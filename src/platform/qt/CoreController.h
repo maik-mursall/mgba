@@ -27,6 +27,7 @@
 #endif
 #ifdef M_CORE_GBA
 #include <mgba/internal/gba/sio/dolphin.h>
+#include <mgba/internal/gba/sio/netplay-lockstep.h>
 #endif
 
 #ifdef M_CORE_GBA
@@ -329,7 +330,15 @@ private:
 	LogController* m_log = nullptr;
 	MultiplayerController* m_multiplayer = nullptr;
 #ifdef M_CORE_GBA
+	void attachNetPlayLockstepDriver();
+	void detachNetPlayLockstepDriver();
+
 	GBASIODolphin m_dolphin;
+#ifndef DISABLE_THREADING
+	mLockstepThreadUser m_netplayUser;
+#endif
+	GBASIONetPlayLockstepDriver m_netplayLockstep;
+	bool m_netplayAttached = false;
 #endif
 
 #ifdef ENABLE_DEBUGGERS

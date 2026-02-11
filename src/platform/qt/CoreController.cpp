@@ -48,6 +48,12 @@ CoreController::CoreController(mCore* core, QObject* parent)
 
 #ifdef M_CORE_GBA
 	GBASIODolphinCreate(&m_dolphin);
+#ifndef DISABLE_THREADING
+	mLockstepThreadUserInit(&m_netplayUser, &m_threadContext);
+	GBASIONetPlayLockstepDriverCreate(&m_netplayLockstep, &m_netplayUser.d);
+#else
+	GBASIONetPlayLockstepDriverCreate(&m_netplayLockstep, nullptr);
+#endif
 #endif
 
 #ifdef ENABLE_DEBUGGERS
@@ -78,6 +84,10 @@ CoreController::CoreController(mCore* core, QObject* parent)
 		if (controller->m_multiplayer) {
 			controller->m_multiplayer->attachGame(controller);
 			controller->updatePlayerSave();
+#ifdef M_CORE_GBA
+		} else if (context->core->platform(context->core) == mPLATFORM_GBA) {
+			controller->attachNetPlayLockstepDriver();
+#endif
 		}
 
 		if (controller->m_override) {
@@ -132,6 +142,7 @@ CoreController::CoreController(mCore* core, QObject* parent)
 
 		controller->clearMultiplayerController();
 #ifdef M_CORE_GBA
+		controller->detachNetPlayLockstepDriver();
 		controller->detachDolphin();
 #endif
 		QMetaObject::invokeMethod(controller, "stopping");
@@ -230,6 +241,9 @@ CoreController::~CoreController() {
 	}
 
 	mCoreConfigDeinit(&m_threadContext.core->config);
+#ifdef M_CORE_GBA
+	GBASIONetPlayLockstepDriverDestroy(&m_netplayLockstep);
+#endif
 	m_threadContext.core->deinit(m_threadContext.core);
 }
 
@@ -371,6 +385,9 @@ void CoreController::setMultiplayerController(MultiplayerController* controller)
 		return;
 	}
 	clearMultiplayerController();
+#ifdef M_CORE_GBA
+	detachNetPlayLockstepDriver();
+#endif
 	m_multiplayer = controller;
 	if (!mCoreThreadHasStarted(&m_threadContext)) {
 		return;
@@ -420,10 +437,37 @@ mCacheSet* CoreController::graphicCaches() {
 }
 
 #ifdef M_CORE_GBA
+void CoreController::attachNetPlayLockstepDriver() {
+	if (platform() != mPLATFORM_GBA || m_netplayAttached || m_multiplayer) {
+		return;
+	}
+	if (!GBASIONetPlayLockstepDriverConnectDefault(&m_netplayLockstep)) {
+		LOG(QT, WARN) << tr("Failed to connect NetPlay relay at %1:%2")
+		                     .arg(QLatin1String(GBA_SIO_NETPLAY_LOCKSTEP_DEFAULT_HOST))
+		                     .arg(GBA_SIO_NETPLAY_LOCKSTEP_DEFAULT_PORT);
+		return;
+	}
+	clearMultiplayerController();
+	m_threadContext.core->setPeripheral(m_threadContext.core, mPERIPH_GBA_LINK_PORT, &m_netplayLockstep.d);
+	m_netplayAttached = true;
+	LOG(QT, INFO) << tr("Connected NetPlay relay at %1:%2")
+	                     .arg(QLatin1String(GBA_SIO_NETPLAY_LOCKSTEP_DEFAULT_HOST))
+	                     .arg(GBA_SIO_NETPLAY_LOCKSTEP_DEFAULT_PORT);
+}
+
+void CoreController::detachNetPlayLockstepDriver() {
+	if (platform() != mPLATFORM_GBA || !m_netplayAttached) {
+		return;
+	}
+	m_threadContext.core->setPeripheral(m_threadContext.core, mPERIPH_GBA_LINK_PORT, nullptr);
+	m_netplayAttached = false;
+}
+
 bool CoreController::attachDolphin(const Address& address) {
 	if (platform() != mPLATFORM_GBA) {
 		return false;
 	}
+	detachNetPlayLockstepDriver();
 	if (GBASIODolphinConnect(&m_dolphin, &address, 0, 0)) {
 		clearMultiplayerController();
 		m_threadContext.core->setPeripheral(m_threadContext.core, mPERIPH_GBA_LINK_PORT, &m_dolphin.d);
@@ -436,6 +480,7 @@ void CoreController::detachDolphin() {
 	if (platform() == mPLATFORM_GBA) {
 		// TODO: Reattach to multiplayer controller
 		m_threadContext.core->setPeripheral(m_threadContext.core, mPERIPH_GBA_LINK_PORT, NULL);
+		m_netplayAttached = false;
 	}
 	GBASIODolphinDestroy(&m_dolphin);
 }
@@ -1111,6 +1156,7 @@ void CoreController::attachBattleChipGate() {
 		return;
 	}
 	Interrupter interrupter(this);
+	detachNetPlayLockstepDriver();
 	clearMultiplayerController();
 	GBASIOBattlechipGateCreate(&m_battlechip);
 	m_threadContext.core->setPeripheral(m_threadContext.core, mPERIPH_GBA_LINK_PORT, &m_battlechip);
