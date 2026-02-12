@@ -21,6 +21,7 @@ extern const uint16_t GBA_SIO_NETPLAY_LOCKSTEP_DEFAULT_PORT;
 extern const char GBA_SIO_NETPLAY_LOCKSTEP_DEFAULT_HOST[];
 
 #define NETPLAY_LOCKSTEP_BEGIN_QUEUE_SIZE 64
+#define NETPLAY_LOCKSTEP_RESULT_QUEUE_SIZE 64
 
 struct GBASIONetPlayLockstepTransferResult {
 	uint32_t sequence;
@@ -35,6 +36,7 @@ struct GBASIONetPlayLockstepPendingBegin {
 	enum GBASIOMode mode;
 	uint8_t attached;
 	uint16_t siocnt;
+	uint8_t deferEvents;
 };
 
 struct GBASIONetPlayLockstepDriver {
@@ -54,6 +56,8 @@ struct GBASIONetPlayLockstepDriver {
 	bool connected;
 	bool stopping;
 	bool asleep;
+	uint32_t wakeGeneration;
+	uint32_t clientIdleEvents;
 	bool waitingForTransfer;
 	bool transferActive;
 	uint32_t transferSequence;
@@ -73,8 +77,10 @@ struct GBASIONetPlayLockstepDriver {
 	uint8_t pendingBeginWrite;
 	uint8_t pendingBeginCount;
 
-	bool pendingResult;
-	struct GBASIONetPlayLockstepTransferResult pendingTransferResult;
+	struct GBASIONetPlayLockstepTransferResult pendingResults[NETPLAY_LOCKSTEP_RESULT_QUEUE_SIZE];
+	uint8_t pendingResultRead;
+	uint8_t pendingResultWrite;
+	uint8_t pendingResultCount;
 };
 
 typedef struct GBASIONetPlayLockstepDriver NetPlayLockstepDriver;
