@@ -29,6 +29,8 @@
 #define NETPLAY_CYCLE_RESYNC_INTERVAL 256
 /* Timeout if a secondary never publishes fresh transfer data after BEGIN. */
 #define NETPLAY_SAMPLE_FRESH_TIMEOUT_CYCLES 280896
+/* In reuse mode, only wait briefly for a post-BEGIN register write. */
+#define NETPLAY_SAMPLE_FRESH_REUSE_WAIT_CYCLES 2048
 
 #define NETPLAY_SAMPLE_FRESH_TIMEOUT_STRICT 0
 #define NETPLAY_SAMPLE_FRESH_TIMEOUT_REUSE_CURRENT 1
@@ -1412,6 +1414,7 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 	int32_t beginCycleDelta = 0;
 	bool beginCycleCompared = false;
 	bool beginHasStartCycle = false;
+	bool shouldLogBeginAttempt = true;
 	UNUSED(cyclesLate);
 
 #ifndef DISABLE_THREADING
@@ -1503,6 +1506,16 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 #ifndef DISABLE_THREADING
 			MutexUnlock(&driver->mutex);
 #endif
+			/* Avoid flooding per-event BEGIN logs while freshness wait is active. */
+#ifndef DISABLE_THREADING
+			MutexLock(&driver->mutex);
+#endif
+			shouldLogBeginAttempt = !(driver->freshnessWaitActive
+				&& driver->freshnessWaitSequence == beginSequence
+				&& driver->freshnessWaitMode == beginMode);
+#ifndef DISABLE_THREADING
+			MutexUnlock(&driver->mutex);
+#endif
 			if (calibratedCycleSync) {
 				mLOG(GBA_SIO, DEBUG, "NetPlay lockstep: cycle sync calibrated reason=%s offset=%08X (local=%08X start=%08X seq=%u since=%u)",
 				     periodicCycleSync ? "periodic" : "initial",
@@ -1512,12 +1525,14 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 				     (unsigned) beginSequence,
 				     (unsigned) transfersSinceSync);
 			}
-			mLOG(GBA_SIO, DEBUG, "NetPlay lockstep: transfer %u cycle compare start=%08X local=%08X target=%08X delta=%d",
-			     (unsigned) beginSequence,
-			     (unsigned) (uint32_t) beginStartCycle,
-			     (unsigned) (uint32_t) localCycle,
-			     (unsigned) (uint32_t) targetCycle,
-			     (int) beginCycleDelta);
+			if (shouldLogBeginAttempt) {
+				mLOG(GBA_SIO, DEBUG, "NetPlay lockstep: transfer %u cycle compare start=%08X local=%08X target=%08X delta=%d",
+				     (unsigned) beginSequence,
+				     (unsigned) (uint32_t) beginStartCycle,
+				     (unsigned) (uint32_t) localCycle,
+				     (unsigned) (uint32_t) targetCycle,
+				     (int) beginCycleDelta);
+			}
 			if (deferForCycle) {
 				uint32_t waitCycles = (uint32_t) untilStartCycle;
 				if (!waitCycles || waitCycles > EVENT_ACTIVE_INTERVAL) {
@@ -1532,7 +1547,7 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 				return;
 			}
 		}
-		if (!clearPendingBegin) {
+		if (!clearPendingBegin && shouldLogBeginAttempt) {
 			mLOG(GBA_SIO, DEBUG, "NetPlay lockstep: transfer %u begin pending (mode=%u, playerId=%d, attached=%u, startCycle=%08X)",
 			     (unsigned) beginSequence, _modeToWire(beginMode), playerId, beginAttached, (unsigned) (uint32_t) beginStartCycle);
 			_logTransferControlSnapshot(driver, "BEGIN_RX", beginSequence, beginMode, beginSIOCNT);
@@ -1558,8 +1573,12 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 			_syncSIOCNTFromBegin(driver, beginMode, beginSIOCNT);
 			{
 				bool waitingForFreshSample = false;
-				bool staleTimeout = false;
 				bool logFreshReady = false;
+#if NETPLAY_SAMPLE_FRESH_TIMEOUT_MODE == NETPLAY_SAMPLE_FRESH_TIMEOUT_REUSE_CURRENT
+				bool reuseGraceExpired = false;
+#else
+				bool staleTimeout = false;
+#endif
 				uint32_t writeGeneration = 0;
 				uint32_t baselineGeneration = 0;
 				int32_t localCycle = mTimingCurrentTime(timing);
@@ -1581,7 +1600,11 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 				baselineGeneration = driver->freshnessWaitBaselineGeneration;
 				freshnessElapsed = localCycle - driver->freshnessWaitStartCycle;
 				waitingForFreshSample = writeGeneration == baselineGeneration;
+#if NETPLAY_SAMPLE_FRESH_TIMEOUT_MODE == NETPLAY_SAMPLE_FRESH_TIMEOUT_REUSE_CURRENT
+				reuseGraceExpired = waitingForFreshSample && freshnessElapsed >= NETPLAY_SAMPLE_FRESH_REUSE_WAIT_CYCLES;
+#else
 				staleTimeout = waitingForFreshSample && freshnessElapsed >= NETPLAY_SAMPLE_FRESH_TIMEOUT_CYCLES;
+#endif
 				if (waitingForFreshSample && !driver->freshnessWaitLogged) {
 					driver->freshnessWaitLogged = true;
 					mLOG(GBA_SIO, DEBUG, "NetPlay lockstep: transfer %u waiting for fresh sample write (mode=%u baselineGen=%u currentGen=%u)",
@@ -1595,12 +1618,18 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 				MutexUnlock(&driver->mutex);
 #endif
 				if (waitingForFreshSample) {
-					if (staleTimeout) {
 #if NETPLAY_SAMPLE_FRESH_TIMEOUT_MODE == NETPLAY_SAMPLE_FRESH_TIMEOUT_REUSE_CURRENT
-						mLOG(GBA_SIO, WARN, "NetPlay lockstep: transfer %u timed out waiting for fresh sample write (mode=%u baselineGen=%u currentGen=%u waitedCycles=%d); reusing current register value",
-						     (unsigned) beginSequence, _modeToWire(beginMode),
+					if (reuseGraceExpired) {
+						mLOG(GBA_SIO, DEBUG, "NetPlay lockstep: transfer %u no post-BEGIN sample write after %u cycles (mode=%u baselineGen=%u currentGen=%u waitedCycles=%d); reusing current register value",
+						     (unsigned) beginSequence,
+						     (unsigned) NETPLAY_SAMPLE_FRESH_REUSE_WAIT_CYCLES, _modeToWire(beginMode),
 						     (unsigned) baselineGeneration, (unsigned) writeGeneration, (int) freshnessElapsed);
+					} else {
+						mTimingSchedule(timing, &driver->event, connected ? EVENT_ACTIVE_INTERVAL : EVENT_IDLE_INTERVAL);
+						return;
+					}
 #else
+					if (staleTimeout) {
 						mLOG(GBA_SIO, WARN, "NetPlay lockstep: transfer %u timed out waiting for fresh sample write (mode=%u baselineGen=%u currentGen=%u waitedCycles=%d)",
 						     (unsigned) beginSequence, _modeToWire(beginMode),
 						     (unsigned) baselineGeneration, (unsigned) writeGeneration, (int) freshnessElapsed);
@@ -1609,11 +1638,11 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 						_setDisconnected(driver, true);
 						mTimingSchedule(timing, &driver->event, EVENT_IDLE_INTERVAL);
 						return;
-#endif
 					} else {
 						mTimingSchedule(timing, &driver->event, connected ? EVENT_ACTIVE_INTERVAL : EVENT_IDLE_INTERVAL);
 						return;
 					}
+#endif
 				} else if (logFreshReady) {
 					mLOG(GBA_SIO, DEBUG, "NetPlay lockstep: transfer %u fresh sample write observed (mode=%u baselineGen=%u currentGen=%u waitedCycles=%d)",
 					     (unsigned) beginSequence, _modeToWire(beginMode),
