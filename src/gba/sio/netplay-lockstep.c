@@ -291,8 +291,6 @@ static bool GBASIONetPlayLockstepDriverStart(struct GBASIODriver* driver) {
 	int attached;
 	int playerId;
 	uint32_t sequence;
-	uint32_t fallbackSequence = 0;
-	bool fallbackHasPendingBegin = false;
 	enum GBASIOMode mode = driver->p->mode;
 
 	if (!_supportsTransferMode(mode)) {
@@ -326,24 +324,11 @@ static bool GBASIONetPlayLockstepDriverStart(struct GBASIODriver* driver) {
 		return false;
 	}
 	if (playerId != 0) {
-		fallbackHasPendingBegin = net->pendingBegin && net->pendingBeginMode == mode;
-		if (fallbackHasPendingBegin) {
-			fallbackSequence = net->pendingBeginSequence;
-		}
 #ifndef DISABLE_THREADING
 		MutexUnlock(&net->mutex);
 #endif
-		if (_captureTransferSample(net, mode, &sample)) {
-			if (_sendTransferSample(net, MSG_TRANSFER_DATA, fallbackSequence, mode, &sample)) {
-				mLOG(GBA_SIO, DEBUG, "Secondary fallback sent transfer data (seq=%u, pendingBegin=%d)",
-				     (unsigned) fallbackSequence, fallbackHasPendingBegin);
-			} else {
-				mLOG(GBA_SIO, WARN, "Secondary fallback failed to send transfer data");
-			}
-		} else {
-			mLOG(GBA_SIO, DEBUG, "Secondary fallback could not capture transfer sample");
-		}
-		mLOG(GBA_SIO, DEBUG, "Secondary player attempted to start transfer");
+		/* Secondary transfers are begin-driven; START on non-primary is ignored. */
+		mLOG(GBA_SIO, DEBUG, "Secondary player attempted to start transfer (ignored)");
 		return false;
 	}
 	++net->transferSequence;
