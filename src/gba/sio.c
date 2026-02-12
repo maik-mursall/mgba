@@ -342,6 +342,15 @@ uint16_t GBASIOWriteRegister(struct GBASIO* sio, uint32_t address, uint16_t valu
 		handled = false;
 		break;
 	}
+	if (handled && sio->driver && sio->driver->writeRegister) {
+		bool driverHandlesMode = true;
+		if (sio->driver->handlesMode) {
+			driverHandlesMode = sio->driver->handlesMode(sio->driver, sio->mode);
+		}
+		if (driverHandlesMode) {
+			value = sio->driver->writeRegister(sio->driver, address, value);
+		}
+	}
 	if (!handled) {
 		value = sio->p->memory.io[address >> 1];
 	}

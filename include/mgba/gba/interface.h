@@ -123,6 +123,7 @@ struct GBASIODriver {
 	int (*deviceId)(struct GBASIODriver* driver);
 	uint16_t (*writeSIOCNT)(struct GBASIODriver* driver, uint16_t value);
 	uint16_t (*writeRCNT)(struct GBASIODriver* driver, uint16_t value);
+	uint16_t (*writeRegister)(struct GBASIODriver* driver, uint32_t address, uint16_t value);
 	bool (*start)(struct GBASIODriver* driver);
 	void (*finishMultiplayer)(struct GBASIODriver* driver, uint16_t data[4]);
 	uint8_t (*finishNormal8)(struct GBASIODriver* driver);

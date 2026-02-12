@@ -1,4 +1,4 @@
-/* Copyright (c) 2013-2024 Jeffrey Pfau
+/* Copyright (c) 2026-2026 Maik Mursall
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -19,13 +19,14 @@
 #define NETPLAY_CLIENT_PACING_HARD 2
 
 #ifndef NETPLAY_CLIENT_PACING_MODE
-#define NETPLAY_CLIENT_PACING_MODE NETPLAY_CLIENT_PACING_SOFT
+#define NETPLAY_CLIENT_PACING_MODE NETPLAY_CLIENT_PACING_NONE
 #endif
 
 #define NETPLAY_CLIENT_SOFT_IDLE_CYCLES 280896
 #define NETPLAY_CLIENT_SOFT_IDLE_EVENTS ((NETPLAY_CLIENT_SOFT_IDLE_CYCLES + EVENT_ACTIVE_INTERVAL - 1) / EVENT_ACTIVE_INTERVAL)
 #define NETPLAY_CLIENT_SOFT_WAIT_MS 5
 #define NETPLAY_BEGIN_DEFER_EVENTS 1
+#define NETPLAY_BEGIN_DEFER_SEND_EVENTS 64
 
 #define MSG_HELLO 0x01
 #define MSG_MODE 0x02
@@ -55,6 +56,7 @@ static int GBASIONetPlayLockstepDriverConnectedDevices(struct GBASIODriver* driv
 static int GBASIONetPlayLockstepDriverDeviceId(struct GBASIODriver* driver);
 static uint16_t GBASIONetPlayLockstepDriverWriteSIOCNT(struct GBASIODriver* driver, uint16_t value);
 static uint16_t GBASIONetPlayLockstepDriverWriteRCNT(struct GBASIODriver* driver, uint16_t value);
+static uint16_t GBASIONetPlayLockstepDriverWriteRegister(struct GBASIODriver* driver, uint32_t address, uint16_t value);
 static bool GBASIONetPlayLockstepDriverStart(struct GBASIODriver* driver);
 static void GBASIONetPlayLockstepDriverFinishMultiplayer(struct GBASIODriver* driver, uint16_t data[4]);
 static uint8_t GBASIONetPlayLockstepDriverFinishNormal8(struct GBASIODriver* driver);
@@ -65,6 +67,8 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 static bool _sendPacket(struct GBASIONetPlayLockstepDriver* driver, uint8_t type, const uint8_t* payload, size_t size);
 static void _setDisconnected(struct GBASIONetPlayLockstepDriver* driver, bool remoteClose);
 static void _updateReadyState(struct GBASIONetPlayLockstepDriver* driver);
+static void _syncSIOCNTFromBegin(struct GBASIONetPlayLockstepDriver* driver, enum GBASIOMode mode, uint16_t beginSIOCNT);
+static void _logTransferControlSnapshot(struct GBASIONetPlayLockstepDriver* driver, const char* phase, uint32_t sequence, enum GBASIOMode mode, uint16_t packetSIOCNT);
 static bool _captureTransferSample(struct GBASIONetPlayLockstepDriver* driver, enum GBASIOMode mode, struct NetPlayTransferSample* sample);
 static bool _sendTransferSample(struct GBASIONetPlayLockstepDriver* driver, uint8_t type, uint32_t sequence, enum GBASIOMode mode, const struct NetPlayTransferSample* sample);
 static bool _waitForTransferResult(struct GBASIONetPlayLockstepDriver* driver, enum GBASIOMode mode, struct GBASIONetPlayLockstepTransferResult* out);
@@ -138,7 +142,7 @@ static bool _pendingBeginQueueContainsSequence(const struct GBASIONetPlayLockste
 	return false;
 }
 
-static bool _pendingBeginQueuePush(struct GBASIONetPlayLockstepDriver* driver, uint32_t sequence, enum GBASIOMode mode, uint8_t attached, uint16_t siocnt, uint8_t deferEvents) {
+static bool _pendingBeginQueuePush(struct GBASIONetPlayLockstepDriver* driver, uint32_t sequence, enum GBASIOMode mode, uint8_t attached, uint16_t siocnt, uint32_t siocntWriteGeneration, uint32_t siomltWriteGeneration, uint8_t deferEvents, uint8_t deferSendEvents) {
 	struct GBASIONetPlayLockstepPendingBegin* begin;
 	if (driver->pendingBeginCount >= NETPLAY_LOCKSTEP_BEGIN_QUEUE_SIZE) {
 		return false;
@@ -148,7 +152,10 @@ static bool _pendingBeginQueuePush(struct GBASIONetPlayLockstepDriver* driver, u
 	begin->mode = mode;
 	begin->attached = attached;
 	begin->siocnt = siocnt;
+	begin->siocntWriteGeneration = siocntWriteGeneration;
+	begin->siomltWriteGeneration = siomltWriteGeneration;
 	begin->deferEvents = deferEvents;
+	begin->deferSendEvents = deferSendEvents;
 	driver->pendingBeginWrite = (driver->pendingBeginWrite + 1) % NETPLAY_LOCKSTEP_BEGIN_QUEUE_SIZE;
 	++driver->pendingBeginCount;
 	return true;
@@ -250,6 +257,7 @@ void GBASIONetPlayLockstepDriverCreate(struct GBASIONetPlayLockstepDriver* drive
 	driver->d.deviceId = GBASIONetPlayLockstepDriverDeviceId;
 	driver->d.writeSIOCNT = GBASIONetPlayLockstepDriverWriteSIOCNT;
 	driver->d.writeRCNT = GBASIONetPlayLockstepDriverWriteRCNT;
+	driver->d.writeRegister = GBASIONetPlayLockstepDriverWriteRegister;
 	driver->d.start = GBASIONetPlayLockstepDriverStart;
 	driver->d.finishMultiplayer = GBASIONetPlayLockstepDriverFinishMultiplayer;
 	driver->d.finishNormal8 = GBASIONetPlayLockstepDriverFinishNormal8;
@@ -305,6 +313,8 @@ static void GBASIONetPlayLockstepDriverReset(struct GBASIODriver* driver) {
 	net->stateDirty = true;
 	net->waitingForTransfer = false;
 	net->transferActive = false;
+	net->siocntWriteGeneration = 0;
+	net->siomltWriteGeneration = 0;
 	net->asleep = false;
 	net->clientIdleEvents = 0;
 	net->mode = driver->p ? driver->p->mode : (enum GBASIOMode) -1;
@@ -402,6 +412,13 @@ static int GBASIONetPlayLockstepDriverDeviceId(struct GBASIODriver* driver) {
 
 static uint16_t GBASIONetPlayLockstepDriverWriteSIOCNT(struct GBASIODriver* driver, uint16_t value) {
 	struct GBASIONetPlayLockstepDriver* net = (struct GBASIONetPlayLockstepDriver*) driver;
+#ifndef DISABLE_THREADING
+	MutexLock(&net->mutex);
+#endif
+	++net->siocntWriteGeneration;
+#ifndef DISABLE_THREADING
+	MutexUnlock(&net->mutex);
+#endif
 	mLOG(GBA_SIO, DEBUG, "NetPlay lockstep: SIOCNT <- %04X", value);
 	_updateReadyState(net);
 	return value;
@@ -411,6 +428,20 @@ static uint16_t GBASIONetPlayLockstepDriverWriteRCNT(struct GBASIODriver* driver
 	struct GBASIONetPlayLockstepDriver* net = (struct GBASIONetPlayLockstepDriver*) driver;
 	mLOG(GBA_SIO, DEBUG, "NetPlay lockstep: RCNT <- %04X", value);
 	_updateReadyState(net);
+	return value;
+}
+
+static uint16_t GBASIONetPlayLockstepDriverWriteRegister(struct GBASIODriver* driver, uint32_t address, uint16_t value) {
+	struct GBASIONetPlayLockstepDriver* net = (struct GBASIONetPlayLockstepDriver*) driver;
+	if (address == GBA_REG_SIOMLT_SEND) {
+#ifndef DISABLE_THREADING
+		MutexLock(&net->mutex);
+#endif
+		++net->siomltWriteGeneration;
+#ifndef DISABLE_THREADING
+		MutexUnlock(&net->mutex);
+#endif
+	}
 	return value;
 }
 
@@ -590,6 +621,8 @@ bool GBASIONetPlayLockstepDriverConnect(struct GBASIONetPlayLockstepDriver* driv
 	driver->stateDirty = true;
 	driver->waitingForTransfer = false;
 	driver->transferActive = false;
+	driver->siocntWriteGeneration = 0;
+	driver->siomltWriteGeneration = 0;
 	driver->asleep = false;
 	driver->clientIdleEvents = 0;
 	driver->pendingBeginRead = 0;
@@ -837,6 +870,8 @@ static void _setDisconnected(struct GBASIONetPlayLockstepDriver* driver, bool re
 	driver->connected = false;
 	driver->waitingForTransfer = false;
 	driver->transferActive = false;
+	driver->siocntWriteGeneration = 0;
+	driver->siomltWriteGeneration = 0;
 	driver->asleep = false;
 	driver->clientIdleEvents = 0;
 	driver->pendingBeginRead = 0;
@@ -918,6 +953,7 @@ static bool _sendTransferSample(struct GBASIONetPlayLockstepDriver* driver, uint
 	_write16BE(&payload[6], sample->siocnt);
 	_write16BE(&payload[8], sample->send16);
 	_write32BE(&payload[12], sample->send32);
+	_logTransferControlSnapshot(driver, type == MSG_TRANSFER_START ? "START_TX" : "DATA_TX", sequence, mode, sample->siocnt);
 	mLOG(GBA_SIO, DEBUG, "NetPlay lockstep: sending packet type=%u seq=%u mode=%u player=%d siocnt=%04X send16=%04X send32=%08X",
 	     type, (unsigned) sequence, _modeToWire(mode), playerId, sample->siocnt, sample->send16, sample->send32);
 	return _sendPacket(driver, type, payload, sizeof(payload));
@@ -1048,6 +1084,79 @@ static void _updateReadyState(struct GBASIONetPlayLockstepDriver* driver) {
 	}
 }
 
+static void _syncSIOCNTFromBegin(struct GBASIONetPlayLockstepDriver* driver, enum GBASIOMode mode, uint16_t beginSIOCNT) {
+	struct GBASIO* sio = driver->d.p;
+	uint16_t copyMask = 0;
+
+	if (!sio || !beginSIOCNT) {
+		return;
+	}
+
+	switch (mode) {
+	case GBA_SIO_MULTI:
+		/* Sync transfer-timing bits only; keep local identity/ready bits. */
+		copyMask = 0x4003; /* IRQ + baud */
+		sio->siocnt = (sio->siocnt & ~copyMask) | (beginSIOCNT & copyMask);
+		_updateReadyState(driver);
+		return;
+	case GBA_SIO_NORMAL_8:
+	case GBA_SIO_NORMAL_32:
+		copyMask = 0x5003; /* IRQ + length + clock select */
+		sio->siocnt = (sio->siocnt & ~copyMask) | (beginSIOCNT & copyMask);
+		return;
+	default:
+		return;
+	}
+}
+
+static void _logTransferControlSnapshot(struct GBASIONetPlayLockstepDriver* driver, const char* phase, uint32_t sequence, enum GBASIOMode mode, uint16_t packetSIOCNT) {
+	struct GBASIO* sio = driver->d.p;
+	uint16_t localSIOCNT = sio ? sio->siocnt : 0;
+	uint16_t localRCNT = sio ? sio->rcnt : 0;
+	int playerId = driver->playerId;
+
+	if (mode == GBA_SIO_MULTI) {
+		unsigned pktBaud = packetSIOCNT & 0x3;
+		unsigned pktBusy = (packetSIOCNT >> 7) & 1;
+		unsigned pktReady = (packetSIOCNT >> 3) & 1;
+		unsigned pktId = (packetSIOCNT >> 4) & 0x3;
+		unsigned pktErr = (packetSIOCNT >> 6) & 1;
+		unsigned pktIrq = (packetSIOCNT >> 14) & 1;
+		unsigned localBaud = localSIOCNT & 0x3;
+		unsigned localBusy = (localSIOCNT >> 7) & 1;
+		unsigned localReady = (localSIOCNT >> 3) & 1;
+		unsigned localId = (localSIOCNT >> 4) & 0x3;
+		unsigned localErr = (localSIOCNT >> 6) & 1;
+		unsigned localIrq = (localSIOCNT >> 14) & 1;
+		unsigned rcntHi = (localRCNT >> 14) & 0x3;
+		unsigned rcntPins = localRCNT & 0x000F;
+		unsigned rcntDirs = (localRCNT >> 4) & 0x000F;
+		mLOG(GBA_SIO, DEBUG, "NetPlay lockstep: xfer %u %s p=%d MULTI pktSIOCNT=%04X(baud=%u busy=%u ready=%u id=%u err=%u irq=%u) localSIOCNT=%04X(baud=%u busy=%u ready=%u id=%u err=%u irq=%u) RCNT=%04X(hi=%u pins=%X dir=%X)",
+		     (unsigned) sequence, phase, playerId, packetSIOCNT,
+		     pktBaud, pktBusy, pktReady, pktId, pktErr, pktIrq,
+		     localSIOCNT, localBaud, localBusy, localReady, localId, localErr, localIrq,
+		     localRCNT, rcntHi, rcntPins, rcntDirs);
+		return;
+	}
+
+	if (mode == GBA_SIO_NORMAL_8 || mode == GBA_SIO_NORMAL_32) {
+		unsigned pktStart = (packetSIOCNT >> 7) & 1;
+		unsigned pktLen = (packetSIOCNT >> 12) & 1;
+		unsigned pktScInt = (packetSIOCNT >> 1) & 1;
+		unsigned pktIrq = (packetSIOCNT >> 14) & 1;
+		unsigned localStart = (localSIOCNT >> 7) & 1;
+		unsigned localLen = (localSIOCNT >> 12) & 1;
+		unsigned localScInt = (localSIOCNT >> 1) & 1;
+		unsigned localIrq = (localSIOCNT >> 14) & 1;
+		unsigned rcntHi = (localRCNT >> 14) & 0x3;
+		mLOG(GBA_SIO, DEBUG, "NetPlay lockstep: xfer %u %s p=%d NORMAL pktSIOCNT=%04X(start=%u len=%u intSc=%u irq=%u) localSIOCNT=%04X(start=%u len=%u intSc=%u irq=%u) RCNT=%04X(hi=%u)",
+		     (unsigned) sequence, phase, playerId, packetSIOCNT,
+		     pktStart, pktLen, pktScInt, pktIrq,
+		     localSIOCNT, localStart, localLen, localScInt, localIrq,
+		     localRCNT, rcntHi);
+	}
+}
+
 static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cyclesLate) {
 	struct GBASIONetPlayLockstepDriver* driver = context;
 	bool pendingDisconnect;
@@ -1069,6 +1178,7 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 	uint8_t beginAttached = 0;
 	uint16_t beginSIOCNT = 0;
 	uint8_t beginDeferEvents = 0;
+	uint8_t beginDeferSendEvents = 0;
 	UNUSED(cyclesLate);
 
 #ifndef DISABLE_THREADING
@@ -1092,6 +1202,7 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 		beginAttached = queuedBegin.attached;
 		beginSIOCNT = queuedBegin.siocnt;
 		beginDeferEvents = queuedBegin.deferEvents;
+		beginDeferSendEvents = queuedBegin.deferSendEvents;
 	}
 	if (stateDirty) {
 		driver->stateDirty = false;
@@ -1120,25 +1231,47 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 			mTimingSchedule(timing, &driver->event, connected ? EVENT_ACTIVE_INTERVAL : EVENT_IDLE_INTERVAL);
 			return;
 		}
-		if (beginDeferEvents) {
+		if ((beginDeferEvents || beginDeferSendEvents) && beginMode == GBA_SIO_MULTI) {
+			bool deferForSIOCNTWrite = false;
+			bool deferForSIOMLTWrite = false;
+			uint8_t remainingSIOCNTDefers = 0;
+			uint8_t remainingSIOMLTDefers = 0;
 #ifndef DISABLE_THREADING
 			MutexLock(&driver->mutex);
 #endif
 			if (driver->pendingBeginCount
 					&& driver->pendingBegins[driver->pendingBeginRead].sequence == beginSequence
-					&& driver->pendingBegins[driver->pendingBeginRead].deferEvents) {
-				--driver->pendingBegins[driver->pendingBeginRead].deferEvents;
+					&& (driver->pendingBegins[driver->pendingBeginRead].deferEvents
+						|| driver->pendingBegins[driver->pendingBeginRead].deferSendEvents)) {
+				if (driver->pendingBegins[driver->pendingBeginRead].deferEvents
+						&& driver->siocntWriteGeneration == driver->pendingBegins[driver->pendingBeginRead].siocntWriteGeneration) {
+					--driver->pendingBegins[driver->pendingBeginRead].deferEvents;
+					deferForSIOCNTWrite = true;
+				}
+				if (driver->pendingBegins[driver->pendingBeginRead].deferSendEvents
+						&& driver->siomltWriteGeneration == driver->pendingBegins[driver->pendingBeginRead].siomltWriteGeneration) {
+					--driver->pendingBegins[driver->pendingBeginRead].deferSendEvents;
+					deferForSIOMLTWrite = true;
+				}
+				remainingSIOCNTDefers = driver->pendingBegins[driver->pendingBeginRead].deferEvents;
+				remainingSIOMLTDefers = driver->pendingBegins[driver->pendingBeginRead].deferSendEvents;
 			}
 #ifndef DISABLE_THREADING
 			MutexUnlock(&driver->mutex);
 #endif
-			mLOG(GBA_SIO, DEBUG, "NetPlay lockstep: transfer %u begin deferred for local tick alignment",
-			     (unsigned) beginSequence);
-			mTimingSchedule(timing, &driver->event, connected ? EVENT_ACTIVE_INTERVAL : EVENT_IDLE_INTERVAL);
-			return;
+			if (deferForSIOCNTWrite || deferForSIOMLTWrite) {
+				const char* waitFor = deferForSIOCNTWrite
+					? (deferForSIOMLTWrite ? "SIOCNT+SIOMLT_SEND" : "SIOCNT")
+					: "SIOMLT_SEND";
+				mLOG(GBA_SIO, DEBUG, "NetPlay lockstep: transfer %u begin deferred waiting for local %s write (remainingSIOCNT=%u remainingSIOMLT=%u)",
+				     (unsigned) beginSequence, waitFor, remainingSIOCNTDefers, remainingSIOMLTDefers);
+				mTimingSchedule(timing, &driver->event, connected ? EVENT_ACTIVE_INTERVAL : EVENT_IDLE_INTERVAL);
+				return;
+			}
 		}
 		mLOG(GBA_SIO, DEBUG, "NetPlay lockstep: transfer %u begin pending (mode=%u, playerId=%d, attached=%u)",
 		     (unsigned) beginSequence, _modeToWire(beginMode), playerId, beginAttached);
+		_logTransferControlSnapshot(driver, "BEGIN_RX", beginSequence, beginMode, beginSIOCNT);
 		if (playerId != 0 && _supportsTransferMode(beginMode)) {
 			struct NetPlayTransferSample sample;
 			struct GBASIO* sio = driver->d.p;
@@ -1146,9 +1279,6 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 				mLOG(GBA_SIO, DEBUG, "NetPlay lockstep: transfer %u begin mode mismatch (local=%u begin=%u), forcing local mode",
 				     (unsigned) beginSequence, _modeToWire(sio->mode), _modeToWire(beginMode));
 				sio->mode = beginMode;
-				if (beginSIOCNT) {
-					sio->siocnt = (sio->siocnt & ~0x3000) | (beginSIOCNT & 0x3000);
-				}
 #ifndef DISABLE_THREADING
 				MutexLock(&driver->mutex);
 #endif
@@ -1160,6 +1290,7 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 				MutexUnlock(&driver->mutex);
 #endif
 			}
+			_syncSIOCNTFromBegin(driver, beginMode, beginSIOCNT);
 			if (_captureTransferSample(driver, beginMode, &sample)) {
 				int transferCycles = 1;
 				int connectedDevices = beginAttached > 0 ? beginAttached - 1 : GBASIONetPlayLockstepDriverConnectedDevices(&driver->d);
@@ -1370,7 +1501,7 @@ static bool _handleTransferBeginPacket(struct GBASIONetPlayLockstepDriver* drive
 		return false;
 	}
 
-	if (!_pendingBeginQueuePush(driver, sequence, mode, payload[6], _read16BE(&payload[8]), NETPLAY_BEGIN_DEFER_EVENTS)) {
+	if (!_pendingBeginQueuePush(driver, sequence, mode, payload[6], _read16BE(&payload[8]), driver->siocntWriteGeneration, driver->siomltWriteGeneration, NETPLAY_BEGIN_DEFER_EVENTS, mode == GBA_SIO_MULTI ? NETPLAY_BEGIN_DEFER_SEND_EVENTS : 0)) {
 		mLOG(GBA_SIO, ERROR, "NetPlay lockstep: TRANSFER_BEGIN queue overflow at transfer %u (depth=%u)",
 		     (unsigned) sequence, (unsigned) driver->pendingBeginCount);
 		MutexUnlock(&driver->mutex);
