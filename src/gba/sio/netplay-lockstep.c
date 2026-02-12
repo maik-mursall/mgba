@@ -99,7 +99,9 @@ static bool _waitForHardSync(struct GBASIONetPlayLockstepDriver* driver, uint32_
 static void _wakeDriver(struct GBASIONetPlayLockstepDriver* driver);
 static void _paceClientDelay(struct GBASIONetPlayLockstepDriver* driver, uint32_t waitMs);
 static void _paceClientSoft(struct GBASIONetPlayLockstepDriver* driver);
+#if NETPLAY_CLIENT_PACING_MODE == NETPLAY_CLIENT_PACING_HARD
 static void _sleepDriver(struct GBASIONetPlayLockstepDriver* driver);
+#endif
 static bool _tryGetLocalCycle(struct GBASIONetPlayLockstepDriver* driver, int32_t* outCycle);
 
 #ifndef DISABLE_THREADING
@@ -570,8 +572,8 @@ static uint16_t GBASIONetPlayLockstepDriverWriteRegister(struct GBASIODriver* dr
 	MutexUnlock(&net->mutex);
 #endif
 	if (nudgeFreshness && net->d.p && net->d.p->p) {
-		mTimingDeschedule(&net->d.p->timing, &net->event);
-		mTimingSchedule(&net->d.p->timing, &net->event, 1);
+		mTimingDeschedule(&net->d.p->p->timing, &net->event);
+		mTimingSchedule(&net->d.p->p->timing, &net->event, 1);
 	}
 	return value;
 }
@@ -910,6 +912,7 @@ static void _paceClientSoft(struct GBASIONetPlayLockstepDriver* driver) {
 #endif
 }
 
+#if NETPLAY_CLIENT_PACING_MODE == NETPLAY_CLIENT_PACING_HARD
 static void _sleepDriver(struct GBASIONetPlayLockstepDriver* driver) {
 	/*
 	 * Keep "hard" pacing finite so secondaries cannot park indefinitely
@@ -917,6 +920,7 @@ static void _sleepDriver(struct GBASIONetPlayLockstepDriver* driver) {
 	 */
 	_paceClientDelay(driver, NETPLAY_CLIENT_HARD_WAIT_MS);
 }
+#endif
 
 static bool _sendPacket(struct GBASIONetPlayLockstepDriver* driver, uint8_t type, const uint8_t* payload, size_t size) {
 	uint8_t header[8] = { 0 };
