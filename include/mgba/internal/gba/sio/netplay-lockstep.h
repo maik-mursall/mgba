@@ -39,6 +39,7 @@ struct GBASIONetPlayLockstepDriver {
 	Mutex mutex;
 	Condition cond;
 	bool threadRunning;
+	struct mLogger* readerLogger;
 #endif
 
 	bool connected;

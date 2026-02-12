@@ -12,6 +12,7 @@
 #define EVENT_IDLE_INTERVAL 1024
 #define EVENT_ACTIVE_INTERVAL 64
 #define MAX_PACKET_SIZE 512
+#define CONNECT_ID_WAIT_MS 5000
 
 #define MSG_HELLO 0x01
 #define MSG_MODE 0x02
@@ -59,7 +60,7 @@ static void _wakeDriver(struct GBASIONetPlayLockstepDriver* driver);
 #ifndef DISABLE_THREADING
 static THREAD_ENTRY _readerThread(void* context);
 static bool _recvAll(struct GBASIONetPlayLockstepDriver* driver, void* out, size_t size);
-static void _handleIncomingPacket(struct GBASIONetPlayLockstepDriver* driver, uint8_t type, const uint8_t* payload, size_t size);
+static bool _handleIncomingPacket(struct GBASIONetPlayLockstepDriver* driver, uint8_t type, const uint8_t* payload, size_t size);
 #endif
 
 static uint16_t _read16BE(const uint8_t* data) {
@@ -140,6 +141,7 @@ void GBASIONetPlayLockstepDriverCreate(struct GBASIONetPlayLockstepDriver* drive
 #ifndef DISABLE_THREADING
 	MutexInit(&driver->mutex);
 	ConditionInit(&driver->cond);
+	driver->readerLogger = NULL;
 #endif
 }
 
@@ -152,10 +154,7 @@ void GBASIONetPlayLockstepDriverDestroy(struct GBASIONetPlayLockstepDriver* driv
 }
 
 static bool GBASIONetPlayLockstepDriverInit(struct GBASIODriver* driver) {
-	struct GBASIONetPlayLockstepDriver* net = (struct GBASIONetPlayLockstepDriver*) driver;
 	GBASIONetPlayLockstepDriverReset(driver);
-	mTimingDeschedule(&driver->p->p->timing, &net->event);
-	mTimingSchedule(&driver->p->p->timing, &net->event, 0);
 	return true;
 }
 
@@ -185,6 +184,10 @@ static void GBASIONetPlayLockstepDriverReset(struct GBASIODriver* driver) {
 #ifndef DISABLE_THREADING
 	MutexUnlock(&net->mutex);
 #endif
+	if (driver->p && driver->p->p) {
+		mTimingDeschedule(&driver->p->p->timing, &net->event);
+		mTimingSchedule(&driver->p->p->timing, &net->event, 0);
+	}
 }
 
 static uint32_t GBASIONetPlayLockstepDriverId(const struct GBASIODriver* driver) {
@@ -288,6 +291,8 @@ static bool GBASIONetPlayLockstepDriverStart(struct GBASIODriver* driver) {
 	int attached;
 	int playerId;
 	uint32_t sequence;
+	uint32_t fallbackSequence = 0;
+	bool fallbackHasPendingBegin = false;
 	enum GBASIOMode mode = driver->p->mode;
 
 	if (!_supportsTransferMode(mode)) {
@@ -321,9 +326,23 @@ static bool GBASIONetPlayLockstepDriverStart(struct GBASIODriver* driver) {
 		return false;
 	}
 	if (playerId != 0) {
+		fallbackHasPendingBegin = net->pendingBegin && net->pendingBeginMode == mode;
+		if (fallbackHasPendingBegin) {
+			fallbackSequence = net->pendingBeginSequence;
+		}
 #ifndef DISABLE_THREADING
 		MutexUnlock(&net->mutex);
 #endif
+		if (_captureTransferSample(net, mode, &sample)) {
+			if (_sendTransferSample(net, MSG_TRANSFER_DATA, fallbackSequence, mode, &sample)) {
+				mLOG(GBA_SIO, DEBUG, "Secondary fallback sent transfer data (seq=%u, pendingBegin=%d)",
+				     (unsigned) fallbackSequence, fallbackHasPendingBegin);
+			} else {
+				mLOG(GBA_SIO, WARN, "Secondary fallback failed to send transfer data");
+			}
+		} else {
+			mLOG(GBA_SIO, DEBUG, "Secondary fallback could not capture transfer sample");
+		}
 		mLOG(GBA_SIO, DEBUG, "Secondary player attempted to start transfer");
 		return false;
 	}
@@ -416,6 +435,7 @@ bool GBASIONetPlayLockstepDriverConnect(struct GBASIONetPlayLockstepDriver* driv
 	driver->pendingBeginAttached = 0;
 	driver->pendingBeginSIOCNT = 0;
 	driver->pendingResult = false;
+	driver->readerLogger = mLogGetContext();
 	MutexUnlock(&driver->mutex);
 
 	if (!_sendPacket(driver, MSG_HELLO, hello, sizeof(hello))) {
@@ -424,6 +444,9 @@ bool GBASIONetPlayLockstepDriverConnect(struct GBASIONetPlayLockstepDriver* driv
 		return false;
 	}
 
+#ifdef _MSC_VER
+	SetLastError(ERROR_SUCCESS);
+#endif
 	if (ThreadCreate(&driver->thread, _readerThread, driver)) {
 		mLOG(GBA_SIO, ERROR, "Could not start relay reader thread");
 		_setDisconnected(driver, false);
@@ -432,10 +455,34 @@ bool GBASIONetPlayLockstepDriverConnect(struct GBASIONetPlayLockstepDriver* driv
 	MutexLock(&driver->mutex);
 	driver->threadRunning = true;
 	MutexUnlock(&driver->mutex);
+	mLOG(GBA_SIO, DEBUG, "NetPlay lockstep: relay reader thread started");
 
 	if (driver->d.p) {
 		mTimingInterrupt(&driver->d.p->p->timing);
 	}
+
+	{
+		const int32_t waitStepMs = 50;
+		int32_t waitedMs = 0;
+		bool connected = false;
+		int assignedPlayerId = -1;
+		MutexLock(&driver->mutex);
+		while (driver->connected && driver->playerId < 0 && waitedMs < CONNECT_ID_WAIT_MS) {
+			ConditionWaitTimed(&driver->cond, &driver->mutex, waitStepMs);
+			waitedMs += waitStepMs;
+		}
+		connected = driver->connected;
+		assignedPlayerId = driver->playerId;
+		MutexUnlock(&driver->mutex);
+
+		if (!connected || assignedPlayerId < 0) {
+			mLOG(GBA_SIO, ERROR, "Did not receive assigned player ID from relay within %d ms", CONNECT_ID_WAIT_MS);
+			_setDisconnected(driver, false);
+			return false;
+		}
+		mLOG(GBA_SIO, DEBUG, "NetPlay lockstep: assigned player ID from relay: %d", assignedPlayerId);
+	}
+
 	return true;
 #endif
 }
@@ -461,7 +508,7 @@ static void _wakeDriver(struct GBASIONetPlayLockstepDriver* driver) {
 #ifndef DISABLE_THREADING
 	MutexLock(&driver->mutex);
 #endif
-	if (driver->asleep && driver->user && driver->user->wake) {
+	if (driver->user && driver->user->wake) {
 		driver->asleep = false;
 		user = driver->user;
 	}
@@ -490,6 +537,7 @@ static bool _sendPacket(struct GBASIONetPlayLockstepDriver* driver, uint8_t type
 #ifndef DISABLE_THREADING
 		MutexUnlock(&driver->mutex);
 #endif
+		mLOG(GBA_SIO, WARN, "NetPlay lockstep: send failed (disconnected) type=%u size=%u", type, (unsigned) size);
 		return false;
 	}
 	socket = driver->socket;
@@ -503,6 +551,7 @@ static bool _sendPacket(struct GBASIONetPlayLockstepDriver* driver, uint8_t type
 	while (sent < sizeof(header)) {
 		written = SocketSend(socket, &header[sent], sizeof(header) - sent);
 		if (written <= 0) {
+			mLOG(GBA_SIO, WARN, "NetPlay lockstep: send header failed type=%u", type);
 			return false;
 		}
 		sent += written;
@@ -512,6 +561,7 @@ static bool _sendPacket(struct GBASIONetPlayLockstepDriver* driver, uint8_t type
 	while (sent < size) {
 		written = SocketSend(socket, &payload[sent], size - sent);
 		if (written <= 0) {
+			mLOG(GBA_SIO, WARN, "NetPlay lockstep: send payload failed type=%u", type);
 			return false;
 		}
 		sent += written;
@@ -619,6 +669,8 @@ static bool _sendTransferSample(struct GBASIONetPlayLockstepDriver* driver, uint
 	_write16BE(&payload[6], sample->siocnt);
 	_write16BE(&payload[8], sample->send16);
 	_write32BE(&payload[12], sample->send32);
+	mLOG(GBA_SIO, DEBUG, "NetPlay lockstep: sending packet type=%u seq=%u mode=%u player=%d siocnt=%04X",
+	     type, (unsigned) sequence, _modeToWire(mode), playerId, sample->siocnt);
 	return _sendPacket(driver, type, payload, sizeof(payload));
 }
 
@@ -809,7 +861,9 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 	}
 
 	if (pendingBegin && beginMode != (enum GBASIOMode) -1) {
-		if (playerId > 0 && _supportsTransferMode(beginMode)) {
+		mLOG(GBA_SIO, DEBUG, "NetPlay lockstep: transfer %u begin pending (mode=%u, playerId=%d, attached=%u)",
+		     (unsigned) beginSequence, _modeToWire(beginMode), playerId, beginAttached);
+		if (playerId != 0 && _supportsTransferMode(beginMode)) {
 			struct NetPlayTransferSample sample;
 			if (_captureTransferSample(driver, beginMode, &sample)) {
 				if (_sendTransferSample(driver, MSG_TRANSFER_DATA, beginSequence, beginMode, &sample)) {
@@ -841,13 +895,23 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 					     (unsigned) beginSequence, playerId);
 					clearPendingBegin = true;
 				} else {
+					mLOG(GBA_SIO, WARN, "NetPlay lockstep: transfer %u begin send failed (playerId=%d, mode=%u)",
+					     (unsigned) beginSequence, playerId, _modeToWire(beginMode));
 					clearPendingBegin = true;
 					_setDisconnected(driver, true);
 				}
+			} else {
+				mLOG(GBA_SIO, WARN, "NetPlay lockstep: transfer %u begin deferred (sample unavailable, playerId=%d, sio=%p)",
+				     (unsigned) beginSequence, playerId, (void*) driver->d.p);
 			}
 		} else if (playerId == 0 || !_supportsTransferMode(beginMode)) {
 			// Primary should never receive begin packets; unsupported modes are ignored.
+			mLOG(GBA_SIO, WARN, "NetPlay lockstep: transfer %u begin dropped (playerId=%d, supported=%d, mode=%u)",
+			     (unsigned) beginSequence, playerId, _supportsTransferMode(beginMode), _modeToWire(beginMode));
 			clearPendingBegin = true;
+		} else {
+			mLOG(GBA_SIO, DEBUG, "NetPlay lockstep: transfer %u begin deferred (playerId=%d)",
+			     (unsigned) beginSequence, playerId);
 		}
 	}
 
@@ -888,13 +952,14 @@ static bool _recvAll(struct GBASIONetPlayLockstepDriver* driver, void* out, size
 	return true;
 }
 
-static void _handleStatePacket(struct GBASIONetPlayLockstepDriver* driver, const uint8_t* payload, size_t size) {
+static bool _handleStatePacket(struct GBASIONetPlayLockstepDriver* driver, const uint8_t* payload, size_t size) {
 	uint8_t presentMask;
 	int attached = 0;
 	int oldPlayerId;
 	int i;
 	if (size < 8) {
-		return;
+		mLOG(GBA_SIO, WARN, "NetPlay lockstep: STATE packet too small (%u)", (unsigned) size);
+		return false;
 	}
 	presentMask = payload[2];
 	for (i = 0; i < MAX_GBAS; ++i) {
@@ -913,13 +978,19 @@ static void _handleStatePacket(struct GBASIONetPlayLockstepDriver* driver, const
 		driver->otherModes[driver->playerId] = driver->mode;
 	}
 	driver->stateDirty = true;
+	ConditionWake(&driver->cond);
+	mLOG(GBA_SIO, DEBUG, "NetPlay lockstep: state update playerId=%d attached=%d presentMask=%02X",
+	     driver->playerId, driver->attached, presentMask);
 	MutexUnlock(&driver->mutex);
 	_wakeDriver(driver);
+	return true;
 }
 
-static void _handleTransferBeginPacket(struct GBASIONetPlayLockstepDriver* driver, const uint8_t* payload, size_t size) {
+static bool _handleTransferBeginPacket(struct GBASIONetPlayLockstepDriver* driver, const uint8_t* payload, size_t size) {
+	bool validMode;
 	if (size < 10) {
-		return;
+		mLOG(GBA_SIO, WARN, "NetPlay lockstep: TRANSFER_BEGIN packet too small (%u)", (unsigned) size);
+		return false;
 	}
 	MutexLock(&driver->mutex);
 	driver->pendingBeginSequence = _read32BE(&payload[0]);
@@ -927,17 +998,26 @@ static void _handleTransferBeginPacket(struct GBASIONetPlayLockstepDriver* drive
 	driver->pendingBeginAttached = payload[6];
 	driver->pendingBeginSIOCNT = _read16BE(&payload[8]);
 	driver->pendingBegin = driver->pendingBeginMode != (enum GBASIOMode) -1;
+	validMode = driver->pendingBegin;
 	driver->stateDirty = true;
+	ConditionWake(&driver->cond);
 	mLOG(GBA_SIO, DEBUG, "NetPlay lockstep: transfer %u begin received (mode=%u, attached=%u)",
 	     (unsigned) driver->pendingBeginSequence, payload[4], payload[6]);
+	mLOG(GBA_SIO, WARN, "NetPlay lockstep: transfer %u begin queued (validMode=%d, playerId=%d, sio=%p)",
+	     (unsigned) driver->pendingBeginSequence, validMode, driver->playerId, (void*) driver->d.p);
 	MutexUnlock(&driver->mutex);
 	_wakeDriver(driver);
+	if (!validMode) {
+		mLOG(GBA_SIO, WARN, "NetPlay lockstep: TRANSFER_BEGIN packet has invalid mode (%u)", payload[4]);
+	}
+	return validMode;
 }
 
-static void _handleTransferResultPacket(struct GBASIONetPlayLockstepDriver* driver, const uint8_t* payload, size_t size) {
+static bool _handleTransferResultPacket(struct GBASIONetPlayLockstepDriver* driver, const uint8_t* payload, size_t size) {
 	int i;
 	if (size < 32) {
-		return;
+		mLOG(GBA_SIO, WARN, "NetPlay lockstep: TRANSFER_RESULT packet too small (%u)", (unsigned) size);
+		return false;
 	}
 	MutexLock(&driver->mutex);
 	driver->pendingTransferResult.sequence = _read32BE(&payload[0]);
@@ -952,22 +1032,33 @@ static void _handleTransferResultPacket(struct GBASIONetPlayLockstepDriver* driv
 	ConditionWake(&driver->cond);
 	MutexUnlock(&driver->mutex);
 	_wakeDriver(driver);
+	return true;
 }
 
-static void _handleIncomingPacket(struct GBASIONetPlayLockstepDriver* driver, uint8_t type, const uint8_t* payload, size_t size) {
+static bool _handleIncomingPacket(struct GBASIONetPlayLockstepDriver* driver, uint8_t type, const uint8_t* payload, size_t size) {
+	bool handled = false;
+	mLOG(GBA_SIO, DEBUG, "NetPlay lockstep: received packet type=%u size=%u", type, (unsigned) size);
 	switch (type) {
 	case MSG_STATE:
-		_handleStatePacket(driver, payload, size);
+		handled = _handleStatePacket(driver, payload, size);
 		break;
 	case MSG_TRANSFER_BEGIN:
-		_handleTransferBeginPacket(driver, payload, size);
+		handled = _handleTransferBeginPacket(driver, payload, size);
 		break;
 	case MSG_TRANSFER_RESULT:
-		_handleTransferResultPacket(driver, payload, size);
+		handled = _handleTransferResultPacket(driver, payload, size);
 		break;
 	default:
+		mLOG(GBA_SIO, WARN, "NetPlay lockstep: unknown packet type=%u size=%u", type, (unsigned) size);
+		handled = false;
 		break;
 	}
+	if (handled) {
+		mLOG(GBA_SIO, DEBUG, "NetPlay lockstep: processed packet type=%u successfully", type);
+	} else {
+		mLOG(GBA_SIO, WARN, "NetPlay lockstep: failed to process packet type=%u", type);
+	}
+	return handled;
 }
 
 static THREAD_ENTRY _readerThread(void* context) {
@@ -976,16 +1067,29 @@ static THREAD_ENTRY _readerThread(void* context) {
 	uint8_t payload[MAX_PACKET_SIZE];
 	uint32_t size;
 	bool stopping = false;
+	struct mLogger* logger = NULL;
+
+	MutexLock(&driver->mutex);
+	logger = driver->readerLogger;
+	MutexUnlock(&driver->mutex);
+	if (logger) {
+		mLogSetThreadLogger(logger);
+	}
+
 	ThreadSetName("NetPlay Relay");
+	mLOG(GBA_SIO, DEBUG, "NetPlay lockstep: relay reader thread running");
 	while (true) {
 		if (!_recvAll(driver, header, sizeof(header))) {
+			mLOG(GBA_SIO, WARN, "NetPlay lockstep: reader failed to read packet header");
 			break;
 		}
 		size = _read32BE(&header[4]);
 		if (size > sizeof(payload)) {
+			mLOG(GBA_SIO, WARN, "NetPlay lockstep: reader got oversized packet (%u)", (unsigned) size);
 			break;
 		}
 		if (size && !_recvAll(driver, payload, size)) {
+			mLOG(GBA_SIO, WARN, "NetPlay lockstep: reader failed to read payload (%u)", (unsigned) size);
 			break;
 		}
 		_handleIncomingPacket(driver, header[0], payload, size);
