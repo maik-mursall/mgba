@@ -19,18 +19,25 @@
 #define NETPLAY_CLIENT_PACING_HARD 2
 
 #ifndef NETPLAY_CLIENT_PACING_MODE
-#define NETPLAY_CLIENT_PACING_MODE NETPLAY_CLIENT_PACING_NONE
+#define NETPLAY_CLIENT_PACING_MODE NETPLAY_CLIENT_PACING_SOFT
 #endif
 
 #define NETPLAY_CLIENT_SOFT_IDLE_CYCLES 280896
 #define NETPLAY_CLIENT_SOFT_IDLE_EVENTS ((NETPLAY_CLIENT_SOFT_IDLE_CYCLES + EVENT_ACTIVE_INTERVAL - 1) / EVENT_ACTIVE_INTERVAL)
-#define NETPLAY_CLIENT_SOFT_WAIT_MS 5
+#define NETPLAY_CLIENT_SOFT_WAIT_MS 2
+#define NETPLAY_CLIENT_HARD_WAIT_MS 8
+#define NETPLAY_CLIENT_AHEAD_PACE_THRESHOLD_CYCLES 32768
+#define NETPLAY_CLIENT_AHEAD_CYCLES_PER_MS 16777
+#define NETPLAY_CLIENT_AHEAD_SOFT_MAX_WAIT_MS 6
+#define NETPLAY_CLIENT_AHEAD_HARD_MAX_WAIT_MS 10
 /* Force a timing re-baseline periodically to limit long-session drift. */
 #define NETPLAY_CYCLE_RESYNC_INTERVAL 256
 /* Timeout if a secondary never publishes fresh transfer data after BEGIN. */
 #define NETPLAY_SAMPLE_FRESH_TIMEOUT_CYCLES 280896
 /* In reuse mode, only wait briefly for a post-BEGIN register write. */
 #define NETPLAY_SAMPLE_FRESH_REUSE_WAIT_CYCLES 2048
+/* Poll less often while waiting for a fresh sample write to reduce event churn. */
+#define NETPLAY_SAMPLE_FRESH_POLL_INTERVAL_CYCLES 512
 
 #define NETPLAY_SAMPLE_FRESH_TIMEOUT_STRICT 0
 #define NETPLAY_SAMPLE_FRESH_TIMEOUT_REUSE_CURRENT 1
@@ -90,6 +97,7 @@ static bool _waitForTransferResult(struct GBASIONetPlayLockstepDriver* driver, e
 static bool _sendHardSyncAck(struct GBASIONetPlayLockstepDriver* driver, uint32_t sequence);
 static bool _waitForHardSync(struct GBASIONetPlayLockstepDriver* driver, uint32_t sequence);
 static void _wakeDriver(struct GBASIONetPlayLockstepDriver* driver);
+static void _paceClientDelay(struct GBASIONetPlayLockstepDriver* driver, uint32_t waitMs);
 static void _paceClientSoft(struct GBASIONetPlayLockstepDriver* driver);
 static void _sleepDriver(struct GBASIONetPlayLockstepDriver* driver);
 static bool _tryGetLocalCycle(struct GBASIONetPlayLockstepDriver* driver, int32_t* outCycle);
@@ -539,6 +547,7 @@ static uint16_t GBASIONetPlayLockstepDriverWriteRCNT(struct GBASIODriver* driver
 
 static uint16_t GBASIONetPlayLockstepDriverWriteRegister(struct GBASIODriver* driver, uint32_t address, uint16_t value) {
 	struct GBASIONetPlayLockstepDriver* net = (struct GBASIONetPlayLockstepDriver*) driver;
+	bool nudgeFreshness = false;
 #ifndef DISABLE_THREADING
 	MutexLock(&net->mutex);
 #endif
@@ -546,10 +555,13 @@ static uint16_t GBASIONetPlayLockstepDriverWriteRegister(struct GBASIODriver* dr
 	case GBA_REG_SIOMLT_SEND:
 		++net->multiSendWriteGeneration;
 		++net->normal8WriteGeneration;
+		nudgeFreshness = net->freshnessWaitActive
+			&& (net->freshnessWaitMode == GBA_SIO_MULTI || net->freshnessWaitMode == GBA_SIO_NORMAL_8);
 		break;
 	case GBA_REG_SIODATA32_LO:
 	case GBA_REG_SIODATA32_HI:
 		++net->normal32WriteGeneration;
+		nudgeFreshness = net->freshnessWaitActive && net->freshnessWaitMode == GBA_SIO_NORMAL_32;
 		break;
 	default:
 		break;
@@ -557,6 +569,10 @@ static uint16_t GBASIONetPlayLockstepDriverWriteRegister(struct GBASIODriver* dr
 #ifndef DISABLE_THREADING
 	MutexUnlock(&net->mutex);
 #endif
+	if (nudgeFreshness && net->d.p && net->d.p->p) {
+		mTimingDeschedule(&net->d.p->timing, &net->event);
+		mTimingSchedule(&net->d.p->timing, &net->event, 1);
+	}
 	return value;
 }
 
@@ -852,6 +868,22 @@ static void _wakeDriver(struct GBASIONetPlayLockstepDriver* driver) {
 	}
 }
 
+static void _paceClientDelay(struct GBASIONetPlayLockstepDriver* driver, uint32_t waitMs) {
+#ifndef DISABLE_THREADING
+	if (!waitMs) {
+		return;
+	}
+	MutexLock(&driver->mutex);
+	if (driver->connected && driver->playerId > 0 && driver->attached > 1) {
+		ConditionWaitTimed(&driver->cond, &driver->mutex, waitMs);
+	}
+	MutexUnlock(&driver->mutex);
+#else
+	UNUSED(driver);
+	UNUSED(waitMs);
+#endif
+}
+
 static void _paceClientSoft(struct GBASIONetPlayLockstepDriver* driver) {
 #ifndef DISABLE_THREADING
 	bool shouldWait = false;
@@ -869,73 +901,21 @@ static void _paceClientSoft(struct GBASIONetPlayLockstepDriver* driver) {
 		driver->clientIdleEvents = 0;
 		shouldWait = true;
 	}
-	if (shouldWait) {
-		ConditionWaitTimed(&driver->cond, &driver->mutex, NETPLAY_CLIENT_SOFT_WAIT_MS);
-	}
 	MutexUnlock(&driver->mutex);
+	if (shouldWait) {
+		_paceClientDelay(driver, NETPLAY_CLIENT_SOFT_WAIT_MS);
+	}
 #else
 	UNUSED(driver);
 #endif
 }
 
 static void _sleepDriver(struct GBASIONetPlayLockstepDriver* driver) {
-	struct mLockstepUser* user = NULL;
-	uint32_t sleepGeneration = 0;
-	bool cancelSleep = false;
-#ifndef DISABLE_THREADING
-	MutexLock(&driver->mutex);
-#endif
-	if (driver->user && driver->user->sleep && driver->user->wake
-			&& !driver->asleep
-			&& driver->connected
-			&& driver->playerId > 0
-			&& driver->attached > 1
-			&& !driver->pendingBeginCount
-			&& !driver->transferActive
-			&& !driver->waitingForTransfer
-			&& !driver->waitingForHardSync
-			&& !_hasPendingResultForTransfer(driver, driver->transferSequence)
-			&& !_hasPendingSyncForTransfer(driver, driver->transferSequence)) {
-		driver->asleep = true;
-		user = driver->user;
-		sleepGeneration = driver->wakeGeneration;
-	}
-#ifndef DISABLE_THREADING
-	MutexUnlock(&driver->mutex);
-#endif
-	if (!user) {
-		return;
-	}
-
-	user->sleep(user);
-	if (driver->d.p && driver->d.p->p && driver->d.p->p->cpu) {
-		driver->d.p->p->cpu->nextEvent = 0;
-		GBAInterrupt(driver->d.p->p);
-	}
-
-#ifndef DISABLE_THREADING
-	MutexLock(&driver->mutex);
-#endif
-	if (!driver->asleep
-			|| driver->wakeGeneration != sleepGeneration
-			|| !driver->connected
-			|| driver->playerId <= 0
-			|| driver->attached < 2
-			|| driver->pendingBeginCount
-			|| driver->transferActive
-			|| driver->waitingForTransfer
-			|| driver->waitingForHardSync
-			|| _hasPendingResultForTransfer(driver, driver->transferSequence)
-			|| _hasPendingSyncForTransfer(driver, driver->transferSequence)) {
-		driver->asleep = false;
-		cancelSleep = true;
-	}
-#ifndef DISABLE_THREADING
-	MutexUnlock(&driver->mutex);
-#endif
-	if (cancelSleep) {
-		user->wake(user);
-	}
+	/*
+	 * Keep "hard" pacing finite so secondaries cannot park indefinitely
+	 * in quiet phases before new packets arrive.
+	 */
+	_paceClientDelay(driver, NETPLAY_CLIENT_HARD_WAIT_MS);
 }
 
 static bool _sendPacket(struct GBASIONetPlayLockstepDriver* driver, uint8_t type, const uint8_t* payload, size_t size) {
@@ -1546,6 +1526,27 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 				mTimingSchedule(timing, &driver->event, connected ? waitCycles : EVENT_IDLE_INTERVAL);
 				return;
 			}
+#if NETPLAY_CLIENT_PACING_MODE != NETPLAY_CLIENT_PACING_NONE
+			if (playerId > 0 && beginCycleDelta < -NETPLAY_CLIENT_AHEAD_PACE_THRESHOLD_CYCLES) {
+				uint32_t leadCycles = (uint32_t) (-beginCycleDelta);
+				uint32_t paceMs = leadCycles / NETPLAY_CLIENT_AHEAD_CYCLES_PER_MS;
+				if (!paceMs) {
+					paceMs = 1;
+				}
+#if NETPLAY_CLIENT_PACING_MODE == NETPLAY_CLIENT_PACING_HARD
+				if (paceMs > NETPLAY_CLIENT_AHEAD_HARD_MAX_WAIT_MS) {
+					paceMs = NETPLAY_CLIENT_AHEAD_HARD_MAX_WAIT_MS;
+				}
+#else
+				if (paceMs > NETPLAY_CLIENT_AHEAD_SOFT_MAX_WAIT_MS) {
+					paceMs = NETPLAY_CLIENT_AHEAD_SOFT_MAX_WAIT_MS;
+				}
+#endif
+				mLOG(GBA_SIO, DEBUG, "NetPlay lockstep: transfer %u secondary pacing wait=%u ms (cycleDelta=%d leadCycles=%u)",
+				     (unsigned) beginSequence, (unsigned) paceMs, (int) beginCycleDelta, (unsigned) leadCycles);
+				_paceClientDelay(driver, paceMs);
+			}
+#endif
 		}
 		if (!clearPendingBegin && shouldLogBeginAttempt) {
 			mLOG(GBA_SIO, DEBUG, "NetPlay lockstep: transfer %u begin pending (mode=%u, playerId=%d, attached=%u, startCycle=%08X)",
@@ -1625,7 +1626,18 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 						     (unsigned) NETPLAY_SAMPLE_FRESH_REUSE_WAIT_CYCLES, _modeToWire(beginMode),
 						     (unsigned) baselineGeneration, (unsigned) writeGeneration, (int) freshnessElapsed);
 					} else {
-						mTimingSchedule(timing, &driver->event, connected ? EVENT_ACTIVE_INTERVAL : EVENT_IDLE_INTERVAL);
+						uint32_t waitCycles = EVENT_ACTIVE_INTERVAL;
+						int32_t remainingCycles = NETPLAY_SAMPLE_FRESH_REUSE_WAIT_CYCLES - freshnessElapsed;
+						if (remainingCycles > 0) {
+							waitCycles = (uint32_t) remainingCycles;
+							if (waitCycles > NETPLAY_SAMPLE_FRESH_POLL_INTERVAL_CYCLES) {
+								waitCycles = NETPLAY_SAMPLE_FRESH_POLL_INTERVAL_CYCLES;
+							}
+							if (!waitCycles) {
+								waitCycles = EVENT_ACTIVE_INTERVAL;
+							}
+						}
+						mTimingSchedule(timing, &driver->event, connected ? waitCycles : EVENT_IDLE_INTERVAL);
 						return;
 					}
 #else
@@ -1639,7 +1651,18 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 						mTimingSchedule(timing, &driver->event, EVENT_IDLE_INTERVAL);
 						return;
 					} else {
-						mTimingSchedule(timing, &driver->event, connected ? EVENT_ACTIVE_INTERVAL : EVENT_IDLE_INTERVAL);
+						uint32_t waitCycles = EVENT_ACTIVE_INTERVAL;
+						int32_t remainingCycles = NETPLAY_SAMPLE_FRESH_TIMEOUT_CYCLES - freshnessElapsed;
+						if (remainingCycles > 0) {
+							waitCycles = (uint32_t) remainingCycles;
+							if (waitCycles > NETPLAY_SAMPLE_FRESH_POLL_INTERVAL_CYCLES) {
+								waitCycles = NETPLAY_SAMPLE_FRESH_POLL_INTERVAL_CYCLES;
+							}
+							if (!waitCycles) {
+								waitCycles = EVENT_ACTIVE_INTERVAL;
+							}
+						}
+						mTimingSchedule(timing, &driver->event, connected ? waitCycles : EVENT_IDLE_INTERVAL);
 						return;
 					}
 #endif
