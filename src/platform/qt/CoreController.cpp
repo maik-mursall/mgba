@@ -81,13 +81,30 @@ CoreController::CoreController(mCore* core, QObject* parent)
 
 		controller->updateFastForward();
 
-		if (controller->m_multiplayer) {
-			controller->m_multiplayer->attachGame(controller);
-			controller->updatePlayerSave();
+		switch (context->core->platform(context->core)) {
 #ifdef M_CORE_GBA
-		} else if (context->core->platform(context->core) == mPLATFORM_GBA) {
-			controller->attachNetPlayLockstepDriver();
+		case mPLATFORM_GBA:
+			if (controller->attachNetPlayLockstepDriver()) {
+				LOG(QT, INFO) << tr("Startup link mode: NetPlay relay");
+			} else if (controller->m_multiplayer) {
+				LOG(QT, INFO) << tr("Falling back to local multiplayer after NetPlay relay connection failure");
+				if (controller->m_multiplayer->attachGame(controller)) {
+					controller->updatePlayerSave();
+					LOG(QT, INFO) << tr("Startup link mode: Local multiplayer fallback");
+				} else {
+					LOG(QT, WARN) << tr("Startup link mode: None (local multiplayer attach failed)");
+				}
+			} else {
+				LOG(QT, INFO) << tr("Startup link mode: None (NetPlay unavailable and no local multiplayer)");
+			}
+			break;
 #endif
+		default:
+			if (controller->m_multiplayer) {
+				controller->m_multiplayer->attachGame(controller);
+				controller->updatePlayerSave();
+			}
+			break;
 		}
 
 		if (controller->m_override) {
@@ -437,22 +454,28 @@ mCacheSet* CoreController::graphicCaches() {
 }
 
 #ifdef M_CORE_GBA
-void CoreController::attachNetPlayLockstepDriver() {
-	if (platform() != mPLATFORM_GBA || m_netplayAttached || m_multiplayer) {
-		return;
+bool CoreController::attachNetPlayLockstepDriver() {
+	if (platform() != mPLATFORM_GBA) {
+		return false;
+	}
+	if (m_netplayAttached) {
+		return true;
 	}
 	if (!GBASIONetPlayLockstepDriverConnectDefault(&m_netplayLockstep)) {
 		LOG(QT, WARN) << tr("Failed to connect NetPlay relay at %1:%2")
 		                     .arg(QLatin1String(GBA_SIO_NETPLAY_LOCKSTEP_DEFAULT_HOST))
 		                     .arg(GBA_SIO_NETPLAY_LOCKSTEP_DEFAULT_PORT);
-		return;
+		return false;
 	}
-	clearMultiplayerController();
+	if (m_multiplayer && m_multiplayer->playerId(this) >= 0) {
+		m_multiplayer->detachGame(this);
+	}
 	m_threadContext.core->setPeripheral(m_threadContext.core, mPERIPH_GBA_LINK_PORT, &m_netplayLockstep.d);
 	m_netplayAttached = true;
 	LOG(QT, INFO) << tr("Connected NetPlay relay at %1:%2")
 	                     .arg(QLatin1String(GBA_SIO_NETPLAY_LOCKSTEP_DEFAULT_HOST))
 	                     .arg(GBA_SIO_NETPLAY_LOCKSTEP_DEFAULT_PORT);
+	return true;
 }
 
 void CoreController::detachNetPlayLockstepDriver() {

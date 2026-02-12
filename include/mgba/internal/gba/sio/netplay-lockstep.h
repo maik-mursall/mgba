@@ -37,6 +37,7 @@ struct GBASIONetPlayLockstepDriver {
 #ifndef DISABLE_THREADING
 	Thread thread;
 	Mutex mutex;
+	Condition cond;
 	bool threadRunning;
 #endif
 
@@ -60,6 +61,8 @@ struct GBASIONetPlayLockstepDriver {
 	bool pendingBegin;
 	uint32_t pendingBeginSequence;
 	enum GBASIOMode pendingBeginMode;
+	uint8_t pendingBeginAttached;
+	uint16_t pendingBeginSIOCNT;
 
 	bool pendingResult;
 	struct GBASIONetPlayLockstepTransferResult pendingTransferResult;

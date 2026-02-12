@@ -330,7 +330,7 @@ private:
 	LogController* m_log = nullptr;
 	MultiplayerController* m_multiplayer = nullptr;
 #ifdef M_CORE_GBA
-	void attachNetPlayLockstepDriver();
+	bool attachNetPlayLockstepDriver();
 	void detachNetPlayLockstepDriver();
 
 	GBASIODolphin m_dolphin;
