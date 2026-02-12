@@ -27,8 +27,15 @@
 #define NETPLAY_CLIENT_SOFT_WAIT_MS 5
 /* Force a timing re-baseline periodically to limit long-session drift. */
 #define NETPLAY_CYCLE_RESYNC_INTERVAL 256
-/* Abort if a secondary never publishes fresh transfer data after BEGIN. */
+/* Timeout if a secondary never publishes fresh transfer data after BEGIN. */
 #define NETPLAY_SAMPLE_FRESH_TIMEOUT_CYCLES 280896
+
+#define NETPLAY_SAMPLE_FRESH_TIMEOUT_STRICT 0
+#define NETPLAY_SAMPLE_FRESH_TIMEOUT_REUSE_CURRENT 1
+
+#ifndef NETPLAY_SAMPLE_FRESH_TIMEOUT_MODE
+#define NETPLAY_SAMPLE_FRESH_TIMEOUT_MODE NETPLAY_SAMPLE_FRESH_TIMEOUT_REUSE_CURRENT
+#endif
 
 #define MSG_HELLO 0x01
 #define MSG_MODE 0x02
@@ -1589,12 +1596,20 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 #endif
 				if (waitingForFreshSample) {
 					if (staleTimeout) {
+#if NETPLAY_SAMPLE_FRESH_TIMEOUT_MODE == NETPLAY_SAMPLE_FRESH_TIMEOUT_REUSE_CURRENT
+						mLOG(GBA_SIO, WARN, "NetPlay lockstep: transfer %u timed out waiting for fresh sample write (mode=%u baselineGen=%u currentGen=%u waitedCycles=%d); reusing current register value",
+						     (unsigned) beginSequence, _modeToWire(beginMode),
+						     (unsigned) baselineGeneration, (unsigned) writeGeneration, (int) freshnessElapsed);
+#else
 						mLOG(GBA_SIO, WARN, "NetPlay lockstep: transfer %u timed out waiting for fresh sample write (mode=%u baselineGen=%u currentGen=%u waitedCycles=%d)",
 						     (unsigned) beginSequence, _modeToWire(beginMode),
 						     (unsigned) baselineGeneration, (unsigned) writeGeneration, (int) freshnessElapsed);
 						clearPendingBegin = true;
 						connected = false;
 						_setDisconnected(driver, true);
+						mTimingSchedule(timing, &driver->event, EVENT_IDLE_INTERVAL);
+						return;
+#endif
 					} else {
 						mTimingSchedule(timing, &driver->event, connected ? EVENT_ACTIVE_INTERVAL : EVENT_IDLE_INTERVAL);
 						return;
