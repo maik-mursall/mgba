@@ -36,10 +36,8 @@ struct GBASIONetPlayLockstepPendingBegin {
 	enum GBASIOMode mode;
 	uint8_t attached;
 	uint16_t siocnt;
-	uint32_t siocntWriteGeneration;
-	uint32_t siomltWriteGeneration;
-	uint8_t deferEvents;
-	uint8_t deferSendEvents;
+	int32_t startCycle;
+	uint8_t hasStartCycle;
 };
 
 struct GBASIONetPlayLockstepDriver {
@@ -64,8 +62,8 @@ struct GBASIONetPlayLockstepDriver {
 	bool waitingForTransfer;
 	bool transferActive;
 	uint32_t transferSequence;
-	uint32_t siocntWriteGeneration;
-	uint32_t siomltWriteGeneration;
+	bool cycleSyncValid;
+	int32_t cycleSyncOffset;
 
 	int playerId;
 	int attached;
