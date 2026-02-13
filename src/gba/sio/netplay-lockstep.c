@@ -1729,18 +1729,29 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 #endif
 				if (_sendTransferSample(driver, MSG_TRANSFER_DATA, beginSequence, beginMode, &sample, 0, false)) {
 					if (sio) {
+						int completeCycles = transferCycles;
 						if (beginCycleCompared) {
 							int32_t sendLocalCycle = mTimingCurrentTime(&sio->p->timing);
 							int32_t sendDelta = beginTargetCycle - sendLocalCycle;
+							int32_t finishDelta = (beginTargetCycle + transferCycles) - sendLocalCycle;
 							mLOG(GBA_SIO, DEBUG, "NetPlay lockstep: transfer %u DATA sample cycle local=%08X target=%08X delta=%d",
 							     (unsigned) beginSequence,
 							     (unsigned) (uint32_t) sendLocalCycle,
 							     (unsigned) (uint32_t) beginTargetCycle,
 							     (int) sendDelta);
+							/*
+							 * Anchor completion to the mapped BEGIN cycle so a delayed DATA send
+							 * does not push finish/hard-sync past a fast mode transition.
+							 */
+							if (finishDelta <= 0) {
+								completeCycles = 1;
+							} else {
+								completeCycles = finishDelta;
+							}
 						}
 						sio->siocnt |= 0x80;
 						mTimingDeschedule(&sio->p->timing, &sio->completeEvent);
-						mTimingSchedule(&sio->p->timing, &sio->completeEvent, transferCycles);
+						mTimingSchedule(&sio->p->timing, &sio->completeEvent, completeCycles);
 					}
 					mLOG(GBA_SIO, DEBUG, "NetPlay lockstep: transfer %u begin handled by player %d",
 					     (unsigned) beginSequence, playerId);
