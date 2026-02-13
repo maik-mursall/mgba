@@ -9,8 +9,12 @@
 #include <mgba/internal/gba/io.h>
 
 #define DRIVER_ID 0x4E506C73
-#define EVENT_IDLE_INTERVAL 1024
-#define EVENT_ACTIVE_INTERVAL 512
+/*
+ * Keep the periodic event cadence moderate; transfer-critical wakeups come
+ * from packet handling and explicit timing nudges.
+ */
+#define EVENT_IDLE_INTERVAL 8192
+#define EVENT_ACTIVE_INTERVAL 4096
 #define MAX_PACKET_SIZE 512
 #define CONNECT_ID_WAIT_MS 5000
 
@@ -102,6 +106,7 @@ static bool _waitForHardSync(struct GBASIONetPlayLockstepDriver* driver, uint32_
 static void _wakeDriver(struct GBASIONetPlayLockstepDriver* driver);
 static void _paceClientDelay(struct GBASIONetPlayLockstepDriver* driver, uint32_t waitMs);
 static void _paceClientSoft(struct GBASIONetPlayLockstepDriver* driver);
+static bool _isSecondaryIdle(const struct GBASIONetPlayLockstepDriver* driver);
 #if NETPLAY_CLIENT_PACING_MODE == NETPLAY_CLIENT_PACING_HARD
 static void _sleepDriver(struct GBASIONetPlayLockstepDriver* driver);
 #endif
@@ -860,8 +865,8 @@ static void _wakeDriver(struct GBASIONetPlayLockstepDriver* driver) {
 	MutexLock(&driver->mutex);
 #endif
 	driver->clientIdleEvents = 0;
-	++driver->wakeGeneration;
-	if (driver->user && driver->user->wake) {
+	if (driver->asleep && driver->user && driver->user->wake) {
+		++driver->wakeGeneration;
 		driver->asleep = false;
 		user = driver->user;
 	}
@@ -871,6 +876,18 @@ static void _wakeDriver(struct GBASIONetPlayLockstepDriver* driver) {
 	if (user) {
 		user->wake(user);
 	}
+}
+
+static bool _isSecondaryIdle(const struct GBASIONetPlayLockstepDriver* driver) {
+	return driver->connected
+		&& driver->playerId > 0
+		&& driver->attached > 1
+		&& !driver->pendingBeginCount
+		&& !driver->transferActive
+		&& !driver->waitingForTransfer
+		&& !driver->waitingForHardSync
+		&& !_hasPendingResultForTransfer(driver, driver->transferSequence)
+		&& !_hasPendingSyncForTransfer(driver, driver->transferSequence);
 }
 
 static void _paceClientDelay(struct GBASIONetPlayLockstepDriver* driver, uint32_t waitMs) {
@@ -893,15 +910,7 @@ static void _paceClientSoft(struct GBASIONetPlayLockstepDriver* driver) {
 #ifndef DISABLE_THREADING
 	bool shouldWait = false;
 	MutexLock(&driver->mutex);
-	if (driver->connected
-			&& driver->playerId > 0
-			&& driver->attached > 1
-			&& !driver->pendingBeginCount
-			&& !driver->transferActive
-			&& !driver->waitingForTransfer
-			&& !driver->waitingForHardSync
-			&& !_hasPendingResultForTransfer(driver, driver->transferSequence)
-			&& !_hasPendingSyncForTransfer(driver, driver->transferSequence)) {
+	if (_isSecondaryIdle(driver)) {
 		/* Soft pacing should never hard-block: wait briefly, then resume. */
 		driver->clientIdleEvents = 0;
 		shouldWait = true;
@@ -1806,13 +1815,7 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 #ifndef DISABLE_THREADING
 	MutexLock(&driver->mutex);
 	if (driver->connected && driver->playerId > 0) {
-		bool idle = !driver->pendingBeginCount
-			&& !driver->transferActive
-			&& !driver->waitingForTransfer
-			&& !driver->waitingForHardSync
-			&& !_hasPendingResultForTransfer(driver, driver->transferSequence)
-			&& !_hasPendingSyncForTransfer(driver, driver->transferSequence)
-			&& driver->attached > 1;
+		bool idle = _isSecondaryIdle(driver);
 		if (idle) {
 #if NETPLAY_CLIENT_PACING_MODE == NETPLAY_CLIENT_PACING_HARD
 			shouldPaceClient = true;
@@ -1841,7 +1844,36 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 #endif
 #endif
 
+#ifndef DISABLE_THREADING
+	{
+		struct mLockstepUser* sleepUser = NULL;
+		uint32_t nextInterval = EVENT_IDLE_INTERVAL;
+		MutexLock(&driver->mutex);
+		connected = driver->connected;
+		if (connected) {
+			bool idle = _isSecondaryIdle(driver);
+			if (idle) {
+				nextInterval = EVENT_IDLE_INTERVAL;
+				if (!driver->asleep && driver->user && driver->user->sleep) {
+					driver->asleep = true;
+					sleepUser = driver->user;
+				}
+			} else {
+				nextInterval = EVENT_ACTIVE_INTERVAL;
+			}
+		}
+		MutexUnlock(&driver->mutex);
+		if (sleepUser) {
+			sleepUser->sleep(sleepUser);
+			/* Woken by packet activity: re-enter quickly to drain queues. */
+			nextInterval = 1;
+		}
+		mTimingSchedule(timing, &driver->event, nextInterval);
+		return;
+	}
+#else
 	mTimingSchedule(timing, &driver->event, connected ? EVENT_ACTIVE_INTERVAL : EVENT_IDLE_INTERVAL);
+#endif
 }
 
 #ifndef DISABLE_THREADING
