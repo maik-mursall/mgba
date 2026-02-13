@@ -865,9 +865,11 @@ static void _wakeDriver(struct GBASIONetPlayLockstepDriver* driver) {
 	MutexLock(&driver->mutex);
 #endif
 	driver->clientIdleEvents = 0;
-	if (driver->asleep && driver->user && driver->user->wake) {
-		++driver->wakeGeneration;
-		driver->asleep = false;
+	if (driver->user && driver->user->wake) {
+		if (driver->asleep) {
+			++driver->wakeGeneration;
+			driver->asleep = false;
+		}
 		user = driver->user;
 	}
 #ifndef DISABLE_THREADING
@@ -1857,28 +1859,18 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 
 #ifndef DISABLE_THREADING
 	{
-		struct mLockstepUser* sleepUser = NULL;
 		uint32_t nextInterval = EVENT_IDLE_INTERVAL;
 		MutexLock(&driver->mutex);
 		connected = driver->connected;
 		if (connected) {
-			bool idle = _isSecondaryIdle(driver);
-			if (idle) {
-				nextInterval = EVENT_IDLE_INTERVAL;
-				if (!driver->asleep && driver->user && driver->user->sleep) {
-					driver->asleep = true;
-					sleepUser = driver->user;
-				}
-			} else {
-				nextInterval = EVENT_ACTIVE_INTERVAL;
-			}
+			nextInterval = _isSecondaryIdle(driver) ? EVENT_IDLE_INTERVAL : EVENT_ACTIVE_INTERVAL;
 		}
+		/*
+		 * NetPlay secondaries must never park the core thread indefinitely:
+		 * if the primary is idle, packet-driven wakeups may not arrive.
+		 */
+		driver->asleep = false;
 		MutexUnlock(&driver->mutex);
-		if (sleepUser) {
-			sleepUser->sleep(sleepUser);
-			/* Woken by packet activity: re-enter quickly to drain queues. */
-			nextInterval = 1;
-		}
 		mTimingSchedule(timing, &driver->event, nextInterval);
 		return;
 	}
