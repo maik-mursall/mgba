@@ -10,13 +10,19 @@
 
 #define DRIVER_ID 0x4E506C73
 #define EVENT_IDLE_INTERVAL 1024
-#define EVENT_ACTIVE_INTERVAL 64
+#define EVENT_ACTIVE_INTERVAL 512
 #define MAX_PACKET_SIZE 512
 #define CONNECT_ID_WAIT_MS 5000
 
 #define NETPLAY_CLIENT_PACING_NONE 0
 #define NETPLAY_CLIENT_PACING_SOFT 1
 #define NETPLAY_CLIENT_PACING_HARD 2
+/*
+ * BEGIN-time "ahead" pacing introduces real-time waits inside the core timing
+ * callback. Keep it opt-in so default builds don't stall the client thread in
+ * heavy transfer bursts.
+ */
+#define NETPLAY_CLIENT_ENABLE_AHEAD_PACING 0
 
 #ifndef NETPLAY_CLIENT_PACING_MODE
 #define NETPLAY_CLIENT_PACING_MODE NETPLAY_CLIENT_PACING_SOFT
@@ -36,9 +42,6 @@
 #define NETPLAY_SAMPLE_FRESH_TIMEOUT_CYCLES 280896
 /* In reuse mode, only wait briefly for a post-BEGIN register write. */
 #define NETPLAY_SAMPLE_FRESH_REUSE_WAIT_CYCLES 2048
-/* Poll less often while waiting for a fresh sample write to reduce event churn. */
-#define NETPLAY_SAMPLE_FRESH_POLL_INTERVAL_CYCLES 512
-
 #define NETPLAY_SAMPLE_FRESH_TIMEOUT_STRICT 0
 #define NETPLAY_SAMPLE_FRESH_TIMEOUT_REUSE_CURRENT 1
 
@@ -1530,7 +1533,7 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 				mTimingSchedule(timing, &driver->event, connected ? waitCycles : EVENT_IDLE_INTERVAL);
 				return;
 			}
-#if NETPLAY_CLIENT_PACING_MODE != NETPLAY_CLIENT_PACING_NONE
+#if NETPLAY_CLIENT_PACING_MODE != NETPLAY_CLIENT_PACING_NONE && NETPLAY_CLIENT_ENABLE_AHEAD_PACING
 			/*
 			 * Apply ahead pacing only once per transfer attempt. During freshness
 			 * polling this event can re-enter the same BEGIN sequence many times;
@@ -1584,6 +1587,7 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 			{
 				bool waitingForFreshSample = false;
 				bool logFreshReady = false;
+				bool skipFreshWaitForAheadCycle = false;
 #if NETPLAY_SAMPLE_FRESH_TIMEOUT_MODE == NETPLAY_SAMPLE_FRESH_TIMEOUT_REUSE_CURRENT
 				bool reuseGraceExpired = false;
 #else
@@ -1610,6 +1614,17 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 				baselineGeneration = driver->freshnessWaitBaselineGeneration;
 				freshnessElapsed = localCycle - driver->freshnessWaitStartCycle;
 				waitingForFreshSample = writeGeneration == baselineGeneration;
+				/*
+				 * If we're already well past the mapped transfer start cycle, waiting
+				 * for a post-BEGIN write is usually pointless churn. Reuse behavior
+				 * remains unchanged: we still sample the current register value.
+				 */
+				if (waitingForFreshSample
+						&& beginCycleCompared
+						&& beginCycleDelta <= -(int32_t) NETPLAY_SAMPLE_FRESH_REUSE_WAIT_CYCLES) {
+					waitingForFreshSample = false;
+					skipFreshWaitForAheadCycle = true;
+				}
 #if NETPLAY_SAMPLE_FRESH_TIMEOUT_MODE == NETPLAY_SAMPLE_FRESH_TIMEOUT_REUSE_CURRENT
 				reuseGraceExpired = waitingForFreshSample && freshnessElapsed >= NETPLAY_SAMPLE_FRESH_REUSE_WAIT_CYCLES;
 #else
@@ -1627,6 +1642,11 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 #ifndef DISABLE_THREADING
 				MutexUnlock(&driver->mutex);
 #endif
+				if (skipFreshWaitForAheadCycle) {
+					mLOG(GBA_SIO, DEBUG, "NetPlay lockstep: transfer %u skipping fresh-sample wait (cycleDelta=%d, baselineGen=%u currentGen=%u)",
+					     (unsigned) beginSequence, (int) beginCycleDelta,
+					     (unsigned) baselineGeneration, (unsigned) writeGeneration);
+				}
 				if (waitingForFreshSample) {
 #if NETPLAY_SAMPLE_FRESH_TIMEOUT_MODE == NETPLAY_SAMPLE_FRESH_TIMEOUT_REUSE_CURRENT
 					if (reuseGraceExpired) {
@@ -1639,9 +1659,6 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 						int32_t remainingCycles = NETPLAY_SAMPLE_FRESH_REUSE_WAIT_CYCLES - freshnessElapsed;
 						if (remainingCycles > 0) {
 							waitCycles = (uint32_t) remainingCycles;
-							if (waitCycles > NETPLAY_SAMPLE_FRESH_POLL_INTERVAL_CYCLES) {
-								waitCycles = NETPLAY_SAMPLE_FRESH_POLL_INTERVAL_CYCLES;
-							}
 							if (!waitCycles) {
 								waitCycles = EVENT_ACTIVE_INTERVAL;
 							}
@@ -1664,9 +1681,6 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 						int32_t remainingCycles = NETPLAY_SAMPLE_FRESH_TIMEOUT_CYCLES - freshnessElapsed;
 						if (remainingCycles > 0) {
 							waitCycles = (uint32_t) remainingCycles;
-							if (waitCycles > NETPLAY_SAMPLE_FRESH_POLL_INTERVAL_CYCLES) {
-								waitCycles = NETPLAY_SAMPLE_FRESH_POLL_INTERVAL_CYCLES;
-							}
 							if (!waitCycles) {
 								waitCycles = EVENT_ACTIVE_INTERVAL;
 							}
