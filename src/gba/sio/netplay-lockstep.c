@@ -1531,7 +1531,12 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 				return;
 			}
 #if NETPLAY_CLIENT_PACING_MODE != NETPLAY_CLIENT_PACING_NONE
-			if (playerId > 0 && beginCycleDelta < -NETPLAY_CLIENT_AHEAD_PACE_THRESHOLD_CYCLES) {
+			/*
+			 * Apply ahead pacing only once per transfer attempt. During freshness
+			 * polling this event can re-enter the same BEGIN sequence many times;
+			 * repeating the pace delay there would stall transfer throughput.
+			 */
+			if (shouldLogBeginAttempt && playerId > 0 && beginCycleDelta < -NETPLAY_CLIENT_AHEAD_PACE_THRESHOLD_CYCLES) {
 				uint32_t leadCycles = (uint32_t) (-beginCycleDelta);
 				uint32_t paceMs = leadCycles / NETPLAY_CLIENT_AHEAD_CYCLES_PER_MS;
 				if (!paceMs) {
