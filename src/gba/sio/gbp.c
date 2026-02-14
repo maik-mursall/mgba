@@ -17,7 +17,7 @@ static uint16_t _gbpSioWriteSIOCNT(struct GBASIODriver* driver, uint16_t value);
 static bool _gbpSioHandlesMode(struct GBASIODriver* driver, enum GBASIOMode mode);
 static int _gbpSioConnectedDevices(struct GBASIODriver* driver);
 static bool _gbpSioStart(struct GBASIODriver* driver);
-static uint32_t _gbpSioFinishNormal32(struct GBASIODriver* driver);
+static bool _gbpSioFinishNormal32(struct GBASIODriver* driver, uint32_t* data);
 
 static const uint8_t _logoPalette[] = {
 	0xDF, 0xFF, 0x0C, 0x64, 0x0C, 0xE4, 0x2D, 0xE4, 0x4E, 0x64, 0x4E, 0xE4, 0x6E, 0xE4, 0xAF, 0x68,
@@ -134,7 +134,7 @@ static int _gbpSioConnectedDevices(struct GBASIODriver* driver) {
 	return 1;
 }
 
-uint32_t _gbpSioFinishNormal32(struct GBASIODriver* driver) {
+static bool _gbpSioFinishNormal32(struct GBASIODriver* driver, uint32_t* dataOut) {
 	struct GBASIOPlayer* gbp = (struct GBASIOPlayer*) driver;
 	uint32_t tx = 0;
 	int txPosition = gbp->txPosition;
@@ -146,5 +146,6 @@ uint32_t _gbpSioFinishNormal32(struct GBASIODriver* driver) {
 	}
 	tx = _gbpTxData[txPosition];
 	++gbp->txPosition;
-	return tx;
+	*dataOut = tx;
+	return true;
 }

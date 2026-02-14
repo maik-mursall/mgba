@@ -37,7 +37,7 @@ static bool GBASIOBattlechipGateInit(struct GBASIODriver* driver);
 static uint16_t GBASIOBattlechipGateWriteSIOCNT(struct GBASIODriver* driver, uint16_t value);
 static bool GBASIOBattlechipGateHandlesMode(struct GBASIODriver* driver, enum GBASIOMode mode);
 static int GBASIOBattlechipGateConnectedDevices(struct GBASIODriver* driver);
-static void GBASIOBattlechipGateFinishMultiplayer(struct GBASIODriver* driver, uint16_t data[4]);
+static bool GBASIOBattlechipGateFinishMultiplayer(struct GBASIODriver* driver, uint16_t data[4]);
 
 void GBASIOBattlechipGateCreate(struct GBASIOBattlechipGate* gate) {
 	memset(&gate->d, 0, sizeof(gate->d));
@@ -82,7 +82,7 @@ static int GBASIOBattlechipGateConnectedDevices(struct GBASIODriver* driver) {
 	return 1;
 }
 
-static void GBASIOBattlechipGateFinishMultiplayer(struct GBASIODriver* driver, uint16_t data[4]) {
+static bool GBASIOBattlechipGateFinishMultiplayer(struct GBASIODriver* driver, uint16_t data[4]) {
 	struct GBASIOBattlechipGate* gate = (struct GBASIOBattlechipGate*) driver;
 
 	uint16_t cmd = gate->d.p->p->memory.io[GBA_REG(SIOMLT_SEND)];
@@ -168,4 +168,5 @@ static void GBASIOBattlechipGateFinishMultiplayer(struct GBASIODriver* driver, u
 	data[1] = reply;
 	data[2] = 0xFFFF;
 	data[3] = 0xFFFF;
+	return true;
 }

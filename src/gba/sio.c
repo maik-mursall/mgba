@@ -17,6 +17,8 @@ static const int GBASIOCyclesPerTransfer[4][MAX_GBAS] = {
 	{ 5750, 10998, 16241, 20972 },
 	{ 3140, 5755, 8376, 10486 }
 };
+/* Poll period for drivers that defer transfer completion asynchronously. */
+static const uint32_t GBASIOAsyncFinishPollCycles = 1024;
 
 static void _sioFinish(struct mTiming* timing, void* user, uint32_t cyclesLate);
 
@@ -415,29 +417,41 @@ void GBASIONormal32FinishTransfer(struct GBASIO* sio, uint32_t data, uint32_t cy
 }
 
 static void _sioFinish(struct mTiming* timing, void* user, uint32_t cyclesLate) {
-	UNUSED(timing);
 	struct GBASIO* sio = user;
 	union {
 		uint16_t multi[4];
 		uint8_t normal8;
 		uint32_t normal32;
 	} data = {0};
+	bool ready = true;
 	switch (sio->mode) {
 	case GBA_SIO_MULTI:
 		if (sio->driver && sio->driver->finishMultiplayer) {
-			sio->driver->finishMultiplayer(sio->driver, data.multi);
+			ready = sio->driver->finishMultiplayer(sio->driver, data.multi);
+		}
+		if (!ready) {
+			mTimingSchedule(timing, &sio->completeEvent, GBASIOAsyncFinishPollCycles);
+			return;
 		}
 		GBASIOMultiplayerFinishTransfer(sio, data.multi, cyclesLate);
 		break;
 	case GBA_SIO_NORMAL_8:
 		if (sio->driver && sio->driver->finishNormal8) {
-			data.normal8 = sio->driver->finishNormal8(sio->driver);
+			ready = sio->driver->finishNormal8(sio->driver, &data.normal8);
+		}
+		if (!ready) {
+			mTimingSchedule(timing, &sio->completeEvent, GBASIOAsyncFinishPollCycles);
+			return;
 		}
 		GBASIONormal8FinishTransfer(sio, data.normal8, cyclesLate);
 		break;
 	case GBA_SIO_NORMAL_32:
 		if (sio->driver && sio->driver->finishNormal32) {
-			data.normal32 = sio->driver->finishNormal32(sio->driver);
+			ready = sio->driver->finishNormal32(sio->driver, &data.normal32);
+		}
+		if (!ready) {
+			mTimingSchedule(timing, &sio->completeEvent, GBASIOAsyncFinishPollCycles);
+			return;
 		}
 		GBASIONormal32FinishTransfer(sio, data.normal32, cyclesLate);
 		break;

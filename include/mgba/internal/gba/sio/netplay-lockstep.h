@@ -69,6 +69,7 @@ struct GBASIONetPlayLockstepDriver {
 	bool waitingForHardSync;
 	uint32_t hardSyncSequence;
 	uint32_t transferSequence;
+	bool transferAckSent;
 	bool cycleSyncValid;
 	int32_t cycleSyncOffset;
 	uint32_t cycleSyncSequence;

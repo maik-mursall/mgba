@@ -85,9 +85,9 @@ static uint16_t GBASIONetPlayLockstepDriverWriteSIOCNT(struct GBASIODriver* driv
 static uint16_t GBASIONetPlayLockstepDriverWriteRCNT(struct GBASIODriver* driver, uint16_t value);
 static uint16_t GBASIONetPlayLockstepDriverWriteRegister(struct GBASIODriver* driver, uint32_t address, uint16_t value);
 static bool GBASIONetPlayLockstepDriverStart(struct GBASIODriver* driver);
-static void GBASIONetPlayLockstepDriverFinishMultiplayer(struct GBASIODriver* driver, uint16_t data[4]);
-static uint8_t GBASIONetPlayLockstepDriverFinishNormal8(struct GBASIODriver* driver);
-static uint32_t GBASIONetPlayLockstepDriverFinishNormal32(struct GBASIODriver* driver);
+static bool GBASIONetPlayLockstepDriverFinishMultiplayer(struct GBASIODriver* driver, uint16_t data[4]);
+static bool GBASIONetPlayLockstepDriverFinishNormal8(struct GBASIODriver* driver, uint8_t* data);
+static bool GBASIONetPlayLockstepDriverFinishNormal32(struct GBASIODriver* driver, uint32_t* data);
 
 static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cyclesLate);
 
@@ -102,9 +102,8 @@ static void _syncSIOCNTFromBegin(struct GBASIONetPlayLockstepDriver* driver, enu
 static void _logTransferControlSnapshot(struct GBASIONetPlayLockstepDriver* driver, const char* phase, uint32_t sequence, enum GBASIOMode mode, uint16_t packetSIOCNT);
 static bool _captureTransferSample(struct GBASIONetPlayLockstepDriver* driver, enum GBASIOMode mode, struct NetPlayTransferSample* sample);
 static bool _sendTransferSample(struct GBASIONetPlayLockstepDriver* driver, uint8_t type, uint32_t sequence, enum GBASIOMode mode, const struct NetPlayTransferSample* sample, int32_t startCycle, bool hasStartCycle);
-static bool _waitForTransferResult(struct GBASIONetPlayLockstepDriver* driver, enum GBASIOMode mode, struct GBASIONetPlayLockstepTransferResult* out);
+static bool _tryFinishTransfer(struct GBASIONetPlayLockstepDriver* driver, enum GBASIOMode mode, struct GBASIONetPlayLockstepTransferResult* out);
 static bool _sendHardSyncAck(struct GBASIONetPlayLockstepDriver* driver, uint32_t sequence);
-static bool _waitForHardSync(struct GBASIONetPlayLockstepDriver* driver, uint32_t sequence);
 static struct mLockstepUser* _wakeDriverLocked(struct GBASIONetPlayLockstepDriver* driver);
 static void _wakeDriver(struct GBASIONetPlayLockstepDriver* driver);
 static void _paceClientDelay(struct GBASIONetPlayLockstepDriver* driver, uint32_t waitMs);
@@ -433,6 +432,7 @@ static void GBASIONetPlayLockstepDriverReset(struct GBASIODriver* driver) {
 	net->transferActive = false;
 	net->waitingForHardSync = false;
 	net->hardSyncSequence = 0;
+	net->transferAckSent = false;
 	net->cycleSyncValid = false;
 	net->cycleSyncOffset = 0;
 	net->cycleSyncSequence = 0;
@@ -748,6 +748,7 @@ static bool GBASIONetPlayLockstepDriverStart(struct GBASIODriver* driver) {
 	sequence = net->transferSequence;
 	net->transferActive = true;
 	net->waitingForTransfer = true;
+	net->transferAckSent = false;
 #ifndef DISABLE_THREADING
 	MutexUnlock(&net->mutex);
 #endif
@@ -758,6 +759,7 @@ static bool GBASIONetPlayLockstepDriverStart(struct GBASIODriver* driver) {
 #endif
 		net->waitingForTransfer = false;
 		net->transferActive = false;
+		net->transferAckSent = false;
 #ifndef DISABLE_THREADING
 		ConditionWake(&net->cond);
 #endif
@@ -774,6 +776,7 @@ static bool GBASIONetPlayLockstepDriverStart(struct GBASIODriver* driver) {
 #endif
 		net->waitingForTransfer = false;
 		net->transferActive = false;
+		net->transferAckSent = false;
 #ifndef DISABLE_THREADING
 		ConditionWake(&net->cond);
 #endif
@@ -836,6 +839,7 @@ bool GBASIONetPlayLockstepDriverConnect(struct GBASIONetPlayLockstepDriver* driv
 	driver->transferActive = false;
 	driver->waitingForHardSync = false;
 	driver->hardSyncSequence = 0;
+	driver->transferAckSent = false;
 	driver->cycleSyncValid = false;
 	driver->cycleSyncOffset = 0;
 	driver->cycleSyncSequence = 0;
@@ -1079,6 +1083,7 @@ static void _setDisconnected(struct GBASIONetPlayLockstepDriver* driver, bool re
 	driver->transferActive = false;
 	driver->waitingForHardSync = false;
 	driver->hardSyncSequence = 0;
+	driver->transferAckSent = false;
 	driver->cycleSyncValid = false;
 	driver->cycleSyncOffset = 0;
 	driver->cycleSyncSequence = 0;
@@ -1198,46 +1203,105 @@ static bool _sendTransferSample(struct GBASIONetPlayLockstepDriver* driver, uint
 	return _sendPacket(driver, type, payload, payloadSize);
 }
 
-static bool _waitForTransferResult(struct GBASIONetPlayLockstepDriver* driver, enum GBASIOMode mode, struct GBASIONetPlayLockstepTransferResult* out) {
+static bool _tryFinishTransfer(struct GBASIONetPlayLockstepDriver* driver, enum GBASIOMode mode, struct GBASIONetPlayLockstepTransferResult* out) {
 #ifdef DISABLE_THREADING
 	UNUSED(driver);
 	UNUSED(mode);
 	UNUSED(out);
-	return false;
+	return true;
 #else
-	uint32_t expectedSequence;
+	uint32_t sequence;
+	bool hasResult;
+	bool hasSync;
+	bool sendAck = false;
+	memset(out, 0, sizeof(*out));
 	MutexLock(&driver->mutex);
-	expectedSequence = driver->transferSequence;
-	while (driver->connected && driver->waitingForTransfer) {
-		if (_pendingResultQueuePopSequence(driver, expectedSequence, out)) {
-			if (out->mode != mode) {
-				mLOG(GBA_SIO, WARN, "Transfer mode mismatch: expected %u got %u",
-				     _modeToWire(mode), _modeToWire(out->mode));
-				driver->waitingForTransfer = false;
-				driver->transferActive = false;
-				driver->waitingForHardSync = false;
-				driver->hardSyncSequence = 0;
-				ConditionWake(&driver->cond);
-				MutexUnlock(&driver->mutex);
-				return false;
+	if (!driver->connected) {
+		driver->waitingForTransfer = false;
+		driver->transferActive = false;
+		driver->waitingForHardSync = false;
+		driver->hardSyncSequence = 0;
+		driver->transferAckSent = false;
+		ConditionWake(&driver->cond);
+		MutexUnlock(&driver->mutex);
+		return true;
+	}
+	if (!driver->transferActive || !driver->waitingForTransfer || !driver->transferSequence) {
+		driver->waitingForTransfer = false;
+		driver->transferActive = false;
+		driver->waitingForHardSync = false;
+		driver->hardSyncSequence = 0;
+		driver->transferAckSent = false;
+		ConditionWake(&driver->cond);
+		MutexUnlock(&driver->mutex);
+		return true;
+	}
+	sequence = driver->transferSequence;
+	hasResult = _hasPendingResultForTransfer(driver, sequence);
+	if (!hasResult) {
+		MutexUnlock(&driver->mutex);
+		return false;
+	}
+	if (!driver->transferAckSent) {
+		driver->waitingForHardSync = true;
+		driver->hardSyncSequence = sequence;
+		sendAck = true;
+	}
+	MutexUnlock(&driver->mutex);
+
+	if (sendAck) {
+		if (!_sendHardSyncAck(driver, sequence)) {
+			if (GBASIONetPlayLockstepDriverIsConnected(driver)) {
+				_setDisconnected(driver, true);
 			}
-			driver->waitingForTransfer = false;
-			driver->transferActive = false;
-			driver->waitingForHardSync = true;
-			driver->hardSyncSequence = expectedSequence;
-			ConditionWake(&driver->cond);
-			MutexUnlock(&driver->mutex);
 			return true;
 		}
-		ConditionWait(&driver->cond, &driver->mutex);
+		MutexLock(&driver->mutex);
+		if (driver->connected
+				&& driver->transferActive
+				&& driver->waitingForTransfer
+				&& driver->transferSequence == sequence) {
+			driver->transferAckSent = true;
+		}
+		ConditionWake(&driver->cond);
+		MutexUnlock(&driver->mutex);
+		return false;
+	}
+
+	MutexLock(&driver->mutex);
+	hasSync = _hasPendingSyncForTransfer(driver, sequence);
+	if (!hasSync) {
+		MutexUnlock(&driver->mutex);
+		return false;
+	}
+	if (!_pendingResultQueuePopSequence(driver, sequence, out) || !_pendingSyncQueuePopSequence(driver, sequence)) {
+		MutexUnlock(&driver->mutex);
+		return false;
+	}
+	if (out->mode != mode) {
+		mLOG(GBA_SIO, WARN, "Transfer mode mismatch: expected %u got %u",
+		     _modeToWire(mode), _modeToWire(out->mode));
+		out->sequence = 0;
+		driver->waitingForTransfer = false;
+		driver->transferActive = false;
+		driver->waitingForHardSync = false;
+		driver->hardSyncSequence = 0;
+		driver->transferAckSent = false;
+		ConditionWake(&driver->cond);
+		MutexUnlock(&driver->mutex);
+		if (GBASIONetPlayLockstepDriverIsConnected(driver)) {
+			_setDisconnected(driver, true);
+		}
+		return true;
 	}
 	driver->waitingForTransfer = false;
 	driver->transferActive = false;
 	driver->waitingForHardSync = false;
 	driver->hardSyncSequence = 0;
+	driver->transferAckSent = false;
 	ConditionWake(&driver->cond);
 	MutexUnlock(&driver->mutex);
-	return false;
+	return true;
 #endif
 }
 
@@ -1248,87 +1312,45 @@ static bool _sendHardSyncAck(struct GBASIONetPlayLockstepDriver* driver, uint32_
 	return _sendPacket(driver, MSG_HARD_SYNC_ACK, payload, sizeof(payload));
 }
 
-static bool _waitForHardSync(struct GBASIONetPlayLockstepDriver* driver, uint32_t sequence) {
-#ifdef DISABLE_THREADING
-	UNUSED(driver);
-	UNUSED(sequence);
-	return false;
-#else
-	MutexLock(&driver->mutex);
-	while (driver->connected && driver->waitingForHardSync && driver->hardSyncSequence == sequence) {
-		if (_pendingSyncQueuePopSequence(driver, sequence)) {
-			driver->waitingForHardSync = false;
-			driver->hardSyncSequence = 0;
-			ConditionWake(&driver->cond);
-			MutexUnlock(&driver->mutex);
-			return true;
-		}
-		ConditionWait(&driver->cond, &driver->mutex);
-	}
-	if (_pendingSyncQueuePopSequence(driver, sequence)) {
-		driver->waitingForHardSync = false;
-		driver->hardSyncSequence = 0;
-		ConditionWake(&driver->cond);
-		MutexUnlock(&driver->mutex);
-		return true;
-	}
-	if (driver->hardSyncSequence == sequence) {
-		driver->waitingForHardSync = false;
-		driver->hardSyncSequence = 0;
-	}
-	ConditionWake(&driver->cond);
-	MutexUnlock(&driver->mutex);
-	return false;
-#endif
-}
-
-static void GBASIONetPlayLockstepDriverFinishMultiplayer(struct GBASIODriver* driver, uint16_t data[4]) {
+static bool GBASIONetPlayLockstepDriverFinishMultiplayer(struct GBASIODriver* driver, uint16_t data[4]) {
 	struct GBASIONetPlayLockstepDriver* net = (struct GBASIONetPlayLockstepDriver*) driver;
 	struct GBASIONetPlayLockstepTransferResult result;
 	memset(data, 0xFF, sizeof(uint16_t) * 4);
-	if (_waitForTransferResult(net, GBA_SIO_MULTI, &result)
-			&& _sendHardSyncAck(net, result.sequence)
-			&& _waitForHardSync(net, result.sequence)) {
+	if (!_tryFinishTransfer(net, GBA_SIO_MULTI, &result)) {
+		return false;
+	}
+	if (result.sequence) {
 		memcpy(data, result.multiData, sizeof(uint16_t) * 4);
-	} else if (GBASIONetPlayLockstepDriverIsConnected(net)) {
-		_setDisconnected(net, true);
 	}
+	return true;
 }
 
-static uint8_t GBASIONetPlayLockstepDriverFinishNormal8(struct GBASIODriver* driver) {
+static bool GBASIONetPlayLockstepDriverFinishNormal8(struct GBASIODriver* driver, uint8_t* dataOut) {
 	struct GBASIONetPlayLockstepDriver* net = (struct GBASIONetPlayLockstepDriver*) driver;
 	struct GBASIONetPlayLockstepTransferResult result;
 	int playerId = GBASIONetPlayLockstepDriverDeviceId(driver);
-	if (!_waitForTransferResult(net, GBA_SIO_NORMAL_8, &result)
-			|| !_sendHardSyncAck(net, result.sequence)
-			|| !_waitForHardSync(net, result.sequence)) {
-		if (GBASIONetPlayLockstepDriverIsConnected(net)) {
-			_setDisconnected(net, true);
-		}
-		return 0xFF;
+	*dataOut = 0xFF;
+	if (!_tryFinishTransfer(net, GBA_SIO_NORMAL_8, &result)) {
+		return false;
 	}
-	if (playerId > 0 && playerId < MAX_GBAS) {
-		return result.normalData[playerId - 1] & 0xFF;
+	if (result.sequence && playerId > 0 && playerId < MAX_GBAS) {
+		*dataOut = result.normalData[playerId - 1] & 0xFF;
 	}
-	return 0xFF;
+	return true;
 }
 
-static uint32_t GBASIONetPlayLockstepDriverFinishNormal32(struct GBASIODriver* driver) {
+static bool GBASIONetPlayLockstepDriverFinishNormal32(struct GBASIODriver* driver, uint32_t* dataOut) {
 	struct GBASIONetPlayLockstepDriver* net = (struct GBASIONetPlayLockstepDriver*) driver;
 	struct GBASIONetPlayLockstepTransferResult result;
 	int playerId = GBASIONetPlayLockstepDriverDeviceId(driver);
-	if (!_waitForTransferResult(net, GBA_SIO_NORMAL_32, &result)
-			|| !_sendHardSyncAck(net, result.sequence)
-			|| !_waitForHardSync(net, result.sequence)) {
-		if (GBASIONetPlayLockstepDriverIsConnected(net)) {
-			_setDisconnected(net, true);
-		}
-		return 0xFFFFFFFF;
+	*dataOut = 0xFFFFFFFF;
+	if (!_tryFinishTransfer(net, GBA_SIO_NORMAL_32, &result)) {
+		return false;
 	}
-	if (playerId > 0 && playerId < MAX_GBAS) {
-		return result.normalData[playerId - 1];
+	if (result.sequence && playerId > 0 && playerId < MAX_GBAS) {
+		*dataOut = result.normalData[playerId - 1];
 	}
-	return 0xFFFFFFFF;
+	return true;
 }
 
 static void _updateReadyState(struct GBASIONetPlayLockstepDriver* driver) {
@@ -1784,14 +1806,15 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 				driver->waitingForTransfer = true;
 				driver->transferActive = true;
 				driver->transferSequence = beginSequence;
+				driver->transferAckSent = false;
 #ifndef DISABLE_THREADING
 				MutexUnlock(&driver->mutex);
 #endif
 				if (_sendTransferSample(driver, MSG_TRANSFER_DATA, beginSequence, beginMode, &sample, 0, false)) {
 					if (sio) {
 						int completeCycles = transferCycles;
+						int32_t sendLocalCycle = mTimingCurrentTime(&sio->p->timing);
 						if (beginCycleCompared) {
-							int32_t sendLocalCycle = mTimingCurrentTime(&sio->p->timing);
 							int32_t sendDelta = beginTargetCycle - sendLocalCycle;
 							int32_t finishDelta = (beginTargetCycle + transferCycles) - sendLocalCycle;
 							NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u DATA sample cycle local=%08X target=%08X delta=%d",
@@ -1831,6 +1854,7 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 					if (driver->transferSequence == beginSequence) {
 						driver->waitingForTransfer = false;
 						driver->transferActive = false;
+						driver->transferAckSent = false;
 					}
 #ifndef DISABLE_THREADING
 					ConditionWake(&driver->cond);
@@ -2226,6 +2250,7 @@ static THREAD_ENTRY _readerThread(void* context) {
 	driver->transferActive = false;
 	driver->waitingForHardSync = false;
 	driver->hardSyncSequence = 0;
+	driver->transferAckSent = false;
 	driver->cycleSyncValid = false;
 	driver->cycleSyncOffset = 0;
 	driver->cycleSyncSequence = 0;

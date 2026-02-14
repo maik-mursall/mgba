@@ -92,9 +92,9 @@ static int GBASIOLockstepDriverDeviceId(struct GBASIODriver* driver);
 static uint16_t GBASIOLockstepDriverWriteSIOCNT(struct GBASIODriver* driver, uint16_t value);
 static uint16_t GBASIOLockstepDriverWriteRCNT(struct GBASIODriver* driver, uint16_t value);
 static bool GBASIOLockstepDriverStart(struct GBASIODriver* driver);
-static void GBASIOLockstepDriverFinishMultiplayer(struct GBASIODriver* driver, uint16_t data[4]);
-static uint8_t GBASIOLockstepDriverFinishNormal8(struct GBASIODriver* driver);
-static uint32_t GBASIOLockstepDriverFinishNormal32(struct GBASIODriver* driver);
+static bool GBASIOLockstepDriverFinishMultiplayer(struct GBASIODriver* driver, uint16_t data[4]);
+static bool GBASIOLockstepDriverFinishNormal8(struct GBASIODriver* driver, uint8_t* data);
+static bool GBASIOLockstepDriverFinishNormal32(struct GBASIODriver* driver, uint32_t* data);
 
 static void GBASIOLockstepCoordinatorWaitOnPlayers(struct GBASIOLockstepCoordinator*, struct GBASIOLockstepPlayer*);
 static void GBASIOLockstepCoordinatorAckPlayer(struct GBASIOLockstepCoordinator*, struct GBASIOLockstepPlayer*);
@@ -576,7 +576,7 @@ out:
 	return ret;
 }
 
-static void GBASIOLockstepDriverFinishMultiplayer(struct GBASIODriver* driver, uint16_t data[4]) {
+static bool GBASIOLockstepDriverFinishMultiplayer(struct GBASIODriver* driver, uint16_t data[4]) {
 	struct GBASIOLockstepDriver* lockstep = (struct GBASIOLockstepDriver*) driver;
 	struct GBASIOLockstepCoordinator* coordinator = lockstep->coordinator;
 	MutexLock(&coordinator->mutex);
@@ -599,9 +599,10 @@ static void GBASIOLockstepDriverFinishMultiplayer(struct GBASIODriver* driver, u
 		}
 	}
 	MutexUnlock(&coordinator->mutex);
+	return true;
 }
 
-static uint8_t GBASIOLockstepDriverFinishNormal8(struct GBASIODriver* driver) {
+static bool GBASIOLockstepDriverFinishNormal8(struct GBASIODriver* driver, uint8_t* dataOut) {
 	struct GBASIOLockstepDriver* lockstep = (struct GBASIOLockstepDriver*) driver;
 	struct GBASIOLockstepCoordinator* coordinator = lockstep->coordinator;
 	uint8_t data = 0xFF;
@@ -622,10 +623,11 @@ static uint8_t GBASIOLockstepDriverFinishNormal8(struct GBASIODriver* driver) {
 		}
 	}
 	MutexUnlock(&coordinator->mutex);
-	return data;
+	*dataOut = data;
+	return true;
 }
 
-static uint32_t GBASIOLockstepDriverFinishNormal32(struct GBASIODriver* driver) {
+static bool GBASIOLockstepDriverFinishNormal32(struct GBASIODriver* driver, uint32_t* dataOut) {
 	struct GBASIOLockstepDriver* lockstep = (struct GBASIOLockstepDriver*) driver;
 	struct GBASIOLockstepCoordinator* coordinator = lockstep->coordinator;
 	uint32_t data = 0xFFFFFFFF;
@@ -646,7 +648,8 @@ static uint32_t GBASIOLockstepDriverFinishNormal32(struct GBASIODriver* driver) 
 		}
 	}
 	MutexUnlock(&coordinator->mutex);
-	return data;
+	*dataOut = data;
+	return true;
 }
 
 void GBASIOLockstepCoordinatorInit(struct GBASIOLockstepCoordinator* coordinator) {
