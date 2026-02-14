@@ -95,9 +95,12 @@ static bool _sendPacket(struct GBASIONetPlayLockstepDriver* driver, uint8_t type
 static void _setDisconnected(struct GBASIONetPlayLockstepDriver* driver, bool remoteClose);
 static void _updateReadyState(struct GBASIONetPlayLockstepDriver* driver);
 static void _clearFreshnessWait(struct GBASIONetPlayLockstepDriver* driver);
+static bool _generationAdvanced(uint32_t current, uint32_t baseline);
 static uint32_t _sampleWriteGenerationForMode(const struct GBASIONetPlayLockstepDriver* driver, enum GBASIOMode mode);
 static uint32_t _sampleLastSentGenerationForMode(const struct GBASIONetPlayLockstepDriver* driver, enum GBASIOMode mode);
 static void _setSampleLastSentGenerationForMode(struct GBASIONetPlayLockstepDriver* driver, enum GBASIOMode mode, uint32_t generation);
+static void _recordMultiWriteSample(struct GBASIONetPlayLockstepDriver* driver, uint32_t generation, uint16_t value);
+static bool _lookupMultiWriteSample(const struct GBASIONetPlayLockstepDriver* driver, uint32_t generation, uint16_t* outValue);
 static void _syncSIOCNTFromBegin(struct GBASIONetPlayLockstepDriver* driver, enum GBASIOMode mode, uint16_t beginSIOCNT);
 static void _logTransferControlSnapshot(struct GBASIONetPlayLockstepDriver* driver, const char* phase, uint32_t sequence, enum GBASIOMode mode, uint16_t packetSIOCNT);
 static bool _captureTransferSample(struct GBASIONetPlayLockstepDriver* driver, enum GBASIOMode mode, struct NetPlayTransferSample* sample);
@@ -439,6 +442,8 @@ static void GBASIONetPlayLockstepDriverReset(struct GBASIODriver* driver) {
 	net->multiSendWriteGeneration = 0;
 	net->normal8WriteGeneration = 0;
 	net->normal32WriteGeneration = 0;
+	memset(net->multiWriteHistoryValue, 0, sizeof(net->multiWriteHistoryValue));
+	memset(net->multiWriteHistoryGeneration, 0, sizeof(net->multiWriteHistoryGeneration));
 	net->multiSendLastSentGeneration = 0;
 	net->normal8LastSentGeneration = 0;
 	net->normal32LastSentGeneration = 0;
@@ -492,6 +497,10 @@ static void _clearFreshnessWait(struct GBASIONetPlayLockstepDriver* driver) {
 	driver->freshnessWaitStartCycle = 0;
 }
 
+static bool _generationAdvanced(uint32_t current, uint32_t baseline) {
+	return (int32_t) (current - baseline) > 0;
+}
+
 static uint32_t _sampleWriteGenerationForMode(const struct GBASIONetPlayLockstepDriver* driver, enum GBASIOMode mode) {
 	switch (mode) {
 	case GBA_SIO_MULTI:
@@ -532,6 +541,21 @@ static void _setSampleLastSentGenerationForMode(struct GBASIONetPlayLockstepDriv
 	default:
 		break;
 	}
+}
+
+static void _recordMultiWriteSample(struct GBASIONetPlayLockstepDriver* driver, uint32_t generation, uint16_t value) {
+	uint32_t slot = generation % NETPLAY_LOCKSTEP_MULTI_WRITE_HISTORY_SIZE;
+	driver->multiWriteHistoryGeneration[slot] = generation;
+	driver->multiWriteHistoryValue[slot] = value;
+}
+
+static bool _lookupMultiWriteSample(const struct GBASIONetPlayLockstepDriver* driver, uint32_t generation, uint16_t* outValue) {
+	uint32_t slot = generation % NETPLAY_LOCKSTEP_MULTI_WRITE_HISTORY_SIZE;
+	if (driver->multiWriteHistoryGeneration[slot] != generation) {
+		return false;
+	}
+	*outValue = driver->multiWriteHistoryValue[slot];
+	return true;
 }
 
 static void GBASIONetPlayLockstepDriverSetMode(struct GBASIODriver* driver, enum GBASIOMode mode) {
@@ -628,6 +652,7 @@ static uint16_t GBASIONetPlayLockstepDriverWriteRegister(struct GBASIODriver* dr
 	switch (address) {
 	case GBA_REG_SIOMLT_SEND:
 		++net->multiSendWriteGeneration;
+		_recordMultiWriteSample(net, net->multiSendWriteGeneration, value);
 		++net->normal8WriteGeneration;
 		nudgeFreshness = net->freshnessWaitActive && _requiresStrictFreshSample(net->freshnessWaitMode);
 		break;
@@ -846,6 +871,8 @@ bool GBASIONetPlayLockstepDriverConnect(struct GBASIONetPlayLockstepDriver* driv
 	driver->multiSendWriteGeneration = 0;
 	driver->normal8WriteGeneration = 0;
 	driver->normal32WriteGeneration = 0;
+	memset(driver->multiWriteHistoryValue, 0, sizeof(driver->multiWriteHistoryValue));
+	memset(driver->multiWriteHistoryGeneration, 0, sizeof(driver->multiWriteHistoryGeneration));
 	driver->multiSendLastSentGeneration = 0;
 	driver->normal8LastSentGeneration = 0;
 	driver->normal32LastSentGeneration = 0;
@@ -1091,6 +1118,8 @@ static void _setDisconnected(struct GBASIONetPlayLockstepDriver* driver, bool re
 	driver->multiSendWriteGeneration = 0;
 	driver->normal8WriteGeneration = 0;
 	driver->normal32WriteGeneration = 0;
+	memset(driver->multiWriteHistoryValue, 0, sizeof(driver->multiWriteHistoryValue));
+	memset(driver->multiWriteHistoryGeneration, 0, sizeof(driver->multiWriteHistoryGeneration));
 	driver->multiSendLastSentGeneration = 0;
 	driver->normal8LastSentGeneration = 0;
 	driver->normal32LastSentGeneration = 0;
@@ -1711,6 +1740,8 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 		if (!clearPendingBegin && playerId != 0 && _supportsTransferMode(beginMode)) {
 			struct NetPlayTransferSample sample;
 			struct GBASIO* sio = driver->d.p;
+			bool forceMultiSend16 = false;
+			uint16_t forcedMultiSend16 = 0;
 			if (sio && sio->mode != beginMode) {
 				NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u begin mode mismatch (local=%u begin=%u), forcing local mode",
 				     (unsigned) beginSequence, _modeToWire(sio->mode), _modeToWire(beginMode));
@@ -1736,6 +1767,7 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 				uint32_t writeGeneration = 0;
 				uint32_t baselineGeneration = 0;
 				uint32_t lastSentGeneration = 0;
+				uint32_t selectedWriteGeneration = 0;
 				int32_t localCycle = mTimingCurrentTime(timing);
 				int32_t freshnessElapsed = 0;
 #ifndef DISABLE_THREADING
@@ -1759,7 +1791,7 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 				}
 				baselineGeneration = driver->freshnessWaitBaselineGeneration;
 				freshnessElapsed = localCycle - driver->freshnessWaitStartCycle;
-				waitingForFreshSample = strictFreshSample && writeGeneration == baselineGeneration;
+				waitingForFreshSample = strictFreshSample && !_generationAdvanced(writeGeneration, baselineGeneration);
 				reuseGraceExpired = waitingForFreshSample
 					&& !noStaleReuse
 					&& freshnessElapsed >= NETPLAY_SAMPLE_FRESH_REUSE_WAIT_CYCLES;
@@ -1773,7 +1805,30 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 					logFreshReady = true;
 				}
 				if (!waitingForFreshSample) {
-					sampleWriteGeneration = writeGeneration;
+					selectedWriteGeneration = writeGeneration;
+					if (beginMode == GBA_SIO_MULTI && _generationAdvanced(writeGeneration, baselineGeneration)) {
+						uint32_t nextGeneration = baselineGeneration + 1;
+						uint16_t queuedValue = 0;
+						if (_lookupMultiWriteSample(driver, nextGeneration, &queuedValue)) {
+							selectedWriteGeneration = nextGeneration;
+							forceMultiSend16 = true;
+							forcedMultiSend16 = queuedValue;
+							if (_generationAdvanced(writeGeneration, nextGeneration)) {
+								NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u MULTI write backlog baseline=%u selected=%u current=%u",
+								     (unsigned) beginSequence,
+								     (unsigned) baselineGeneration,
+								     (unsigned) nextGeneration,
+								     (unsigned) writeGeneration);
+							}
+						} else {
+							NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u missing MULTI write history for generation %u (baseline=%u current=%u), using latest register value",
+							     (unsigned) beginSequence,
+							     (unsigned) nextGeneration,
+							     (unsigned) baselineGeneration,
+							     (unsigned) writeGeneration);
+						}
+					}
+					sampleWriteGeneration = selectedWriteGeneration;
 				}
 #ifndef DISABLE_THREADING
 				MutexUnlock(&driver->mutex);
@@ -1815,6 +1870,9 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 				}
 			}
 			if (_captureTransferSample(driver, beginMode, &sample)) {
+				if (beginMode == GBA_SIO_MULTI && forceMultiSend16) {
+					sample.send16 = forcedMultiSend16;
+				}
 				int transferCycles = 1;
 				int connectedDevices = beginAttached > 0 ? beginAttached - 1 : GBASIONetPlayLockstepDriverConnectedDevices(&driver->d);
 				if (connectedDevices < 0) {
@@ -2289,6 +2347,8 @@ static THREAD_ENTRY _readerThread(void* context) {
 	driver->multiSendWriteGeneration = 0;
 	driver->normal8WriteGeneration = 0;
 	driver->normal32WriteGeneration = 0;
+	memset(driver->multiWriteHistoryValue, 0, sizeof(driver->multiWriteHistoryValue));
+	memset(driver->multiWriteHistoryGeneration, 0, sizeof(driver->multiWriteHistoryGeneration));
 	driver->multiSendLastSentGeneration = 0;
 	driver->normal8LastSentGeneration = 0;
 	driver->normal32LastSentGeneration = 0;

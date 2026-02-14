@@ -17,8 +17,12 @@ static const int GBASIOCyclesPerTransfer[4][MAX_GBAS] = {
 	{ 5750, 10998, 16241, 20972 },
 	{ 3140, 5755, 8376, 10486 }
 };
-/* Poll period for drivers that defer transfer completion asynchronously. */
-static const uint32_t GBASIOAsyncFinishPollCycles = 1024;
+/*
+ * Poll period for drivers that defer transfer completion asynchronously.
+ * MULTI is timing sensitive in lockstep paths, so it uses a tighter poll.
+ */
+static const uint32_t GBASIOAsyncFinishPollCyclesDefault = 1024;
+static const uint32_t GBASIOAsyncFinishPollCyclesMulti = 128;
 
 static void _sioFinish(struct mTiming* timing, void* user, uint32_t cyclesLate);
 
@@ -36,6 +40,15 @@ static const char* _modeName(enum GBASIOMode mode) {
 		return "GPIO";
 	default:
 		return "(unknown)";
+	}
+}
+
+static uint32_t _asyncFinishPollCycles(enum GBASIOMode mode) {
+	switch (mode) {
+	case GBA_SIO_MULTI:
+		return GBASIOAsyncFinishPollCyclesMulti;
+	default:
+		return GBASIOAsyncFinishPollCyclesDefault;
 	}
 }
 
@@ -430,7 +443,7 @@ static void _sioFinish(struct mTiming* timing, void* user, uint32_t cyclesLate) 
 			ready = sio->driver->finishMultiplayer(sio->driver, data.multi);
 		}
 		if (!ready) {
-			mTimingSchedule(timing, &sio->completeEvent, GBASIOAsyncFinishPollCycles);
+			mTimingSchedule(timing, &sio->completeEvent, _asyncFinishPollCycles(sio->mode));
 			return;
 		}
 		GBASIOMultiplayerFinishTransfer(sio, data.multi, cyclesLate);
@@ -440,7 +453,7 @@ static void _sioFinish(struct mTiming* timing, void* user, uint32_t cyclesLate) 
 			ready = sio->driver->finishNormal8(sio->driver, &data.normal8);
 		}
 		if (!ready) {
-			mTimingSchedule(timing, &sio->completeEvent, GBASIOAsyncFinishPollCycles);
+			mTimingSchedule(timing, &sio->completeEvent, _asyncFinishPollCycles(sio->mode));
 			return;
 		}
 		GBASIONormal8FinishTransfer(sio, data.normal8, cyclesLate);
@@ -450,7 +463,7 @@ static void _sioFinish(struct mTiming* timing, void* user, uint32_t cyclesLate) 
 			ready = sio->driver->finishNormal32(sio->driver, &data.normal32);
 		}
 		if (!ready) {
-			mTimingSchedule(timing, &sio->completeEvent, GBASIOAsyncFinishPollCycles);
+			mTimingSchedule(timing, &sio->completeEvent, _asyncFinishPollCycles(sio->mode));
 			return;
 		}
 		GBASIONormal32FinishTransfer(sio, data.normal32, cyclesLate);
