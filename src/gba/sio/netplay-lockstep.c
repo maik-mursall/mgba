@@ -175,6 +175,8 @@ static enum GBASIOMode _modeFromWire(uint8_t mode) {
 	}
 }
 
+static bool _pendingSyncQueuePopSequence(struct GBASIONetPlayLockstepDriver* driver, uint32_t sequence);
+
 static bool _pendingBeginQueueContainsSequence(const struct GBASIONetPlayLockstepDriver* driver, uint32_t sequence) {
 	uint8_t i;
 	uint8_t idx;
@@ -242,6 +244,22 @@ static bool _pendingSyncQueueContainsSequence(const struct GBASIONetPlayLockstep
 		}
 	}
 	return false;
+}
+
+static bool _consumeActiveHardSyncLocked(struct GBASIONetPlayLockstepDriver* driver) {
+	uint32_t sequence = 0;
+	if (!driver->waitingForHardSync || !driver->hardSyncSequence) {
+		return false;
+	}
+	sequence = driver->hardSyncSequence;
+	if (!_pendingSyncQueuePopSequence(driver, sequence)) {
+		return false;
+	}
+	driver->waitingForHardSync = false;
+	driver->hardSyncSequence = 0;
+	NETPLAY_TRANSFER_TRACE("NetPlay lockstep: consumed hard sync %u while waiting to start next transfer",
+	     (unsigned) sequence);
+	return true;
 }
 
 static bool _pendingSyncQueuePush(struct GBASIONetPlayLockstepDriver* driver, uint32_t sequence) {
@@ -699,6 +717,8 @@ static bool GBASIONetPlayLockstepDriverStart(struct GBASIODriver* driver) {
 	waitingForTransfer = net->waitingForTransfer;
 	waitingForHardSync = net->waitingForHardSync;
 	currentSequence = net->transferSequence;
+	_consumeActiveHardSyncLocked(net);
+	waitingForHardSync = net->waitingForHardSync;
 	hasPendingResult = _hasPendingResultForTransfer(net, currentSequence);
 	hasPendingSync = _hasPendingSyncForTransfer(net, currentSequence);
 	transferInFlight = transferActive || waitingForTransfer || waitingForHardSync || hasPendingResult || hasPendingSync;
@@ -721,6 +741,8 @@ static bool GBASIONetPlayLockstepDriverStart(struct GBASIODriver* driver) {
 		waitingForTransfer = net->waitingForTransfer;
 		waitingForHardSync = net->waitingForHardSync;
 		currentSequence = net->transferSequence;
+		_consumeActiveHardSyncLocked(net);
+		waitingForHardSync = net->waitingForHardSync;
 		hasPendingResult = _hasPendingResultForTransfer(net, currentSequence);
 		hasPendingSync = _hasPendingSyncForTransfer(net, currentSequence);
 		transferInFlight = transferActive || waitingForTransfer || waitingForHardSync || hasPendingResult || hasPendingSync;
