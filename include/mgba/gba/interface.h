@@ -125,6 +125,8 @@ struct GBASIODriver {
 	uint16_t (*writeRCNT)(struct GBASIODriver* driver, uint16_t value);
 	uint16_t (*writeRegister)(struct GBASIODriver* driver, uint32_t address, uint16_t value);
 	bool (*start)(struct GBASIODriver* driver);
+	/* Return false to defer SIO completion and retry on a later timing tick. */
+	bool (*finishReady)(struct GBASIODriver* driver);
 	void (*finishMultiplayer)(struct GBASIODriver* driver, uint16_t data[4]);
 	uint8_t (*finishNormal8)(struct GBASIODriver* driver);
 	uint32_t (*finishNormal32)(struct GBASIODriver* driver);

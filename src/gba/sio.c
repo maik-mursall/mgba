@@ -17,6 +17,11 @@ static const int GBASIOCyclesPerTransfer[4][MAX_GBAS] = {
 	{ 5750, 10998, 16241, 20972 },
 	{ 3140, 5755, 8376, 10486 }
 };
+/*
+ * Drivers that synchronize with remote peers can defer completion until
+ * transfer data is ready without blocking this callback.
+ */
+#define SIO_FINISH_RETRY_CYCLES 4096
 
 static void _sioFinish(struct mTiming* timing, void* user, uint32_t cyclesLate);
 
@@ -415,13 +420,16 @@ void GBASIONormal32FinishTransfer(struct GBASIO* sio, uint32_t data, uint32_t cy
 }
 
 static void _sioFinish(struct mTiming* timing, void* user, uint32_t cyclesLate) {
-	UNUSED(timing);
 	struct GBASIO* sio = user;
 	union {
 		uint16_t multi[4];
 		uint8_t normal8;
 		uint32_t normal32;
 	} data = {0};
+	if (sio->driver && sio->driver->finishReady && !sio->driver->finishReady(sio->driver)) {
+		mTimingSchedule(timing, &sio->completeEvent, SIO_FINISH_RETRY_CYCLES);
+		return;
+	}
 	switch (sio->mode) {
 	case GBA_SIO_MULTI:
 		if (sio->driver && sio->driver->finishMultiplayer) {
