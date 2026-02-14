@@ -101,6 +101,7 @@ void GBASIOReset(struct GBASIO* sio) {
 	sio->rcnt = RCNT_INITIAL;
 	sio->siocnt = 0;
 	sio->mode = -1;
+	sio->transferMode = -1;
 	_switchMode(sio);
 
 	GBASIOPlayerReset(&sio->gbp);
@@ -152,6 +153,7 @@ static void _startTransfer(struct GBASIO* sio) {
 			return;
 		}
 	}
+	sio->transferMode = sio->mode;
 	int connected = 0;
 	if (sio->driver && sio->driver->connectedDevices) {
 		connected = sio->driver->connectedDevices(sio->driver);
@@ -421,6 +423,11 @@ void GBASIONormal32FinishTransfer(struct GBASIO* sio, uint32_t data, uint32_t cy
 
 static void _sioFinish(struct mTiming* timing, void* user, uint32_t cyclesLate) {
 	struct GBASIO* sio = user;
+	enum GBASIOMode mode = sio->transferMode;
+	if (mode != GBA_SIO_MULTI && mode != GBA_SIO_NORMAL_8 && mode != GBA_SIO_NORMAL_32) {
+		/* Compatibility fallback for legacy/manual schedulers that don't latch transfer mode. */
+		mode = sio->mode;
+	}
 	union {
 		uint16_t multi[4];
 		uint8_t normal8;
@@ -430,7 +437,7 @@ static void _sioFinish(struct mTiming* timing, void* user, uint32_t cyclesLate) 
 		mTimingSchedule(timing, &sio->completeEvent, SIO_FINISH_RETRY_CYCLES);
 		return;
 	}
-	switch (sio->mode) {
+	switch (mode) {
 	case GBA_SIO_MULTI:
 		if (sio->driver && sio->driver->finishMultiplayer) {
 			sio->driver->finishMultiplayer(sio->driver, data.multi);
@@ -451,7 +458,7 @@ static void _sioFinish(struct mTiming* timing, void* user, uint32_t cyclesLate) 
 		break;
 	default:
 		// TODO
-		mLOG(GBA_SIO, STUB, "No dummy finish implemented for mode %s", _modeName(sio->mode));
+		mLOG(GBA_SIO, STUB, "No dummy finish implemented for mode %s", _modeName(mode));
 		break;
 	}
 }

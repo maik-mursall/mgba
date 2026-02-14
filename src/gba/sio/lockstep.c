@@ -961,6 +961,7 @@ void _lockstepEvent(struct mTiming* timing, void* context, uint32_t cyclesLate) 
 		case SIO_EV_TRANSFER_START:
 			_setData(coordinator, player->playerId, sio);
 			nextEvent = event->finishCycle - GBASIOLockstepTime(player) - cyclesLate;
+			sio->transferMode = player->mode;
 			player->driver->d.p->siocnt |= 0x80;
 			mTimingDeschedule(&sio->p->timing, &sio->completeEvent);
 			mTimingSchedule(&sio->p->timing, &sio->completeEvent, nextEvent);

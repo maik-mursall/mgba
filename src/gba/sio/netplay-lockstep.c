@@ -1867,6 +1867,8 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 								completeCycles = finishDelta;
 							}
 						}
+						/* Secondary transfers bypass _startTransfer(); latch mode for _sioFinish(). */
+						sio->transferMode = beginMode;
 						sio->siocnt |= 0x80;
 						mTimingDeschedule(&sio->p->timing, &sio->completeEvent);
 						mTimingSchedule(&sio->p->timing, &sio->completeEvent, completeCycles);

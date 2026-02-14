@@ -66,6 +66,7 @@ struct GBASIO {
 	struct GBA* p;
 
 	enum GBASIOMode mode;
+	enum GBASIOMode transferMode;
 	struct GBASIODriver* driver;
 
 	uint16_t rcnt;
