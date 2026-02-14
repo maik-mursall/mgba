@@ -42,8 +42,8 @@
 #define NETPLAY_CLIENT_AHEAD_HARD_MAX_WAIT_MS 10
 /* Force a timing re-baseline periodically to limit long-session drift. */
 #define NETPLAY_CYCLE_RESYNC_INTERVAL 256
-/* Timeout if a secondary never publishes a newly written transfer sample. */
-#define NETPLAY_SAMPLE_FRESH_TIMEOUT_CYCLES 280896
+/* Grace window to wait for a post-BEGIN sample write before reusing current value. */
+#define NETPLAY_SAMPLE_FRESH_REUSE_WAIT_CYCLES 2048
 
 #define MSG_HELLO 0x01
 #define MSG_MODE 0x02
@@ -1639,7 +1639,7 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 				bool strictFreshSample = _requiresStrictFreshSample(beginMode);
 				bool waitingForFreshSample = false;
 				bool logFreshReady = false;
-				bool staleTimeout = false;
+				bool reuseGraceExpired = false;
 				uint32_t writeGeneration = 0;
 				uint32_t baselineGeneration = 0;
 				uint32_t lastSentGeneration = 0;
@@ -1667,7 +1667,7 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 				baselineGeneration = driver->freshnessWaitBaselineGeneration;
 				freshnessElapsed = localCycle - driver->freshnessWaitStartCycle;
 				waitingForFreshSample = strictFreshSample && writeGeneration == baselineGeneration;
-				staleTimeout = waitingForFreshSample && freshnessElapsed >= NETPLAY_SAMPLE_FRESH_TIMEOUT_CYCLES;
+				reuseGraceExpired = waitingForFreshSample && freshnessElapsed >= NETPLAY_SAMPLE_FRESH_REUSE_WAIT_CYCLES;
 				if (waitingForFreshSample && !driver->freshnessWaitLogged) {
 					driver->freshnessWaitLogged = true;
 					mLOG(GBA_SIO, DEBUG, "NetPlay lockstep: transfer %u waiting for fresh sample write (mode=%u lastSentGen=%u currentGen=%u)",
@@ -1684,18 +1684,18 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 				MutexUnlock(&driver->mutex);
 #endif
 				if (waitingForFreshSample) {
-					if (staleTimeout) {
-						mLOG(GBA_SIO, WARN, "NetPlay lockstep: transfer %u timed out waiting for fresh sample write (mode=%u baselineGen=%u currentGen=%u waitedCycles=%d)",
-						     (unsigned) beginSequence, _modeToWire(beginMode),
-						     (unsigned) baselineGeneration, (unsigned) writeGeneration, (int) freshnessElapsed);
-						clearPendingBegin = true;
-						connected = false;
-						_setDisconnected(driver, true);
-						mTimingSchedule(timing, &driver->event, EVENT_IDLE_INTERVAL);
-						return;
+					if (reuseGraceExpired) {
+						/*
+						 * If no new write arrives quickly, reuse the current register value
+						 * rather than stalling the entire transfer stream.
+						 */
+						sampleWriteGeneration = writeGeneration;
+						mLOG(GBA_SIO, DEBUG, "NetPlay lockstep: transfer %u no post-BEGIN sample write after %u cycles (mode=%u baselineGen=%u currentGen=%u waitedCycles=%d); reusing current register value",
+						     (unsigned) beginSequence, (unsigned) NETPLAY_SAMPLE_FRESH_REUSE_WAIT_CYCLES,
+						     _modeToWire(beginMode), (unsigned) baselineGeneration, (unsigned) writeGeneration, (int) freshnessElapsed);
 					} else {
 						uint32_t waitCycles = EVENT_ACTIVE_INTERVAL;
-						int32_t remainingCycles = NETPLAY_SAMPLE_FRESH_TIMEOUT_CYCLES - freshnessElapsed;
+						int32_t remainingCycles = NETPLAY_SAMPLE_FRESH_REUSE_WAIT_CYCLES - freshnessElapsed;
 						if (remainingCycles > 0) {
 							waitCycles = (uint32_t) remainingCycles;
 							if (!waitCycles) {
