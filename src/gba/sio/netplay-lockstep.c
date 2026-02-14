@@ -439,9 +439,9 @@ static void GBASIONetPlayLockstepDriverReset(struct GBASIODriver* driver) {
 	net->multiSendWriteGeneration = 0;
 	net->normal8WriteGeneration = 0;
 	net->normal32WriteGeneration = 0;
-	net->multiSendLastSentGeneration = UINT32_MAX;
-	net->normal8LastSentGeneration = UINT32_MAX;
-	net->normal32LastSentGeneration = UINT32_MAX;
+	net->multiSendLastSentGeneration = 0;
+	net->normal8LastSentGeneration = 0;
+	net->normal32LastSentGeneration = 0;
 	_clearFreshnessWait(net);
 	net->asleep = false;
 	net->clientIdleEvents = 0;
@@ -846,9 +846,9 @@ bool GBASIONetPlayLockstepDriverConnect(struct GBASIONetPlayLockstepDriver* driv
 	driver->multiSendWriteGeneration = 0;
 	driver->normal8WriteGeneration = 0;
 	driver->normal32WriteGeneration = 0;
-	driver->multiSendLastSentGeneration = UINT32_MAX;
-	driver->normal8LastSentGeneration = UINT32_MAX;
-	driver->normal32LastSentGeneration = UINT32_MAX;
+	driver->multiSendLastSentGeneration = 0;
+	driver->normal8LastSentGeneration = 0;
+	driver->normal32LastSentGeneration = 0;
 	_clearFreshnessWait(driver);
 	driver->asleep = false;
 	driver->clientIdleEvents = 0;
@@ -1062,6 +1062,7 @@ static void _setDisconnected(struct GBASIONetPlayLockstepDriver* driver, bool re
 #ifndef DISABLE_THREADING
 	bool joinThread = false;
 #endif
+	int i;
 	Socket socket = INVALID_SOCKET;
 
 #ifndef DISABLE_THREADING
@@ -1090,9 +1091,9 @@ static void _setDisconnected(struct GBASIONetPlayLockstepDriver* driver, bool re
 	driver->multiSendWriteGeneration = 0;
 	driver->normal8WriteGeneration = 0;
 	driver->normal32WriteGeneration = 0;
-	driver->multiSendLastSentGeneration = UINT32_MAX;
-	driver->normal8LastSentGeneration = UINT32_MAX;
-	driver->normal32LastSentGeneration = UINT32_MAX;
+	driver->multiSendLastSentGeneration = 0;
+	driver->normal8LastSentGeneration = 0;
+	driver->normal32LastSentGeneration = 0;
 	_clearFreshnessWait(driver);
 	driver->asleep = false;
 	driver->clientIdleEvents = 0;
@@ -1105,6 +1106,13 @@ static void _setDisconnected(struct GBASIONetPlayLockstepDriver* driver, bool re
 	driver->pendingSyncRead = 0;
 	driver->pendingSyncWrite = 0;
 	driver->pendingSyncCount = 0;
+	driver->playerId = -1;
+	driver->attached = 1;
+	for (i = 0; i < MAX_GBAS; ++i) {
+		driver->present[i] = false;
+		driver->otherModes[i] = (enum GBASIOMode) -1;
+	}
+	driver->playerIdChanged = true;
 	driver->stateDirty = true;
 	if (remoteClose) {
 		driver->pendingDisconnect = true;
@@ -1274,7 +1282,27 @@ static bool _tryFinishTransfer(struct GBASIONetPlayLockstepDriver* driver, enum 
 		MutexUnlock(&driver->mutex);
 		return false;
 	}
-	if (!_pendingResultQueuePopSequence(driver, sequence, out) || !_pendingSyncQueuePopSequence(driver, sequence)) {
+	if (!_pendingResultQueuePopSequence(driver, sequence, out)) {
+		MutexUnlock(&driver->mutex);
+		return false;
+	}
+	if (!_pendingSyncQueuePopSequence(driver, sequence)) {
+		if (!_pendingResultQueuePush(driver, out)) {
+			mLOG(GBA_SIO, ERROR, "NetPlay lockstep: failed to restore transfer %u result while waiting for hard sync",
+			     (unsigned) sequence);
+			out->sequence = 0;
+			driver->waitingForTransfer = false;
+			driver->transferActive = false;
+			driver->waitingForHardSync = false;
+			driver->hardSyncSequence = 0;
+			driver->transferAckSent = false;
+			ConditionWake(&driver->cond);
+			MutexUnlock(&driver->mutex);
+			if (GBASIONetPlayLockstepDriverIsConnected(driver)) {
+				_setDisconnected(driver, true);
+			}
+			return true;
+		}
 		MutexUnlock(&driver->mutex);
 		return false;
 	}
@@ -2073,7 +2101,6 @@ static bool _handleTransferBeginPacket(struct GBASIONetPlayLockstepDriver* drive
 		mLOG(GBA_SIO, ERROR, "NetPlay lockstep: TRANSFER_BEGIN queue overflow at transfer %u (depth=%u)",
 		     (unsigned) sequence, (unsigned) driver->pendingBeginCount);
 		MutexUnlock(&driver->mutex);
-		_setDisconnected(driver, true);
 		return false;
 	}
 
@@ -2129,7 +2156,6 @@ static bool _handleTransferResultPacket(struct GBASIONetPlayLockstepDriver* driv
 		mLOG(GBA_SIO, ERROR, "NetPlay lockstep: TRANSFER_RESULT queue overflow at transfer %u (depth=%u)",
 		     (unsigned) sequence, (unsigned) driver->pendingResultCount);
 		MutexUnlock(&driver->mutex);
-		_setDisconnected(driver, true);
 		return false;
 	}
 	if (!driver->transferActive || !driver->waitingForTransfer) {
@@ -2164,7 +2190,6 @@ static bool _handleHardSyncDonePacket(struct GBASIONetPlayLockstepDriver* driver
 		mLOG(GBA_SIO, ERROR, "NetPlay lockstep: HARD_SYNC_DONE queue overflow at transfer %u (depth=%u)",
 		     (unsigned) sequence, (unsigned) driver->pendingSyncCount);
 		MutexUnlock(&driver->mutex);
-		_setDisconnected(driver, true);
 		return false;
 	}
 	if (!driver->waitingForHardSync || driver->hardSyncSequence != sequence) {
@@ -2213,8 +2238,10 @@ static THREAD_ENTRY _readerThread(void* context) {
 	uint8_t payload[MAX_PACKET_SIZE];
 	uint32_t size;
 	bool stopping = false;
+	int i;
 	struct mLogger* logger = NULL;
 	Socket socket = INVALID_SOCKET;
+	Socket socketToClose = INVALID_SOCKET;
 
 	MutexLock(&driver->mutex);
 	logger = driver->readerLogger;
@@ -2240,11 +2267,16 @@ static THREAD_ENTRY _readerThread(void* context) {
 			mLOG(GBA_SIO, WARN, "NetPlay lockstep: reader failed to read payload (%u)", (unsigned) size);
 			break;
 		}
-		_handleIncomingPacket(driver, header[0], payload, size);
+		if (!_handleIncomingPacket(driver, header[0], payload, size)) {
+			mLOG(GBA_SIO, WARN, "NetPlay lockstep: reader failed to process packet type=%u size=%u",
+			     header[0], (unsigned) size);
+			break;
+		}
 	}
 
 	MutexLock(&driver->mutex);
 	stopping = driver->stopping;
+	driver->threadRunning = false;
 	driver->connected = false;
 	driver->waitingForTransfer = false;
 	driver->transferActive = false;
@@ -2257,23 +2289,41 @@ static THREAD_ENTRY _readerThread(void* context) {
 	driver->multiSendWriteGeneration = 0;
 	driver->normal8WriteGeneration = 0;
 	driver->normal32WriteGeneration = 0;
-	driver->multiSendLastSentGeneration = UINT32_MAX;
-	driver->normal8LastSentGeneration = UINT32_MAX;
-	driver->normal32LastSentGeneration = UINT32_MAX;
+	driver->multiSendLastSentGeneration = 0;
+	driver->normal8LastSentGeneration = 0;
+	driver->normal32LastSentGeneration = 0;
 	_clearFreshnessWait(driver);
 	driver->asleep = false;
 	driver->clientIdleEvents = 0;
+	driver->pendingBeginRead = 0;
+	driver->pendingBeginWrite = 0;
+	driver->pendingBeginCount = 0;
 	driver->pendingResultRead = 0;
 	driver->pendingResultWrite = 0;
 	driver->pendingResultCount = 0;
 	driver->pendingSyncRead = 0;
 	driver->pendingSyncWrite = 0;
 	driver->pendingSyncCount = 0;
+	driver->playerId = -1;
+	driver->attached = 1;
+	for (i = 0; i < MAX_GBAS; ++i) {
+		driver->present[i] = false;
+		driver->otherModes[i] = (enum GBASIOMode) -1;
+	}
+	driver->playerIdChanged = true;
+	driver->stateDirty = true;
+	if (driver->socket == socket) {
+		socketToClose = driver->socket;
+		driver->socket = INVALID_SOCKET;
+	}
 	if (!stopping) {
 		driver->pendingDisconnect = true;
 	}
 	ConditionWake(&driver->cond);
 	MutexUnlock(&driver->mutex);
+	if (!SOCKET_FAILED(socketToClose)) {
+		SocketClose(socketToClose);
+	}
 	_wakeDriver(driver);
 	THREAD_EXIT(0);
 }
