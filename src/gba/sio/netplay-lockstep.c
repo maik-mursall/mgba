@@ -52,6 +52,11 @@
 #define NETPLAY_CYCLE_RESYNC_INTERVAL 256
 /* Grace window for modes that may reuse current register values if no fresh write arrives quickly. */
 #define NETPLAY_SAMPLE_FRESH_REUSE_WAIT_CYCLES 2048
+/*
+ * MULTI stale-data prevention is write-driven: wait for the next local write
+ * and keep poll cadence low so long transfer bursts don't burn CPU.
+ */
+#define NETPLAY_SAMPLE_FRESH_NO_STALE_POLL_CYCLES 65536
 
 #define MSG_HELLO 0x01
 #define MSG_MODE 0x02
@@ -643,8 +648,18 @@ static uint16_t GBASIONetPlayLockstepDriverWriteRegister(struct GBASIODriver* dr
 	MutexUnlock(&net->mutex);
 #endif
 	if (nudgeFreshness && net->d.p && net->d.p->p) {
-		mTimingDeschedule(&net->d.p->p->timing, &net->event);
-		mTimingSchedule(&net->d.p->p->timing, &net->event, 1);
+		struct mTiming* timing = &net->d.p->p->timing;
+		bool eventScheduled = mTimingIsScheduled(timing, &net->event);
+		/*
+		 * Avoid repeated deschedule/schedule churn on rapid SIOMLT writes:
+		 * if the event is already imminent, keep the current schedule.
+		 */
+		if (!eventScheduled || mTimingUntil(timing, &net->event) > 1) {
+			if (eventScheduled) {
+				mTimingDeschedule(timing, &net->event);
+			}
+			mTimingSchedule(timing, &net->event, 1);
+		}
 	}
 	return value;
 }
@@ -1546,7 +1561,11 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 	if (hasPendingBegin && beginMode != (enum GBASIOMode) -1) {
 		/* Don't start a new transfer while the current one hasn't fully completed locally. */
 		if (transferActive || waitingForTransfer || waitingForHardSync || hasPendingResult || hasPendingSync) {
-			mTimingSchedule(timing, &driver->event, connected ? EVENT_ACTIVE_INTERVAL : EVENT_IDLE_INTERVAL);
+			/*
+			 * Transfer state changes are packet/finish-driven; polling this too
+			 * aggressively during in-flight periods just burns CPU.
+			 */
+			mTimingSchedule(timing, &driver->event, EVENT_IDLE_INTERVAL);
 			return;
 		}
 		if (!beginHasStartCycle) {
@@ -1749,11 +1768,11 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 								}
 							}
 						} else {
-							NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u waiting for mandatory fresh MULTI sample (baselineGen=%u currentGen=%u waitedCycles=%d)",
-							     (unsigned) beginSequence,
-							     (unsigned) baselineGeneration,
-							     (unsigned) writeGeneration,
-							     (int) freshnessElapsed);
+							/*
+							 * For MULTI, stale reuse is disallowed. Poll slowly and let
+							 * SIOMLT writes nudge this event forward immediately.
+							 */
+							waitCycles = NETPLAY_SAMPLE_FRESH_NO_STALE_POLL_CYCLES;
 						}
 						mTimingSchedule(timing, &driver->event, connected ? waitCycles : EVENT_IDLE_INTERVAL);
 						return;
