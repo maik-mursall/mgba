@@ -15,6 +15,12 @@
  */
 #define EVENT_IDLE_INTERVAL 8192
 #define EVENT_ACTIVE_INTERVAL 4096
+/*
+ * NORMAL link modes can run significantly faster than MULTI; use a tighter
+ * active poll cadence there so queued BEGIN packets don't stall handshake
+ * bursts behind a MULTI-oriented interval.
+ */
+#define EVENT_NORMAL_ACTIVE_INTERVAL 256
 #define MAX_PACKET_SIZE 512
 #define CONNECT_ID_WAIT_MS 5000
 
@@ -492,6 +498,26 @@ static bool _supportsTransferMode(enum GBASIOMode mode) {
 	return mode == GBA_SIO_MULTI || mode == GBA_SIO_NORMAL_8 || mode == GBA_SIO_NORMAL_32;
 }
 
+static uint32_t _activeEventIntervalForMode(enum GBASIOMode mode) {
+	switch (mode) {
+	case GBA_SIO_NORMAL_8:
+	case GBA_SIO_NORMAL_32:
+		return EVENT_NORMAL_ACTIVE_INTERVAL;
+	case GBA_SIO_MULTI:
+	default:
+		return EVENT_ACTIVE_INTERVAL;
+	}
+}
+
+static bool _requiresCycleAlignment(enum GBASIOMode mode) {
+	/*
+	 * MULTI link handshakes are sensitive to transfer latency. Keep strict
+	 * sample freshness there, but don't stretch transfer timing to remote cycle
+	 * alignment; that can push link setup past game-side timeouts.
+	 */
+	return mode == GBA_SIO_NORMAL_8 || mode == GBA_SIO_NORMAL_32;
+}
+
 static bool _requiresStrictFreshSample(enum GBASIOMode mode) {
 	/*
 	 * MULTI/NORMAL8 are write-driven and should publish a fresh local sample.
@@ -698,7 +724,7 @@ static bool GBASIONetPlayLockstepDriverStart(struct GBASIODriver* driver) {
 	int attached;
 	int playerId;
 	uint32_t currentSequence;
-	uint32_t waitedMs = 0;
+	uint32_t waitedWakeCount = 0;
 	uint32_t sequence;
 	int32_t startCycle = 0;
 	bool hasStartCycle = false;
@@ -729,11 +755,11 @@ static bool GBASIONetPlayLockstepDriverStart(struct GBASIODriver* driver) {
 		}
 		waitedForTransfer = true;
 #ifndef DISABLE_THREADING
-		ConditionWaitTimed(&net->cond, &net->mutex, 1);
+		ConditionWait(&net->cond, &net->mutex);
 #else
 		break;
 #endif
-		++waitedMs;
+		++waitedWakeCount;
 		connected = net->connected;
 		attached = net->attached;
 		playerId = net->playerId;
@@ -771,7 +797,7 @@ static bool GBASIONetPlayLockstepDriverStart(struct GBASIODriver* driver) {
 		return false;
 	}
 	if (waitedForTransfer) {
-		mLOG(GBA_SIO, DEBUG, "NetPlay lockstep: host START resumed after waiting %u ms", (unsigned) waitedMs);
+		mLOG(GBA_SIO, DEBUG, "NetPlay lockstep: host START resumed after %u wake events", (unsigned) waitedWakeCount);
 	}
 	if (attached < 2) {
 #ifndef DISABLE_THREADING
@@ -1540,6 +1566,7 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 	int32_t beginStartCycle = 0;
 	int32_t beginTargetCycle = 0;
 	int32_t beginCycleDelta = 0;
+	bool beginCycleAlignment = false;
 	uint32_t sampleWriteGeneration = 0;
 	bool beginCycleCompared = false;
 	bool beginHasStartCycle = false;
@@ -1604,7 +1631,7 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 			 * Transfer state changes are packet/finish-driven; polling this too
 			 * aggressively during in-flight periods just burns CPU.
 			 */
-			mTimingSchedule(timing, &driver->event, EVENT_IDLE_INTERVAL);
+			mTimingSchedule(timing, &driver->event, connected ? _activeEventIntervalForMode(beginMode) : EVENT_IDLE_INTERVAL);
 			return;
 		}
 		if (!beginHasStartCycle) {
@@ -1637,7 +1664,8 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 			}
 			targetCycle = beginStartCycle + driver->cycleSyncOffset;
 			untilStartCycle = targetCycle - localCycle;
-			deferForCycle = untilStartCycle > 0;
+			beginCycleAlignment = _requiresCycleAlignment(beginMode);
+			deferForCycle = beginCycleAlignment && untilStartCycle > 0;
 			beginTargetCycle = targetCycle;
 			beginCycleDelta = untilStartCycle;
 			beginCycleCompared = true;
@@ -1821,6 +1849,16 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 					     (unsigned) beginSequence, _modeToWire(beginMode),
 					     (unsigned) baselineGeneration, (unsigned) writeGeneration, (int) freshnessElapsed);
 				}
+				if (noStaleReuse && sampleWriteGeneration == lastSentGeneration) {
+					/*
+					 * Defensive invariant: MULTI secondaries must not transmit the same
+					 * write generation twice. Retry once a fresh SIOMLT_SEND write arrives.
+					 */
+					NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u stale sample blocked (mode=%u generation=%u)",
+					     (unsigned) beginSequence, _modeToWire(beginMode), (unsigned) sampleWriteGeneration);
+					mTimingSchedule(timing, &driver->event, connected ? _activeEventIntervalForMode(beginMode) : EVENT_IDLE_INTERVAL);
+					return;
+				}
 			}
 			if (_captureTransferSample(driver, beginMode, &sample)) {
 				int transferCycles = 1;
@@ -1848,7 +1886,7 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 				if (_sendTransferSample(driver, MSG_TRANSFER_DATA, beginSequence, beginMode, &sample, 0, false)) {
 					if (sio) {
 						int completeCycles = transferCycles;
-						if (beginCycleCompared) {
+						if (beginCycleCompared && beginCycleAlignment) {
 							int32_t sendLocalCycle = mTimingCurrentTime(&sio->p->timing);
 							int32_t sendDelta = beginTargetCycle - sendLocalCycle;
 							int32_t finishDelta = (beginTargetCycle + transferCycles) - sendLocalCycle;
@@ -1982,7 +2020,12 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 		MutexLock(&driver->mutex);
 		connected = driver->connected;
 		if (connected) {
-			nextInterval = _isSecondaryIdle(driver) ? EVENT_IDLE_INTERVAL : EVENT_ACTIVE_INTERVAL;
+			uint32_t activeInterval = _activeEventIntervalForMode(driver->mode);
+			if (_isSecondaryIdle(driver) && driver->mode == GBA_SIO_MULTI) {
+				nextInterval = EVENT_IDLE_INTERVAL;
+			} else {
+				nextInterval = activeInterval;
+			}
 		}
 		/*
 		 * NetPlay secondaries must never park the core thread indefinitely:
