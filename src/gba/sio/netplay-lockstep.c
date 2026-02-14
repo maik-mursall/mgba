@@ -1652,7 +1652,6 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 			_syncSIOCNTFromBegin(driver, beginMode, beginSIOCNT);
 			{
 				bool strictFreshSample = _requiresStrictFreshSample(beginMode);
-				bool allowFreshReuse = beginMode != GBA_SIO_MULTI;
 				bool waitingForFreshSample = false;
 				bool logFreshReady = false;
 				bool reuseGraceExpired = false;
@@ -1700,7 +1699,7 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 				MutexUnlock(&driver->mutex);
 #endif
 				if (waitingForFreshSample) {
-					if (allowFreshReuse && reuseGraceExpired) {
+					if (reuseGraceExpired) {
 						/*
 						 * If no new write arrives quickly, reuse the current register value
 						 * rather than stalling the entire transfer stream.
@@ -1711,13 +1710,11 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 						     _modeToWire(beginMode), (unsigned) baselineGeneration, (unsigned) writeGeneration, (int) freshnessElapsed);
 					} else {
 						uint32_t waitCycles = EVENT_ACTIVE_INTERVAL;
-						if (allowFreshReuse) {
-							int32_t remainingCycles = NETPLAY_SAMPLE_FRESH_REUSE_WAIT_CYCLES - freshnessElapsed;
-							if (remainingCycles > 0) {
-								waitCycles = (uint32_t) remainingCycles;
-								if (!waitCycles) {
-									waitCycles = EVENT_ACTIVE_INTERVAL;
-								}
+						int32_t remainingCycles = NETPLAY_SAMPLE_FRESH_REUSE_WAIT_CYCLES - freshnessElapsed;
+						if (remainingCycles > 0) {
+							waitCycles = (uint32_t) remainingCycles;
+							if (!waitCycles) {
+								waitCycles = EVENT_ACTIVE_INTERVAL;
 							}
 						}
 						mTimingSchedule(timing, &driver->event, connected ? waitCycles : EVENT_IDLE_INTERVAL);
