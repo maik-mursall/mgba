@@ -56,6 +56,11 @@
 #endif
 /* Force a timing re-baseline periodically to limit long-session drift. */
 #define NETPLAY_CYCLE_RESYNC_INTERVAL 256
+/*
+ * If mapped remote cycle and local cycle diverge by this much, force a
+ * one-shot re-baseline instead of waiting for the periodic resync.
+ */
+#define NETPLAY_CYCLE_DESYNC_REBASE_THRESHOLD 1048576
 /* Grace window for modes that may reuse current register values if no fresh write arrives quickly. */
 #define NETPLAY_SAMPLE_FRESH_REUSE_WAIT_CYCLES 2048
 /*
@@ -511,11 +516,11 @@ static uint32_t _activeEventIntervalForMode(enum GBASIOMode mode) {
 
 static bool _requiresCycleAlignment(enum GBASIOMode mode) {
 	/*
-	 * MULTI link handshakes are sensitive to transfer latency. Keep strict
-	 * sample freshness there, but don't stretch transfer timing to remote cycle
-	 * alignment; that can push link setup past game-side timeouts.
+	 * Keep transfer timing aligned to BEGIN metadata across active transfer
+	 * modes. For MULTI, this avoids secondaries sampling too early/late during
+	 * tight link handshakes.
 	 */
-	return mode == GBA_SIO_NORMAL_8 || mode == GBA_SIO_NORMAL_32;
+	return mode == GBA_SIO_MULTI || mode == GBA_SIO_NORMAL_8 || mode == GBA_SIO_NORMAL_32;
 }
 
 static bool _requiresStrictFreshSample(enum GBASIOMode mode) {
@@ -600,6 +605,10 @@ static void GBASIONetPlayLockstepDriverSetMode(struct GBASIODriver* driver, enum
 		return;
 	}
 	net->mode = mode;
+	net->cycleSyncValid = false;
+	net->cycleSyncOffset = 0;
+	net->cycleSyncSequence = 0;
+	_clearFreshnessWait(net);
 	playerId = net->playerId;
 	if (playerId >= 0 && playerId < MAX_GBAS) {
 		net->otherModes[playerId] = mode;
@@ -1642,6 +1651,7 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 		} else {
 			bool deferForCycle = false;
 			bool calibratedCycleSync = false;
+			bool desyncCycleSync = false;
 			bool periodicCycleSync = false;
 			uint32_t transfersSinceSync = 0;
 			int32_t localCycle = mTimingCurrentTime(timing);
@@ -1650,6 +1660,11 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 #ifndef DISABLE_THREADING
 			MutexLock(&driver->mutex);
 #endif
+			if (driver->mode != beginMode) {
+				driver->cycleSyncValid = false;
+				driver->cycleSyncOffset = 0;
+				driver->cycleSyncSequence = 0;
+			}
 			if (driver->cycleSyncValid && driver->cycleSyncSequence) {
 				transfersSinceSync = beginSequence - driver->cycleSyncSequence;
 				periodicCycleSync = transfersSinceSync >= NETPLAY_CYCLE_RESYNC_INTERVAL;
@@ -1665,6 +1680,15 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 			targetCycle = beginStartCycle + driver->cycleSyncOffset;
 			untilStartCycle = targetCycle - localCycle;
 			beginCycleAlignment = _requiresCycleAlignment(beginMode);
+			if (beginCycleAlignment && (untilStartCycle > NETPLAY_CYCLE_DESYNC_REBASE_THRESHOLD || untilStartCycle < -NETPLAY_CYCLE_DESYNC_REBASE_THRESHOLD)) {
+				driver->cycleSyncOffset = localCycle - beginStartCycle;
+				driver->cycleSyncValid = true;
+				driver->cycleSyncSequence = beginSequence;
+				targetCycle = beginStartCycle + driver->cycleSyncOffset;
+				untilStartCycle = targetCycle - localCycle;
+				calibratedCycleSync = true;
+				desyncCycleSync = true;
+			}
 			deferForCycle = beginCycleAlignment && untilStartCycle > 0;
 			beginTargetCycle = targetCycle;
 			beginCycleDelta = untilStartCycle;
@@ -1684,7 +1708,7 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 #endif
 			if (calibratedCycleSync) {
 				NETPLAY_TRANSFER_TRACE("NetPlay lockstep: cycle sync calibrated reason=%s offset=%08X (local=%08X start=%08X seq=%u since=%u)",
-				     periodicCycleSync ? "periodic" : "initial",
+				     desyncCycleSync ? "desync" : (periodicCycleSync ? "periodic" : "initial"),
 				     (unsigned) (uint32_t) (localCycle - beginStartCycle),
 				     (unsigned) (uint32_t) localCycle,
 				     (unsigned) (uint32_t) beginStartCycle,
