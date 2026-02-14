@@ -100,7 +100,6 @@ static uint32_t _sampleWriteGenerationForMode(const struct GBASIONetPlayLockstep
 static uint32_t _sampleLastSentGenerationForMode(const struct GBASIONetPlayLockstepDriver* driver, enum GBASIOMode mode);
 static void _setSampleLastSentGenerationForMode(struct GBASIONetPlayLockstepDriver* driver, enum GBASIOMode mode, uint32_t generation);
 static void _recordMultiWriteSample(struct GBASIONetPlayLockstepDriver* driver, uint32_t generation, uint16_t value);
-static bool _lookupMultiWriteSample(const struct GBASIONetPlayLockstepDriver* driver, uint32_t generation, uint16_t* outValue);
 static void _syncSIOCNTFromBegin(struct GBASIONetPlayLockstepDriver* driver, enum GBASIOMode mode, uint16_t beginSIOCNT);
 static void _logTransferControlSnapshot(struct GBASIONetPlayLockstepDriver* driver, const char* phase, uint32_t sequence, enum GBASIOMode mode, uint16_t packetSIOCNT);
 static bool _captureTransferSample(struct GBASIONetPlayLockstepDriver* driver, enum GBASIOMode mode, struct NetPlayTransferSample* sample);
@@ -547,15 +546,6 @@ static void _recordMultiWriteSample(struct GBASIONetPlayLockstepDriver* driver, 
 	uint32_t slot = generation % NETPLAY_LOCKSTEP_MULTI_WRITE_HISTORY_SIZE;
 	driver->multiWriteHistoryGeneration[slot] = generation;
 	driver->multiWriteHistoryValue[slot] = value;
-}
-
-static bool _lookupMultiWriteSample(const struct GBASIONetPlayLockstepDriver* driver, uint32_t generation, uint16_t* outValue) {
-	uint32_t slot = generation % NETPLAY_LOCKSTEP_MULTI_WRITE_HISTORY_SIZE;
-	if (driver->multiWriteHistoryGeneration[slot] != generation) {
-		return false;
-	}
-	*outValue = driver->multiWriteHistoryValue[slot];
-	return true;
 }
 
 static void GBASIONetPlayLockstepDriverSetMode(struct GBASIODriver* driver, enum GBASIOMode mode) {
@@ -1740,8 +1730,6 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 		if (!clearPendingBegin && playerId != 0 && _supportsTransferMode(beginMode)) {
 			struct NetPlayTransferSample sample;
 			struct GBASIO* sio = driver->d.p;
-			bool forceMultiSend16 = false;
-			uint16_t forcedMultiSend16 = 0;
 			if (sio && sio->mode != beginMode) {
 				NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u begin mode mismatch (local=%u begin=%u), forcing local mode",
 				     (unsigned) beginSequence, _modeToWire(sio->mode), _modeToWire(beginMode));
@@ -1764,6 +1752,7 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 				bool waitingForFreshSample = false;
 				bool logFreshReady = false;
 				bool reuseGraceExpired = false;
+				int32_t writeGenerationDelta = 0;
 				uint32_t writeGeneration = 0;
 				uint32_t baselineGeneration = 0;
 				uint32_t lastSentGeneration = 0;
@@ -1791,6 +1780,7 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 				}
 				baselineGeneration = driver->freshnessWaitBaselineGeneration;
 				freshnessElapsed = localCycle - driver->freshnessWaitStartCycle;
+				writeGenerationDelta = (int32_t) (writeGeneration - baselineGeneration);
 				waitingForFreshSample = strictFreshSample && !_generationAdvanced(writeGeneration, baselineGeneration);
 				reuseGraceExpired = waitingForFreshSample
 					&& !noStaleReuse
@@ -1806,27 +1796,12 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 				}
 				if (!waitingForFreshSample) {
 					selectedWriteGeneration = writeGeneration;
-					if (beginMode == GBA_SIO_MULTI && _generationAdvanced(writeGeneration, baselineGeneration)) {
-						uint32_t nextGeneration = baselineGeneration + 1;
-						uint16_t queuedValue = 0;
-						if (_lookupMultiWriteSample(driver, nextGeneration, &queuedValue)) {
-							selectedWriteGeneration = nextGeneration;
-							forceMultiSend16 = true;
-							forcedMultiSend16 = queuedValue;
-							if (_generationAdvanced(writeGeneration, nextGeneration)) {
-								NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u MULTI write backlog baseline=%u selected=%u current=%u",
-								     (unsigned) beginSequence,
-								     (unsigned) baselineGeneration,
-								     (unsigned) nextGeneration,
-								     (unsigned) writeGeneration);
-							}
-						} else {
-							NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u missing MULTI write history for generation %u (baseline=%u current=%u), using latest register value",
-							     (unsigned) beginSequence,
-							     (unsigned) nextGeneration,
-							     (unsigned) baselineGeneration,
-							     (unsigned) writeGeneration);
-						}
+					if (beginMode == GBA_SIO_MULTI && writeGenerationDelta > 1) {
+						NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u MULTI write coalesced baseline=%u selected=%u current=%u",
+						     (unsigned) beginSequence,
+						     (unsigned) baselineGeneration,
+						     (unsigned) selectedWriteGeneration,
+						     (unsigned) writeGeneration);
 					}
 					sampleWriteGeneration = selectedWriteGeneration;
 				}
@@ -1870,9 +1845,6 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 				}
 			}
 			if (_captureTransferSample(driver, beginMode, &sample)) {
-				if (beginMode == GBA_SIO_MULTI && forceMultiSend16) {
-					sample.send16 = forcedMultiSend16;
-				}
 				int transferCycles = 1;
 				int connectedDevices = beginAttached > 0 ? beginAttached - 1 : GBASIONetPlayLockstepDriverConnectedDevices(&driver->d);
 				if (connectedDevices < 0) {
