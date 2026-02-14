@@ -19,9 +19,11 @@ static const int GBASIOCyclesPerTransfer[4][MAX_GBAS] = {
 };
 /*
  * Drivers that synchronize with remote peers can defer completion until
- * transfer data is ready without blocking this callback.
+ * transfer data is ready without blocking this callback. Keep this cadence
+ * tight enough for fast NORMAL transfers so emulated link timing does not
+ * drift by whole transfer windows.
  */
-#define SIO_FINISH_RETRY_CYCLES 4096
+#define SIO_FINISH_RETRY_CYCLES 256
 
 static void _sioFinish(struct mTiming* timing, void* user, uint32_t cyclesLate);
 

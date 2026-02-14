@@ -111,6 +111,7 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 static bool _sendPacket(struct GBASIONetPlayLockstepDriver* driver, uint8_t type, const uint8_t* payload, size_t size);
 static void _setDisconnected(struct GBASIONetPlayLockstepDriver* driver, bool remoteClose);
 static void _updateReadyState(struct GBASIONetPlayLockstepDriver* driver);
+static uint16_t _siocntModeBits(enum GBASIOMode mode);
 static void _clearFreshnessWait(struct GBASIONetPlayLockstepDriver* driver);
 static uint32_t _sampleWriteGenerationForMode(const struct GBASIONetPlayLockstepDriver* driver, enum GBASIOMode mode);
 static uint32_t _sampleLastSentGenerationForMode(const struct GBASIONetPlayLockstepDriver* driver, enum GBASIOMode mode);
@@ -511,6 +512,21 @@ static uint32_t _activeEventIntervalForMode(enum GBASIOMode mode) {
 	case GBA_SIO_MULTI:
 	default:
 		return EVENT_ACTIVE_INTERVAL;
+	}
+}
+
+static uint16_t _siocntModeBits(enum GBASIOMode mode) {
+	switch (mode) {
+	case GBA_SIO_NORMAL_8:
+		return 0x0000;
+	case GBA_SIO_NORMAL_32:
+		return 0x1000;
+	case GBA_SIO_MULTI:
+		return 0x2000;
+	case GBA_SIO_UART:
+		return 0x3000;
+	default:
+		return 0x0000;
 	}
 }
 
@@ -1472,7 +1488,13 @@ static void _syncSIOCNTFromBegin(struct GBASIONetPlayLockstepDriver* driver, enu
 	struct GBASIO* sio = driver->d.p;
 	uint16_t copyMask = 0;
 
-	if (!sio || !beginSIOCNT) {
+	if (!sio) {
+		return;
+	}
+
+	/* Keep register mode bits coherent when mode is forced from BEGIN metadata. */
+	sio->siocnt = (sio->siocnt & ~0x3000) | _siocntModeBits(mode);
+	if (!beginSIOCNT) {
 		return;
 	}
 
@@ -1775,6 +1797,7 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 				NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u begin mode mismatch (local=%u begin=%u), forcing local mode",
 				     (unsigned) beginSequence, _modeToWire(sio->mode), _modeToWire(beginMode));
 				sio->mode = beginMode;
+				sio->siocnt = (sio->siocnt & ~0x3000) | _siocntModeBits(beginMode);
 #ifndef DISABLE_THREADING
 				MutexLock(&driver->mutex);
 #endif
@@ -1782,6 +1805,9 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 				if (driver->playerId >= 0 && driver->playerId < MAX_GBAS) {
 					driver->otherModes[driver->playerId] = beginMode;
 				}
+				driver->cycleSyncValid = false;
+				driver->cycleSyncOffset = 0;
+				driver->cycleSyncSequence = 0;
 #ifndef DISABLE_THREADING
 				MutexUnlock(&driver->mutex);
 #endif
