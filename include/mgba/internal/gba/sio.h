@@ -70,6 +70,8 @@ struct GBASIO {
 
 	uint16_t rcnt;
 	uint16_t siocnt;
+	enum GBASIOMode transferMode;
+	bool transferActive;
 
 	struct GBASIOPlayer gbp;
 	struct mTimingEvent completeEvent;

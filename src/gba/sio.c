@@ -111,6 +111,8 @@ void GBASIOReset(struct GBASIO* sio) {
 	sio->rcnt = RCNT_INITIAL;
 	sio->siocnt = 0;
 	sio->mode = -1;
+	sio->transferMode = -1;
+	sio->transferActive = false;
 	_switchMode(sio);
 
 	GBASIOPlayerReset(&sio->gbp);
@@ -156,6 +158,8 @@ void GBASIOWriteRCNT(struct GBASIO* sio, uint16_t value) {
 }
 
 static void _startTransfer(struct GBASIO* sio) {
+	sio->transferMode = (enum GBASIOMode) -1;
+	sio->transferActive = false;
 	if (sio->driver && sio->driver->start) {
 		if (!sio->driver->start(sio->driver)) {
 			// Transfer completion is handled internally to the driver
@@ -168,6 +172,8 @@ static void _startTransfer(struct GBASIO* sio) {
 	}
 	mTimingDeschedule(&sio->p->timing, &sio->completeEvent);
 	mTimingSchedule(&sio->p->timing, &sio->completeEvent, GBASIOTransferCycles(sio->mode, sio->siocnt, connected));
+	sio->transferMode = sio->mode;
+	sio->transferActive = true;
 }
 
 void GBASIOWriteSIOCNT(struct GBASIO* sio, uint16_t value) {
@@ -431,19 +437,20 @@ void GBASIONormal32FinishTransfer(struct GBASIO* sio, uint32_t data, uint32_t cy
 
 static void _sioFinish(struct mTiming* timing, void* user, uint32_t cyclesLate) {
 	struct GBASIO* sio = user;
+	enum GBASIOMode mode = sio->transferActive ? sio->transferMode : sio->mode;
 	union {
 		uint16_t multi[4];
 		uint8_t normal8;
 		uint32_t normal32;
 	} data = {0};
 	bool ready = true;
-	switch (sio->mode) {
+	switch (mode) {
 	case GBA_SIO_MULTI:
 		if (sio->driver && sio->driver->finishMultiplayer) {
 			ready = sio->driver->finishMultiplayer(sio->driver, data.multi);
 		}
 		if (!ready) {
-			mTimingSchedule(timing, &sio->completeEvent, _asyncFinishPollCycles(sio->mode));
+			mTimingSchedule(timing, &sio->completeEvent, _asyncFinishPollCycles(mode));
 			return;
 		}
 		GBASIOMultiplayerFinishTransfer(sio, data.multi, cyclesLate);
@@ -453,7 +460,7 @@ static void _sioFinish(struct mTiming* timing, void* user, uint32_t cyclesLate) 
 			ready = sio->driver->finishNormal8(sio->driver, &data.normal8);
 		}
 		if (!ready) {
-			mTimingSchedule(timing, &sio->completeEvent, _asyncFinishPollCycles(sio->mode));
+			mTimingSchedule(timing, &sio->completeEvent, _asyncFinishPollCycles(mode));
 			return;
 		}
 		GBASIONormal8FinishTransfer(sio, data.normal8, cyclesLate);
@@ -463,16 +470,18 @@ static void _sioFinish(struct mTiming* timing, void* user, uint32_t cyclesLate) 
 			ready = sio->driver->finishNormal32(sio->driver, &data.normal32);
 		}
 		if (!ready) {
-			mTimingSchedule(timing, &sio->completeEvent, _asyncFinishPollCycles(sio->mode));
+			mTimingSchedule(timing, &sio->completeEvent, _asyncFinishPollCycles(mode));
 			return;
 		}
 		GBASIONormal32FinishTransfer(sio, data.normal32, cyclesLate);
 		break;
 	default:
 		// TODO
-		mLOG(GBA_SIO, STUB, "No dummy finish implemented for mode %s", _modeName(sio->mode));
+		mLOG(GBA_SIO, STUB, "No dummy finish implemented for mode %s", _modeName(mode));
 		break;
 	}
+	sio->transferMode = (enum GBASIOMode) -1;
+	sio->transferActive = false;
 }
 
 int GBASIOJOYSendCommand(struct GBASIODriver* sio, enum GBASIOJOYCommand command, uint8_t* data) {

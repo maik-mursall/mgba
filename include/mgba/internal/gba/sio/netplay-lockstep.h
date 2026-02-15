@@ -82,6 +82,13 @@ struct GBASIONetPlayLockstepDriver {
 	uint32_t multiSendLastSentGeneration;
 	uint32_t normal8LastSentGeneration;
 	uint32_t normal32LastSentGeneration;
+	uint32_t multiModeTransferBaseSequence;
+	uint32_t multiModeWriteBaseGeneration;
+	bool multiModeWindowValid;
+	bool multiTransferWaitActive;
+	uint32_t multiTransferWaitSequence;
+	uint32_t multiTransferWaitExpectedRelative;
+	uint32_t multiTransferWaitCurrentRelative;
 	bool freshnessWaitActive;
 	bool freshnessWaitLogged;
 	uint32_t freshnessWaitSequence;

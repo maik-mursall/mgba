@@ -107,7 +107,6 @@ static uint32_t _sampleWriteGenerationForMode(const struct GBASIONetPlayLockstep
 static uint32_t _sampleLastSentGenerationForMode(const struct GBASIONetPlayLockstepDriver* driver, enum GBASIOMode mode);
 static void _setSampleLastSentGenerationForMode(struct GBASIONetPlayLockstepDriver* driver, enum GBASIOMode mode, uint32_t generation);
 static bool _requiresStrictFreshSample(enum GBASIOMode mode);
-static bool _requiresFreshSampleWithoutReuse(enum GBASIOMode mode);
 static void _recordMultiWriteSample(struct GBASIONetPlayLockstepDriver* driver, uint32_t generation, uint16_t value);
 static void _syncSIOCNTFromBegin(struct GBASIONetPlayLockstepDriver* driver, enum GBASIOMode mode, uint16_t beginSIOCNT);
 static void _logTransferControlSnapshot(struct GBASIONetPlayLockstepDriver* driver, const char* phase, uint32_t sequence, enum GBASIOMode mode, uint16_t packetSIOCNT);
@@ -455,6 +454,13 @@ static void GBASIONetPlayLockstepDriverReset(struct GBASIODriver* driver) {
 	net->multiSendLastSentGeneration = UINT32_MAX;
 	net->normal8LastSentGeneration = UINT32_MAX;
 	net->normal32LastSentGeneration = UINT32_MAX;
+	net->multiModeTransferBaseSequence = net->transferSequence;
+	net->multiModeWriteBaseGeneration = net->multiSendWriteGeneration;
+	net->multiModeWindowValid = net->mode == GBA_SIO_MULTI;
+	net->multiTransferWaitActive = false;
+	net->multiTransferWaitSequence = 0;
+	net->multiTransferWaitExpectedRelative = 0;
+	net->multiTransferWaitCurrentRelative = 0;
 	_clearFreshnessWait(net);
 	net->pendingFinishNudge = false;
 	net->asleep = false;
@@ -483,18 +489,13 @@ static bool _supportsTransferMode(enum GBASIOMode mode) {
 
 static bool _requiresStrictFreshSample(enum GBASIOMode mode) {
 	/*
-	 * MULTI/NORMAL8 are write-driven and should publish a fresh local sample.
-	 * NORMAL32 commonly reuses SIODATA32 across consecutive transfers.
+	 * NORMAL8 can benefit from briefly waiting for a post-BEGIN write.
+	 *
+	 * MULTI uses transfer/write generation matching (see multi_relative_wait)
+	 * and should not add an additional freshness gate, as that introduces
+	 * per-transfer latency in high-rate link bursts.
 	 */
-	return mode == GBA_SIO_MULTI || mode == GBA_SIO_NORMAL_8;
-}
-
-static bool _requiresFreshSampleWithoutReuse(enum GBASIOMode mode) {
-	/*
-	 * MULTI is latency sensitive and gameplay critical: secondary peers must
-	 * never recycle an already-sent sample when waiting for BEGIN.
-	 */
-	return mode == GBA_SIO_MULTI;
+	return mode == GBA_SIO_NORMAL_8;
 }
 
 static void _clearFreshnessWait(struct GBASIONetPlayLockstepDriver* driver) {
@@ -558,17 +559,38 @@ static void GBASIONetPlayLockstepDriverSetMode(struct GBASIODriver* driver, enum
 	struct GBASIONetPlayLockstepDriver* net = (struct GBASIONetPlayLockstepDriver*) driver;
 	bool connected;
 	int playerId;
+	enum GBASIOMode oldMode;
 	uint8_t payload[1];
 #ifndef DISABLE_THREADING
 	MutexLock(&net->mutex);
 #endif
-	if (mode == net->mode) {
+	oldMode = net->mode;
+	if (mode == oldMode) {
 #ifndef DISABLE_THREADING
 		MutexUnlock(&net->mutex);
 #endif
 		return;
 	}
 	net->mode = mode;
+	if (mode == GBA_SIO_MULTI) {
+		/*
+		 * MULTI write generations are interpreted relative to this mode-entry
+		 * epoch so transfer-relative matching remains stable.
+		 */
+		net->multiModeTransferBaseSequence = net->transferSequence;
+		net->multiModeWriteBaseGeneration = net->multiSendWriteGeneration;
+		net->multiModeWindowValid = true;
+		net->multiTransferWaitActive = false;
+		net->multiTransferWaitSequence = 0;
+		net->multiTransferWaitExpectedRelative = 0;
+		net->multiTransferWaitCurrentRelative = 0;
+	} else if (oldMode == GBA_SIO_MULTI) {
+		net->multiModeWindowValid = false;
+		net->multiTransferWaitActive = false;
+		net->multiTransferWaitSequence = 0;
+		net->multiTransferWaitExpectedRelative = 0;
+		net->multiTransferWaitCurrentRelative = 0;
+	}
 	playerId = net->playerId;
 	if (playerId >= 0 && playerId < MAX_GBAS) {
 		net->otherModes[playerId] = mode;
@@ -642,6 +664,14 @@ static uint16_t GBASIONetPlayLockstepDriverWriteRCNT(struct GBASIODriver* driver
 static uint16_t GBASIONetPlayLockstepDriverWriteRegister(struct GBASIODriver* driver, uint32_t address, uint16_t value) {
 	struct GBASIONetPlayLockstepDriver* net = (struct GBASIONetPlayLockstepDriver*) driver;
 	bool nudgeFreshness = false;
+	bool nudgeTransferWait = false;
+	bool logLifecycleWrite = false;
+	uint32_t waitSequence = 0;
+	enum GBASIOMode waitMode = (enum GBASIOMode) -1;
+	uint32_t waitBaselineGeneration = 0;
+	uint32_t multiGeneration = 0;
+	uint32_t normal8Generation = 0;
+	uint32_t normal32Generation = 0;
 #ifndef DISABLE_THREADING
 	MutexLock(&net->mutex);
 #endif
@@ -656,23 +686,56 @@ static uint16_t GBASIONetPlayLockstepDriverWriteRegister(struct GBASIODriver* dr
 		_recordMultiWriteSample(net, net->multiSendWriteGeneration, value);
 		++net->normal8WriteGeneration;
 		nudgeFreshness = net->freshnessWaitActive && _requiresStrictFreshSample(net->freshnessWaitMode);
+		nudgeTransferWait = net->multiTransferWaitActive;
+		if (net->freshnessWaitActive) {
+			logLifecycleWrite = true;
+			waitSequence = net->freshnessWaitSequence;
+			waitMode = net->freshnessWaitMode;
+			waitBaselineGeneration = net->freshnessWaitBaselineGeneration;
+			multiGeneration = net->multiSendWriteGeneration;
+			normal8Generation = net->normal8WriteGeneration;
+		}
 		break;
 	case GBA_REG_SIODATA32_LO:
 	case GBA_REG_SIODATA32_HI:
 		++net->normal32WriteGeneration;
 		nudgeFreshness = false;
+		if (net->freshnessWaitActive) {
+			logLifecycleWrite = true;
+			waitSequence = net->freshnessWaitSequence;
+			waitMode = net->freshnessWaitMode;
+			waitBaselineGeneration = net->freshnessWaitBaselineGeneration;
+			normal32Generation = net->normal32WriteGeneration;
+		}
 		break;
 	default:
 		break;
 	}
+	if (logLifecycleWrite) {
+		NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u lifecycle local_write addr=%04X value=%04X waitMode=%u baselineGen=%u multiGen=%u normal8Gen=%u normal32Gen=%u strictFresh=%d",
+		     (unsigned) waitSequence,
+		     (unsigned) address,
+		     value,
+		     _modeToWire(waitMode),
+		     (unsigned) waitBaselineGeneration,
+		     (unsigned) multiGeneration,
+		     (unsigned) normal8Generation,
+		     (unsigned) normal32Generation,
+		     _requiresStrictFreshSample(waitMode));
+	}
+	if (!waitSequence && nudgeTransferWait) {
+		waitSequence = net->multiTransferWaitSequence;
+	}
 #ifndef DISABLE_THREADING
 	MutexUnlock(&net->mutex);
 #endif
-	if (nudgeFreshness && net->d.p && net->d.p->p) {
+	if ((nudgeFreshness || nudgeTransferWait) && net->d.p && net->d.p->p) {
 		/*
-		 * A fresh local write arrived while BEGIN freshness gating is active.
+		 * A local write arrived while BEGIN gating is active.
 		 * Re-run _netPlayEvent next cycle so we can send DATA immediately.
 		 */
+		NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u lifecycle local_write_nudge event=1",
+		     (unsigned) waitSequence);
 		mTimingDeschedule(&net->d.p->p->timing, &net->event);
 		mTimingSchedule(&net->d.p->p->timing, &net->event, 1);
 	}
@@ -881,6 +944,13 @@ bool GBASIONetPlayLockstepDriverConnect(struct GBASIONetPlayLockstepDriver* driv
 	driver->multiSendLastSentGeneration = UINT32_MAX;
 	driver->normal8LastSentGeneration = UINT32_MAX;
 	driver->normal32LastSentGeneration = UINT32_MAX;
+	driver->multiModeTransferBaseSequence = driver->transferSequence;
+	driver->multiModeWriteBaseGeneration = driver->multiSendWriteGeneration;
+	driver->multiModeWindowValid = false;
+	driver->multiTransferWaitActive = false;
+	driver->multiTransferWaitSequence = 0;
+	driver->multiTransferWaitExpectedRelative = 0;
+	driver->multiTransferWaitCurrentRelative = 0;
 	_clearFreshnessWait(driver);
 	driver->pendingFinishNudge = false;
 	driver->asleep = false;
@@ -1129,6 +1199,13 @@ static void _setDisconnected(struct GBASIONetPlayLockstepDriver* driver, bool re
 	driver->multiSendLastSentGeneration = UINT32_MAX;
 	driver->normal8LastSentGeneration = UINT32_MAX;
 	driver->normal32LastSentGeneration = UINT32_MAX;
+	driver->multiModeTransferBaseSequence = driver->transferSequence;
+	driver->multiModeWriteBaseGeneration = driver->multiSendWriteGeneration;
+	driver->multiModeWindowValid = false;
+	driver->multiTransferWaitActive = false;
+	driver->multiTransferWaitSequence = 0;
+	driver->multiTransferWaitExpectedRelative = 0;
+	driver->multiTransferWaitCurrentRelative = 0;
 	_clearFreshnessWait(driver);
 	driver->pendingFinishNudge = false;
 	driver->asleep = false;
@@ -1343,6 +1420,14 @@ static bool _tryFinishTransfer(struct GBASIONetPlayLockstepDriver* driver, enum 
 		MutexUnlock(&driver->mutex);
 		return false;
 	}
+	NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u lifecycle finish_ready mode=%u attached=%u multi=[%04X,%04X,%04X,%04X]",
+	     (unsigned) sequence,
+	     _modeToWire(out->mode),
+	     (unsigned) out->attached,
+	     out->multiData[0],
+	     out->multiData[1],
+	     out->multiData[2],
+	     out->multiData[3]);
 	if (out->mode != mode) {
 		mLOG(GBA_SIO, WARN, "Transfer mode mismatch: expected %u got %u",
 		     _modeToWire(mode), _modeToWire(out->mode));
@@ -1620,15 +1705,26 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 		bool driftCycleSync = false;
 		struct GBASIONetPlayLockstepPendingBegin queuedBegin;
 		uint32_t beginSequence = 0;
+		uint32_t transferSequence = 0;
 		uint32_t sampleWriteGeneration = 0;
+		uint32_t freshnessWriteGeneration = 0;
+		uint32_t freshnessBaselineGeneration = 0;
+		uint32_t freshnessLastSentGeneration = 0;
 		uint32_t transfersSinceSync = 0;
 		uint32_t deferCycles = 0;
+		uint8_t pendingBeginDepth = 0;
+		uint8_t pendingResultDepth = 0;
+		uint8_t pendingSyncDepth = 0;
 		enum GBASIOMode beginMode = (enum GBASIOMode) -1;
 		uint8_t beginAttached = 0;
 		uint16_t beginSIOCNT = 0;
+		bool strictFreshSampleForLog = false;
+		bool waitedForFreshSample = false;
+		bool freshnessGraceExpired = false;
 		int32_t beginStartCycle = 0;
 		int32_t beginTargetCycle = 0;
 		int32_t beginCycleDelta = 0;
+		int32_t freshnessElapsedCycles = 0;
 		int32_t localCycle = 0;
 		int32_t targetCycle = 0;
 		int32_t untilStartCycle = 0;
@@ -1640,10 +1736,14 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 		transferActive = driver->transferActive;
 		waitingForTransfer = driver->waitingForTransfer;
 		waitingForHardSync = driver->waitingForHardSync;
-		hasPendingResult = _hasPendingResultForTransfer(driver, driver->transferSequence);
-		hasPendingSync = _hasPendingSyncForTransfer(driver, driver->transferSequence);
+		transferSequence = driver->transferSequence;
+		hasPendingResult = _hasPendingResultForTransfer(driver, transferSequence);
+		hasPendingSync = _hasPendingSyncForTransfer(driver, transferSequence);
 		connected = driver->connected;
 		playerId = driver->playerId;
+		pendingBeginDepth = driver->pendingBeginCount;
+		pendingResultDepth = driver->pendingResultCount;
+		pendingSyncDepth = driver->pendingSyncCount;
 		if (hasPendingBegin) {
 			beginSequence = queuedBegin.sequence;
 			beginMode = queuedBegin.mode;
@@ -1659,9 +1759,29 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 		if (!hasPendingBegin || beginMode == (enum GBASIOMode) -1) {
 			break;
 		}
+		NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u lifecycle begin_dequeue mode=%u playerId=%d beginDepth=%u resultDepth=%u syncDepth=%u active=%d waiting=%d hardSync=%d pendingResult=%d pendingSync=%d",
+		     (unsigned) beginSequence,
+		     _modeToWire(beginMode),
+		     playerId,
+		     (unsigned) pendingBeginDepth,
+		     (unsigned) pendingResultDepth,
+		     (unsigned) pendingSyncDepth,
+		     transferActive,
+		     waitingForTransfer,
+		     waitingForHardSync,
+		     hasPendingResult,
+		     hasPendingSync);
 
 		/* Don't start a new transfer while the current one hasn't fully completed locally. */
 		if (transferActive || waitingForTransfer || waitingForHardSync || hasPendingResult || hasPendingSync) {
+			NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u lifecycle begin_wait_inflight active=%d waiting=%d hardSync=%d pendingResult=%d pendingSync=%d transferSeq=%u",
+			     (unsigned) beginSequence,
+			     transferActive,
+			     waitingForTransfer,
+			     waitingForHardSync,
+			     hasPendingResult,
+			     hasPendingSync,
+			     (unsigned) transferSequence);
 			break;
 		}
 
@@ -1784,6 +1904,12 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 		if (!clearPendingBegin && playerId != 0 && _supportsTransferMode(beginMode)) {
 			struct NetPlayTransferSample sample;
 			struct GBASIO* sio = driver->d.p;
+			bool waitForRelativeMultiWrite = false;
+			bool logRelativeMultiWait = false;
+			uint32_t relativeTransferId = 0;
+			uint32_t relativeWriteGeneration = 0;
+			uint32_t relativeBaseSequence = 0;
+			uint32_t relativeBaseGeneration = 0;
 			if (sio && sio->mode != beginMode) {
 				NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u begin mode mismatch (local=%u begin=%u), forcing local mode",
 				     (unsigned) beginSequence, _modeToWire(sio->mode), _modeToWire(beginMode));
@@ -1800,9 +1926,69 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 #endif
 			}
 			_syncSIOCNTFromBegin(driver, beginMode, beginSIOCNT);
+			if (beginMode == GBA_SIO_MULTI) {
+#ifndef DISABLE_THREADING
+				MutexLock(&driver->mutex);
+#endif
+				if (!driver->multiModeWindowValid) {
+					/*
+					 * Fallback initialization in case mode-switch bookkeeping
+					 * was not observed before this BEGIN. Anchor to the
+					 * transfer immediately before BEGIN so the first MULTI
+					 * transfer maps to relative id 1.
+					 */
+					driver->multiModeTransferBaseSequence = beginSequence - 1;
+					driver->multiModeWriteBaseGeneration = driver->multiSendWriteGeneration;
+					driver->multiModeWindowValid = true;
+					driver->multiTransferWaitActive = false;
+					driver->multiTransferWaitSequence = 0;
+					driver->multiTransferWaitExpectedRelative = 0;
+					driver->multiTransferWaitCurrentRelative = 0;
+					NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u lifecycle multi_relative_base_init baseSeq=%u baseGen=%u",
+					     (unsigned) beginSequence,
+					     (unsigned) driver->multiModeTransferBaseSequence,
+					     (unsigned) driver->multiModeWriteBaseGeneration);
+				}
+				relativeBaseSequence = driver->multiModeTransferBaseSequence;
+				relativeBaseGeneration = driver->multiModeWriteBaseGeneration;
+				relativeTransferId = beginSequence - relativeBaseSequence;
+				relativeWriteGeneration = driver->multiSendWriteGeneration - relativeBaseGeneration;
+				waitForRelativeMultiWrite = relativeWriteGeneration < relativeTransferId;
+				if (waitForRelativeMultiWrite) {
+					bool wasWaiting = driver->multiTransferWaitActive
+						&& driver->multiTransferWaitSequence == beginSequence;
+					driver->multiTransferWaitActive = true;
+					driver->multiTransferWaitSequence = beginSequence;
+					driver->multiTransferWaitExpectedRelative = relativeTransferId;
+					driver->multiTransferWaitCurrentRelative = relativeWriteGeneration;
+					logRelativeMultiWait = !wasWaiting;
+				} else if (driver->multiTransferWaitActive && driver->multiTransferWaitSequence == beginSequence) {
+					driver->multiTransferWaitActive = false;
+					driver->multiTransferWaitSequence = 0;
+					driver->multiTransferWaitExpectedRelative = 0;
+					driver->multiTransferWaitCurrentRelative = 0;
+				}
+#ifndef DISABLE_THREADING
+				MutexUnlock(&driver->mutex);
+#endif
+				if (waitForRelativeMultiWrite) {
+					if (logRelativeMultiWait || shouldLogBeginAttempt) {
+						NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u lifecycle multi_relative_wait relTransfer=%u relWrite=%u baseSeq=%u baseGen=%u",
+						     (unsigned) beginSequence,
+						     (unsigned) relativeTransferId,
+						     (unsigned) relativeWriteGeneration,
+						     (unsigned) relativeBaseSequence,
+						     (unsigned) relativeBaseGeneration);
+					}
+					mTimingSchedule(timing, &driver->event, connected ? EVENT_ACTIVE_INTERVAL : EVENT_IDLE_INTERVAL);
+					return;
+				}
+			}
 			{
-				bool strictFreshSample = _requiresStrictFreshSample(beginMode);
-				bool noStaleReuse = _requiresFreshSampleWithoutReuse(beginMode);
+				bool strictFreshSampleRequested = _requiresStrictFreshSample(beginMode);
+				bool strictFreshSample = strictFreshSampleRequested;
+				bool bypassFreshSample = false;
+				bool pastBeginSampleWindow = false;
 				bool waitingForFreshSample = false;
 				bool logFreshReady = false;
 				bool reuseGraceExpired = false;
@@ -1811,6 +1997,10 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 				uint32_t lastSentGeneration = 0;
 				int32_t freshLocalCycle = mTimingCurrentTime(timing);
 				int32_t freshnessElapsed = 0;
+				pastBeginSampleWindow = strictFreshSampleRequested
+					&& beginMode == GBA_SIO_MULTI
+					&& beginCycleCompared
+					&& beginCycleDelta < 0;
 #ifndef DISABLE_THREADING
 				MutexLock(&driver->mutex);
 #endif
@@ -1831,11 +2021,31 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 					driver->freshnessWaitStartCycle = freshLocalCycle;
 				}
 				baselineGeneration = driver->freshnessWaitBaselineGeneration;
+				if (pastBeginSampleWindow && writeGeneration != baselineGeneration) {
+					/*
+					 * We are already past BEGIN locally and a newer unsent sample exists.
+					 * Use it immediately instead of waiting for another write.
+					 */
+					strictFreshSample = false;
+					bypassFreshSample = true;
+				}
 				freshnessElapsed = freshLocalCycle - driver->freshnessWaitStartCycle;
 				waitingForFreshSample = strictFreshSample && writeGeneration == baselineGeneration;
+				strictFreshSampleForLog = strictFreshSample;
+				if (bypassFreshSample && shouldLogBeginAttempt) {
+					NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u lifecycle freshness_bypass mode=%u reason=past_begin delta=%d",
+					     (unsigned) beginSequence,
+					     _modeToWire(beginMode),
+					     (int) beginCycleDelta);
+				}
 				reuseGraceExpired = waitingForFreshSample
-					&& !noStaleReuse
 					&& freshnessElapsed >= NETPLAY_SAMPLE_FRESH_REUSE_WAIT_CYCLES;
+				freshnessWriteGeneration = writeGeneration;
+				freshnessBaselineGeneration = baselineGeneration;
+				freshnessLastSentGeneration = lastSentGeneration;
+				freshnessElapsedCycles = freshnessElapsed;
+				waitedForFreshSample = waitingForFreshSample;
+				freshnessGraceExpired = reuseGraceExpired;
 				if (waitingForFreshSample && !driver->freshnessWaitLogged) {
 					driver->freshnessWaitLogged = true;
 					NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u waiting for fresh sample write (mode=%u lastSentGen=%u currentGen=%u)",
@@ -1851,6 +2061,17 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 #ifndef DISABLE_THREADING
 				MutexUnlock(&driver->mutex);
 #endif
+				if (shouldLogBeginAttempt || waitingForFreshSample || logFreshReady) {
+					NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u lifecycle freshness_check strict=%d baselineGen=%u writeGen=%u lastSentGen=%u waiting=%d graceExpired=%d elapsedCycles=%d",
+					     (unsigned) beginSequence,
+					     strictFreshSample,
+					     (unsigned) baselineGeneration,
+					     (unsigned) writeGeneration,
+					     (unsigned) lastSentGeneration,
+					     waitingForFreshSample,
+					     reuseGraceExpired,
+					     (int) freshnessElapsed);
+				}
 				if (waitingForFreshSample) {
 					if (reuseGraceExpired) {
 						/*
@@ -1863,21 +2084,19 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 						     _modeToWire(beginMode), (unsigned) baselineGeneration, (unsigned) writeGeneration, (int) freshnessElapsed);
 					} else {
 						uint32_t waitCycles = EVENT_ACTIVE_INTERVAL;
-						if (!noStaleReuse) {
-							int32_t remainingCycles = NETPLAY_SAMPLE_FRESH_REUSE_WAIT_CYCLES - freshnessElapsed;
-							if (remainingCycles > 0) {
-								waitCycles = (uint32_t) remainingCycles;
-								if (!waitCycles) {
-									waitCycles = EVENT_ACTIVE_INTERVAL;
-								}
+						int32_t remainingCycles = NETPLAY_SAMPLE_FRESH_REUSE_WAIT_CYCLES - freshnessElapsed;
+						if (remainingCycles > 0) {
+							waitCycles = (uint32_t) remainingCycles;
+							if (!waitCycles) {
+								waitCycles = EVENT_ACTIVE_INTERVAL;
 							}
-						} else {
-							NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u waiting for mandatory fresh MULTI sample (baselineGen=%u currentGen=%u waitedCycles=%d)",
-							     (unsigned) beginSequence,
-							     (unsigned) baselineGeneration,
-							     (unsigned) writeGeneration,
-							     (int) freshnessElapsed);
 						}
+						NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u lifecycle fresh_wait_schedule waitCycles=%u elapsedCycles=%d baselineGen=%u writeGen=%u",
+						     (unsigned) beginSequence,
+						     (unsigned) waitCycles,
+						     (int) freshnessElapsed,
+						     (unsigned) baselineGeneration,
+						     (unsigned) writeGeneration);
 						mTimingSchedule(timing, &driver->event, connected ? waitCycles : EVENT_IDLE_INTERVAL);
 						return;
 					}
@@ -1891,6 +2110,10 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 			if (_captureTransferSample(driver, beginMode, &sample)) {
 				int transferCycles = 1;
 				int connectedDevices = beginAttached > 0 ? beginAttached - 1 : GBASIONetPlayLockstepDriverConnectedDevices(&driver->d);
+				bool oldWaitingForTransfer = false;
+				bool oldTransferActive = false;
+				bool oldTransferAckSent = false;
+				uint32_t oldTransferSequence = 0;
 				if (connectedDevices < 0) {
 					connectedDevices = 0;
 				}
@@ -1898,6 +2121,20 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 				if (transferCycles <= 0) {
 					transferCycles = 1;
 				}
+				NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u lifecycle sample_capture mode=%u siocnt=%04X send16=%04X send32=%08X strictFresh=%d waitedFresh=%d graceExpired=%d baselineGen=%u writeGen=%u lastSentGen=%u chosenSampleGen=%u freshnessElapsed=%d",
+				     (unsigned) beginSequence,
+				     _modeToWire(beginMode),
+				     sample.siocnt,
+				     sample.send16,
+				     sample.send32,
+				     strictFreshSampleForLog,
+				     waitedForFreshSample,
+				     freshnessGraceExpired,
+				     (unsigned) freshnessBaselineGeneration,
+				     (unsigned) freshnessWriteGeneration,
+				     (unsigned) freshnessLastSentGeneration,
+				     (unsigned) sampleWriteGeneration,
+				     (int) freshnessElapsedCycles);
 #ifndef DISABLE_THREADING
 				MutexLock(&driver->mutex);
 #endif
@@ -1905,10 +2142,28 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 				 * Mark transfer active before sending DATA so an immediate RESULT
 				 * is associated with this sequence while local finish is pending.
 				 */
+				oldWaitingForTransfer = driver->waitingForTransfer;
+				oldTransferActive = driver->transferActive;
+				oldTransferAckSent = driver->transferAckSent;
+				oldTransferSequence = driver->transferSequence;
+				NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u lifecycle state_before_send active=%d waiting=%d hardSync=%d ackSent=%d seq=%u",
+				     (unsigned) beginSequence,
+				     oldTransferActive,
+				     oldWaitingForTransfer,
+				     driver->waitingForHardSync,
+				     oldTransferAckSent,
+				     (unsigned) oldTransferSequence);
 				driver->waitingForTransfer = true;
 				driver->transferActive = true;
 				driver->transferSequence = beginSequence;
 				driver->transferAckSent = false;
+				NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u lifecycle state_after_send_arm active=%d waiting=%d hardSync=%d ackSent=%d seq=%u",
+				     (unsigned) beginSequence,
+				     driver->transferActive,
+				     driver->waitingForTransfer,
+				     driver->waitingForHardSync,
+				     driver->transferAckSent,
+				     (unsigned) driver->transferSequence);
 #ifndef DISABLE_THREADING
 				MutexUnlock(&driver->mutex);
 #endif
@@ -1935,13 +2190,22 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 							}
 						}
 						sio->siocnt |= 0x80;
-						mTimingDeschedule(&sio->p->timing, &sio->completeEvent);
-						mTimingSchedule(&sio->p->timing, &sio->completeEvent, completeCycles);
-					}
-					NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u begin handled by player %d",
-					     (unsigned) beginSequence, playerId);
+						sio->transferMode = beginMode;
+						sio->transferActive = true;
+							mTimingDeschedule(&sio->p->timing, &sio->completeEvent);
+							mTimingSchedule(&sio->p->timing, &sio->completeEvent, completeCycles);
+						}
+						NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u lifecycle response_sent mode=%u send16=%04X send32=%08X sampleGen=%u transferCycles=%d",
+						     (unsigned) beginSequence,
+						     _modeToWire(beginMode),
+						     sample.send16,
+						     sample.send32,
+						     (unsigned) sampleWriteGeneration,
+						     transferCycles);
+						NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u begin handled by player %d",
+						     (unsigned) beginSequence, playerId);
 #ifndef DISABLE_THREADING
-					MutexLock(&driver->mutex);
+						MutexLock(&driver->mutex);
 #endif
 					_setSampleLastSentGenerationForMode(driver, beginMode, sampleWriteGeneration);
 					_clearFreshnessWait(driver);
@@ -1950,6 +2214,12 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 #endif
 					clearPendingBegin = true;
 				} else {
+					NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u lifecycle response_send_failed mode=%u send16=%04X send32=%08X sampleGen=%u",
+					     (unsigned) beginSequence,
+					     _modeToWire(beginMode),
+					     sample.send16,
+					     sample.send32,
+					     (unsigned) sampleWriteGeneration);
 #ifndef DISABLE_THREADING
 					MutexLock(&driver->mutex);
 #endif
@@ -1998,9 +2268,22 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 		MutexLock(&driver->mutex);
 #endif
 		if (driver->pendingBeginCount && driver->pendingBegins[driver->pendingBeginRead].sequence == beginSequence) {
+			uint8_t beginDepthBeforePop = driver->pendingBeginCount;
 			_pendingBeginQueuePop(driver);
+			NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u lifecycle begin_queue_pop depth=%u->%u read=%u write=%u",
+			     (unsigned) beginSequence,
+			     (unsigned) beginDepthBeforePop,
+			     (unsigned) driver->pendingBeginCount,
+			     (unsigned) driver->pendingBeginRead,
+			     (unsigned) driver->pendingBeginWrite);
 			if (driver->freshnessWaitActive && driver->freshnessWaitSequence == beginSequence) {
 				_clearFreshnessWait(driver);
+			}
+			if (driver->multiTransferWaitActive && driver->multiTransferWaitSequence == beginSequence) {
+				driver->multiTransferWaitActive = false;
+				driver->multiTransferWaitSequence = 0;
+				driver->multiTransferWaitExpectedRelative = 0;
+				driver->multiTransferWaitCurrentRelative = 0;
 			}
 #ifndef DISABLE_THREADING
 			ConditionWake(&driver->cond);
@@ -2163,8 +2446,17 @@ static bool _handleStatePacket(struct GBASIONetPlayLockstepDriver* driver, const
 
 static bool _handleTransferBeginPacket(struct GBASIONetPlayLockstepDriver* driver, const uint8_t* payload, size_t size) {
 	bool transferInFlight;
+	bool transferActive;
+	bool waitingForTransfer;
+	bool waitingForHardSync;
+	bool hasPendingResult;
+	bool hasPendingSync;
 	bool validMode;
 	uint32_t sequence;
+	uint32_t transferSequence;
+	uint32_t writeGeneration = 0;
+	uint32_t lastSentGeneration = 0;
+	uint8_t queueDepthBefore = 0;
 	int32_t startCycle = 0;
 	bool hasStartCycle = false;
 	enum GBASIOMode mode;
@@ -2180,12 +2472,14 @@ static bool _handleTransferBeginPacket(struct GBASIONetPlayLockstepDriver* drive
 		startCycle = (int32_t) _read32BE(&payload[12]);
 	}
 	MutexLock(&driver->mutex);
-	transferInFlight = driver->transferActive
-		|| driver->waitingForTransfer
-		|| driver->waitingForHardSync
-		|| _hasPendingResultForTransfer(driver, driver->transferSequence)
-		|| _hasPendingSyncForTransfer(driver, driver->transferSequence);
-	if (transferInFlight && driver->transferSequence == sequence) {
+	transferActive = driver->transferActive;
+	waitingForTransfer = driver->waitingForTransfer;
+	waitingForHardSync = driver->waitingForHardSync;
+	transferSequence = driver->transferSequence;
+	hasPendingResult = _hasPendingResultForTransfer(driver, transferSequence);
+	hasPendingSync = _hasPendingSyncForTransfer(driver, transferSequence);
+	transferInFlight = transferActive || waitingForTransfer || waitingForHardSync || hasPendingResult || hasPendingSync;
+	if (transferInFlight && transferSequence == sequence) {
 		NETPLAY_TRANSFER_TRACE("NetPlay lockstep: ignoring duplicate transfer %u begin while active",
 		     (unsigned) sequence);
 		MutexUnlock(&driver->mutex);
@@ -2204,6 +2498,25 @@ static bool _handleTransferBeginPacket(struct GBASIONetPlayLockstepDriver* drive
 		mLOG(GBA_SIO, WARN, "NetPlay lockstep: TRANSFER_BEGIN packet has invalid mode (%u)", payload[4]);
 		return false;
 	}
+	writeGeneration = _sampleWriteGenerationForMode(driver, mode);
+	lastSentGeneration = _sampleLastSentGenerationForMode(driver, mode);
+	queueDepthBefore = driver->pendingBeginCount;
+	NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u lifecycle begin_rx mode=%u attached=%u siocnt=%04X startCycle=%s%08X inFlight=%d active=%d waiting=%d hardSync=%d pendingResult=%d pendingSync=%d writeGen=%u lastSentGen=%u queueDepth=%u",
+	     (unsigned) sequence,
+	     _modeToWire(mode),
+	     payload[6],
+	     _read16BE(&payload[8]),
+	     hasStartCycle ? "" : "none/",
+	     hasStartCycle ? (unsigned) (uint32_t) startCycle : 0,
+	     transferInFlight,
+	     transferActive,
+	     waitingForTransfer,
+	     waitingForHardSync,
+	     hasPendingResult,
+	     hasPendingSync,
+	     (unsigned) writeGeneration,
+	     (unsigned) lastSentGeneration,
+	     (unsigned) queueDepthBefore);
 
 	if (!_pendingBeginQueuePush(driver, sequence, mode, payload[6], _read16BE(&payload[8]), startCycle, hasStartCycle)) {
 		mLOG(GBA_SIO, ERROR, "NetPlay lockstep: TRANSFER_BEGIN queue overflow at transfer %u (depth=%u)",
@@ -2228,6 +2541,12 @@ static bool _handleTransferBeginPacket(struct GBASIONetPlayLockstepDriver* drive
 	}
 	NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u begin queued (playerId=%d, depth=%u, sio=%p)",
 	     (unsigned) sequence, driver->playerId, (unsigned) driver->pendingBeginCount, (void*) driver->d.p);
+	NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u lifecycle begin_queue_push depth=%u->%u read=%u write=%u",
+	     (unsigned) sequence,
+	     (unsigned) queueDepthBefore,
+	     (unsigned) driver->pendingBeginCount,
+	     (unsigned) driver->pendingBeginRead,
+	     (unsigned) driver->pendingBeginWrite);
 	MutexUnlock(&driver->mutex);
 	if (user) {
 		user->wake(user);
@@ -2252,6 +2571,14 @@ static bool _handleTransferResultPacket(struct GBASIONetPlayLockstepDriver* driv
 		result.multiData[i] = _read16BE(&payload[8 + i * 2]);
 		result.normalData[i] = _read32BE(&payload[16 + i * 4]);
 	}
+	NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u lifecycle result_rx mode=%u attached=%u multi=[%04X,%04X,%04X,%04X]",
+	     (unsigned) sequence,
+	     _modeToWire(result.mode),
+	     (unsigned) result.attached,
+	     result.multiData[0],
+	     result.multiData[1],
+	     result.multiData[2],
+	     result.multiData[3]);
 
 	MutexLock(&driver->mutex);
 	if (_pendingResultQueueContainsSequence(driver, sequence)) {
