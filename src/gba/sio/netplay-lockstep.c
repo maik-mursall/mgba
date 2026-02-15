@@ -604,11 +604,10 @@ static uint16_t GBASIONetPlayLockstepDriverWriteRegister(struct GBASIODriver* dr
 #endif
 	switch (address) {
 	case GBA_REG_SIOMLT_SEND:
-		++net->multiSendWriteGeneration;
-		_recordMultiWriteSample(net, net->multiSendWriteGeneration, value);
-		break;
-	case GBA_REG_SIODATA8:
-		if (net->mode == GBA_SIO_NORMAL_8) {
+		if (net->mode == GBA_SIO_MULTI) {
+			++net->multiSendWriteGeneration;
+			_recordMultiWriteSample(net, net->multiSendWriteGeneration, value);
+		} else if (net->mode == GBA_SIO_NORMAL_8) {
 			++net->normal8WriteGeneration;
 		}
 		break;
