@@ -50,6 +50,14 @@
 #endif
 /* Force a timing re-baseline periodically to limit long-session drift. */
 #define NETPLAY_CYCLE_RESYNC_INTERVAL 256
+/*
+ * Host/client emulation clocks are not guaranteed to stay phase-locked.
+ * Re-baseline aggressively when mapped cycle error grows too large so
+ * secondaries don't wait long enough to trip in-game link timeouts.
+ */
+#define NETPLAY_CYCLE_RESYNC_DRIFT_THRESHOLD 65536
+/* Only allow very small positive-cycle defers; larger waits hurt responsiveness. */
+#define NETPLAY_BEGIN_DEFER_MAX_CYCLES 4096
 
 #define MSG_HELLO 0x01
 #define MSG_MODE 0x02
@@ -1564,6 +1572,7 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 		bool deferForCycle = false;
 		bool calibratedCycleSync = false;
 		bool periodicCycleSync = false;
+		bool driftCycleSync = false;
 		struct GBASIONetPlayLockstepPendingBegin queuedBegin;
 		uint32_t beginSequence = 0;
 		uint32_t sampleWriteGeneration = 0;
@@ -1635,6 +1644,16 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 			}
 			targetCycle = beginStartCycle + driver->cycleSyncOffset;
 			untilStartCycle = targetCycle - localCycle;
+			if (driver->cycleSyncValid
+					&& (untilStartCycle > (int32_t) NETPLAY_CYCLE_RESYNC_DRIFT_THRESHOLD
+						|| untilStartCycle < -(int32_t) NETPLAY_CYCLE_RESYNC_DRIFT_THRESHOLD)) {
+				driver->cycleSyncOffset = localCycle - beginStartCycle;
+				driver->cycleSyncSequence = beginSequence;
+				targetCycle = beginStartCycle + driver->cycleSyncOffset;
+				untilStartCycle = targetCycle - localCycle;
+				calibratedCycleSync = true;
+				driftCycleSync = true;
+			}
 			beginTargetCycle = targetCycle;
 			beginCycleDelta = untilStartCycle;
 			beginCycleCompared = true;
@@ -1644,7 +1663,7 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 
 			if (calibratedCycleSync) {
 				NETPLAY_TRANSFER_TRACE("NetPlay lockstep: cycle sync calibrated reason=%s offset=%08X (local=%08X start=%08X seq=%u since=%u)",
-				     periodicCycleSync ? "periodic" : "initial",
+				     driftCycleSync ? "drift" : (periodicCycleSync ? "periodic" : "initial"),
 				     (unsigned) (uint32_t) (localCycle - beginStartCycle),
 				     (unsigned) (uint32_t) localCycle,
 				     (unsigned) (uint32_t) beginStartCycle,
@@ -1659,12 +1678,15 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 				     (unsigned) (uint32_t) targetCycle,
 				     (int) beginCycleDelta);
 			}
-			if (untilStartCycle > 0) {
+			if (untilStartCycle > 0 && untilStartCycle <= (int32_t) NETPLAY_BEGIN_DEFER_MAX_CYCLES) {
 				deferCycles = (uint32_t) untilStartCycle;
 				if (!deferCycles) {
 					deferCycles = 1;
 				}
 				deferForCycle = true;
+			} else if (untilStartCycle > (int32_t) NETPLAY_BEGIN_DEFER_MAX_CYCLES) {
+				NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u begin skip defer (delta=%d exceeds max=%u)",
+				     (unsigned) beginSequence, (int) untilStartCycle, (unsigned) NETPLAY_BEGIN_DEFER_MAX_CYCLES);
 			}
 #if NETPLAY_CLIENT_PACING_MODE != NETPLAY_CLIENT_PACING_NONE && NETPLAY_CLIENT_ENABLE_AHEAD_PACING
 			if (!deferForCycle && shouldLogBeginAttempt && playerId > 0 && beginCycleDelta < -NETPLAY_CLIENT_AHEAD_PACE_THRESHOLD_CYCLES) {
