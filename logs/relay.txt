@@ -1,0 +1,4192 @@
+01:13:32: Executing ':ApplicationKt.main()'…
+
+> Task :checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :compileKotlin UP-TO-DATE
+> Task :compileJava NO-SOURCE
+> Task :processResources UP-TO-DATE
+> Task :classes UP-TO-DATE
+
+> Task :ApplicationKt.main()
+NetPlay relay listening on 0.0.0.0:7777
+Client connected as player 0
+Client connected as player 1
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 1 started in mode 2 at cycle 815763201; expected=[0, 1] beginTargets=[1]
+Transfer 1: forwarding BEGIN to player 1
+Transfer 1: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 1: received data from player 1
+Transfer 1 finalized
+Transfer 1: forwarding RESULT to player 0
+Transfer 1: RESULT to player 0 sent
+Transfer 1: forwarding RESULT to player 1
+Transfer 1: RESULT to player 1 sent
+Transfer 1: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 1: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 1: received HARD_SYNC_ACK from player 1
+Transfer 1: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 1: HARD_SYNC_DONE to player 0 sent
+Transfer 1: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 2 started in mode 2 at cycle 816886784; expected=[0, 1] beginTargets=[1]
+Transfer 2: forwarding BEGIN to player 1
+Transfer 2: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 2: received data from player 1
+Transfer 2 finalized
+Transfer 2: forwarding RESULT to player 0
+Transfer 2: RESULT to player 0 sent
+Transfer 2: forwarding RESULT to player 1
+Transfer 2: RESULT to player 1 sent
+Transfer 2: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 2: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 2: received HARD_SYNC_ACK from player 1
+Transfer 2: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 2: HARD_SYNC_DONE to player 0 sent
+Transfer 2: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 3 started in mode 2 at cycle 818010373; expected=[0, 1] beginTargets=[1]
+Transfer 3: forwarding BEGIN to player 1
+Transfer 3: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 3: received data from player 1
+Transfer 3 finalized
+Transfer 3: forwarding RESULT to player 0
+Transfer 3: RESULT to player 0 sent
+Transfer 3: forwarding RESULT to player 1
+Transfer 3: RESULT to player 1 sent
+Transfer 3: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 3: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 3: received HARD_SYNC_ACK from player 1
+Transfer 3: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 3: HARD_SYNC_DONE to player 0 sent
+Transfer 3: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 4 started in mode 2 at cycle 819133953; expected=[0, 1] beginTargets=[1]
+Transfer 4: forwarding BEGIN to player 1
+Transfer 4: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 4: received data from player 1
+Transfer 4 finalized
+Transfer 4: forwarding RESULT to player 0
+Transfer 4: RESULT to player 0 sent
+Transfer 4: forwarding RESULT to player 1
+Transfer 4: RESULT to player 1 sent
+Transfer 4: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 4: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 4: received HARD_SYNC_ACK from player 0
+Transfer 4: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 4: HARD_SYNC_DONE to player 0 sent
+Transfer 4: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 5 started in mode 2 at cycle 819976641; expected=[0, 1] beginTargets=[1]
+Transfer 5: forwarding BEGIN to player 1
+Transfer 5: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 5: received data from player 1
+Transfer 5 finalized
+Transfer 5: forwarding RESULT to player 0
+Transfer 5: RESULT to player 0 sent
+Transfer 5: forwarding RESULT to player 1
+Transfer 5: RESULT to player 1 sent
+Transfer 5: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 5: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 5: received HARD_SYNC_ACK from player 0
+Transfer 5: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 5: HARD_SYNC_DONE to player 0 sent
+Transfer 5: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 6 started in mode 2 at cycle 821100224; expected=[0, 1] beginTargets=[1]
+Transfer 6: forwarding BEGIN to player 1
+Transfer 6: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 6: received data from player 1
+Transfer 6 finalized
+Transfer 6: forwarding RESULT to player 0
+Transfer 6: RESULT to player 0 sent
+Transfer 6: forwarding RESULT to player 1
+Transfer 6: RESULT to player 1 sent
+Transfer 6: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 6: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 6: received HARD_SYNC_ACK from player 0
+Transfer 6: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 6: HARD_SYNC_DONE to player 0 sent
+Transfer 6: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 7 started in mode 2 at cycle 822223809; expected=[0, 1] beginTargets=[1]
+Transfer 7: forwarding BEGIN to player 1
+Transfer 7: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 7: received data from player 1
+Transfer 7 finalized
+Transfer 7: forwarding RESULT to player 0
+Transfer 7: RESULT to player 0 sent
+Transfer 7: forwarding RESULT to player 1
+Transfer 7: RESULT to player 1 sent
+Transfer 7: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 7: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 7: received HARD_SYNC_ACK from player 1
+Transfer 7: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 7: HARD_SYNC_DONE to player 0 sent
+Transfer 7: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 8 started in mode 2 at cycle 823347397; expected=[0, 1] beginTargets=[1]
+Transfer 8: forwarding BEGIN to player 1
+Transfer 8: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 8: received data from player 1
+Transfer 8 finalized
+Transfer 8: forwarding RESULT to player 0
+Transfer 8: RESULT to player 0 sent
+Transfer 8: forwarding RESULT to player 1
+Transfer 8: RESULT to player 1 sent
+Transfer 8: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 8: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 8: received HARD_SYNC_ACK from player 1
+Transfer 8: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 8: HARD_SYNC_DONE to player 0 sent
+Transfer 8: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 9 started in mode 2 at cycle 824470981; expected=[0, 1] beginTargets=[1]
+Transfer 9: forwarding BEGIN to player 1
+Transfer 9: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 9: received data from player 1
+Transfer 9 finalized
+Transfer 9: forwarding RESULT to player 0
+Transfer 9: RESULT to player 0 sent
+Transfer 9: forwarding RESULT to player 1
+Transfer 9: RESULT to player 1 sent
+Transfer 9: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 9: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 9: received HARD_SYNC_ACK from player 1
+Transfer 9: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 9: HARD_SYNC_DONE to player 0 sent
+Transfer 9: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 10 started in mode 2 at cycle 825594560; expected=[0, 1] beginTargets=[1]
+Transfer 10: forwarding BEGIN to player 1
+Transfer 10: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 10: received data from player 1
+Transfer 10 finalized
+Transfer 10: forwarding RESULT to player 0
+Transfer 10: RESULT to player 0 sent
+Transfer 10: forwarding RESULT to player 1
+Transfer 10: RESULT to player 1 sent
+Transfer 10: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 10: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 10: received HARD_SYNC_ACK from player 0
+Transfer 10: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 10: HARD_SYNC_DONE to player 0 sent
+Transfer 10: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 11 started in mode 2 at cycle 826437251; expected=[0, 1] beginTargets=[1]
+Transfer 11: forwarding BEGIN to player 1
+Transfer 11: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 11: received data from player 1
+Transfer 11 finalized
+Transfer 11: forwarding RESULT to player 0
+Transfer 11: RESULT to player 0 sent
+Transfer 11: forwarding RESULT to player 1
+Transfer 11: RESULT to player 1 sent
+Transfer 11: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 11: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 11: received HARD_SYNC_ACK from player 0
+Transfer 11: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 11: HARD_SYNC_DONE to player 0 sent
+Transfer 11: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 12 started in mode 2 at cycle 827560832; expected=[0, 1] beginTargets=[1]
+Transfer 12: forwarding BEGIN to player 1
+Transfer 12: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 12: received data from player 1
+Transfer 12 finalized
+Transfer 12: forwarding RESULT to player 0
+Transfer 12: RESULT to player 0 sent
+Transfer 12: forwarding RESULT to player 1
+Transfer 12: RESULT to player 1 sent
+Transfer 12: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 12: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 12: received HARD_SYNC_ACK from player 0
+Transfer 12: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 12: HARD_SYNC_DONE to player 0 sent
+Transfer 12: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 13 started in mode 2 at cycle 828684416; expected=[0, 1] beginTargets=[1]
+Transfer 13: forwarding BEGIN to player 1
+Transfer 13: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 13: received data from player 1
+Transfer 13 finalized
+Transfer 13: forwarding RESULT to player 0
+Transfer 13: RESULT to player 0 sent
+Transfer 13: forwarding RESULT to player 1
+Transfer 13: RESULT to player 1 sent
+Transfer 13: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 13: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 13: received HARD_SYNC_ACK from player 1
+Transfer 13: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 13: HARD_SYNC_DONE to player 0 sent
+Transfer 13: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 14 started in mode 2 at cycle 829808001; expected=[0, 1] beginTargets=[1]
+Transfer 14: forwarding BEGIN to player 1
+Transfer 14: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 14: received data from player 1
+Transfer 14 finalized
+Transfer 14: forwarding RESULT to player 0
+Transfer 14: RESULT to player 0 sent
+Transfer 14: forwarding RESULT to player 1
+Transfer 14: RESULT to player 1 sent
+Transfer 14: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 14: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 14: received HARD_SYNC_ACK from player 1
+Transfer 14: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 14: HARD_SYNC_DONE to player 0 sent
+Transfer 14: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 15 started in mode 2 at cycle 830931585; expected=[0, 1] beginTargets=[1]
+Transfer 15: forwarding BEGIN to player 1
+Transfer 15: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 15: received data from player 1
+Transfer 15 finalized
+Transfer 15: forwarding RESULT to player 0
+Transfer 15: RESULT to player 0 sent
+Transfer 15: forwarding RESULT to player 1
+Transfer 15: RESULT to player 1 sent
+Transfer 15: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 15: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 15: received HARD_SYNC_ACK from player 1
+Transfer 15: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 15: HARD_SYNC_DONE to player 0 sent
+Transfer 15: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 16 started in mode 2 at cycle 832055168; expected=[0, 1] beginTargets=[1]
+Transfer 16: forwarding BEGIN to player 1
+Transfer 16: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 16: received data from player 1
+Transfer 16 finalized
+Transfer 16: forwarding RESULT to player 0
+Transfer 16: RESULT to player 0 sent
+Transfer 16: forwarding RESULT to player 1
+Transfer 16: RESULT to player 1 sent
+Transfer 16: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 16: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 16: received HARD_SYNC_ACK from player 1
+Transfer 16: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 16: HARD_SYNC_DONE to player 0 sent
+Transfer 16: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 17 started in mode 2 at cycle 833178756; expected=[0, 1] beginTargets=[1]
+Transfer 17: forwarding BEGIN to player 1
+Transfer 17: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 17: received data from player 1
+Transfer 17 finalized
+Transfer 17: forwarding RESULT to player 0
+Transfer 17: RESULT to player 0 sent
+Transfer 17: forwarding RESULT to player 1
+Transfer 17: RESULT to player 1 sent
+Transfer 17: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 17: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 17: received HARD_SYNC_ACK from player 0
+Transfer 17: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 17: HARD_SYNC_DONE to player 0 sent
+Transfer 17: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 18 started in mode 2 at cycle 834021440; expected=[0, 1] beginTargets=[1]
+Transfer 18: forwarding BEGIN to player 1
+Transfer 18: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 18: received data from player 1
+Transfer 18 finalized
+Transfer 18: forwarding RESULT to player 0
+Transfer 18: RESULT to player 0 sent
+Transfer 18: forwarding RESULT to player 1
+Transfer 18: RESULT to player 1 sent
+Transfer 18: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 18: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 18: received HARD_SYNC_ACK from player 0
+Transfer 18: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 18: HARD_SYNC_DONE to player 0 sent
+Transfer 18: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 19 started in mode 2 at cycle 835145028; expected=[0, 1] beginTargets=[1]
+Transfer 19: forwarding BEGIN to player 1
+Transfer 19: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 19: received data from player 1
+Transfer 19 finalized
+Transfer 19: forwarding RESULT to player 0
+Transfer 19: RESULT to player 0 sent
+Transfer 19: forwarding RESULT to player 1
+Transfer 19: RESULT to player 1 sent
+Transfer 19: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 19: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 19: received HARD_SYNC_ACK from player 1
+Transfer 19: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 19: HARD_SYNC_DONE to player 0 sent
+Transfer 19: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 20 started in mode 2 at cycle 836268613; expected=[0, 1] beginTargets=[1]
+Transfer 20: forwarding BEGIN to player 1
+Transfer 20: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 20: received data from player 1
+Transfer 20 finalized
+Transfer 20: forwarding RESULT to player 0
+Transfer 20: RESULT to player 0 sent
+Transfer 20: forwarding RESULT to player 1
+Transfer 20: RESULT to player 1 sent
+Transfer 20: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 20: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 20: received HARD_SYNC_ACK from player 1
+Transfer 20: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 20: HARD_SYNC_DONE to player 0 sent
+Transfer 20: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 21 started in mode 2 at cycle 837392193; expected=[0, 1] beginTargets=[1]
+Transfer 21: forwarding BEGIN to player 1
+Transfer 21: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 21: received data from player 1
+Transfer 21 finalized
+Transfer 21: forwarding RESULT to player 0
+Transfer 21: RESULT to player 0 sent
+Transfer 21: forwarding RESULT to player 1
+Transfer 21: RESULT to player 1 sent
+Transfer 21: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 21: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 21: received HARD_SYNC_ACK from player 1
+Transfer 21: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 21: HARD_SYNC_DONE to player 0 sent
+Transfer 21: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 22 started in mode 2 at cycle 838515776; expected=[0, 1] beginTargets=[1]
+Transfer 22: forwarding BEGIN to player 1
+Transfer 22: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 22: received data from player 1
+Transfer 22 finalized
+Transfer 22: forwarding RESULT to player 0
+Transfer 22: RESULT to player 0 sent
+Transfer 22: forwarding RESULT to player 1
+Transfer 22: RESULT to player 1 sent
+Transfer 22: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 22: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 22: received HARD_SYNC_ACK from player 0
+Transfer 22: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 22: HARD_SYNC_DONE to player 0 sent
+Transfer 22: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 23 started in mode 2 at cycle 839358465; expected=[0, 1] beginTargets=[1]
+Transfer 23: forwarding BEGIN to player 1
+Transfer 23: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 23: received data from player 1
+Transfer 23 finalized
+Transfer 23: forwarding RESULT to player 0
+Transfer 23: RESULT to player 0 sent
+Transfer 23: forwarding RESULT to player 1
+Transfer 23: RESULT to player 1 sent
+Transfer 23: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 23: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 23: received HARD_SYNC_ACK from player 0
+Transfer 23: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 23: HARD_SYNC_DONE to player 0 sent
+Transfer 23: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 24 started in mode 2 at cycle 840482049; expected=[0, 1] beginTargets=[1]
+Transfer 24: forwarding BEGIN to player 1
+Transfer 24: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 24: received data from player 1
+Transfer 24 finalized
+Transfer 24: forwarding RESULT to player 0
+Transfer 24: RESULT to player 0 sent
+Transfer 24: forwarding RESULT to player 1
+Transfer 24: RESULT to player 1 sent
+Transfer 24: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 24: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 24: received HARD_SYNC_ACK from player 0
+Transfer 24: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 24: HARD_SYNC_DONE to player 0 sent
+Transfer 24: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 25 started in mode 2 at cycle 841605638; expected=[0, 1] beginTargets=[1]
+Transfer 25: forwarding BEGIN to player 1
+Transfer 25: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 25: received data from player 1
+Transfer 25 finalized
+Transfer 25: forwarding RESULT to player 0
+Transfer 25: RESULT to player 0 sent
+Transfer 25: forwarding RESULT to player 1
+Transfer 25: RESULT to player 1 sent
+Transfer 25: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 25: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 25: received HARD_SYNC_ACK from player 1
+Transfer 25: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 25: HARD_SYNC_DONE to player 0 sent
+Transfer 25: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 26 started in mode 2 at cycle 842449075; expected=[0, 1] beginTargets=[1]
+Transfer 26: forwarding BEGIN to player 1
+Transfer 26: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 26: received data from player 1
+Transfer 26 finalized
+Transfer 26: forwarding RESULT to player 0
+Transfer 26: RESULT to player 0 sent
+Transfer 26: forwarding RESULT to player 1
+Transfer 26: RESULT to player 1 sent
+Transfer 26: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 26: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 26: received HARD_SYNC_ACK from player 0
+Transfer 26: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 26: HARD_SYNC_DONE to player 0 sent
+Transfer 26: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 27 started in mode 2 at cycle 843291011; expected=[0, 1] beginTargets=[1]
+Transfer 27: forwarding BEGIN to player 1
+Transfer 27: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 27: received data from player 1
+Transfer 27 finalized
+Transfer 27: forwarding RESULT to player 0
+Transfer 27: RESULT to player 0 sent
+Transfer 27: forwarding RESULT to player 1
+Transfer 27: RESULT to player 1 sent
+Transfer 27: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 27: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 27: received HARD_SYNC_ACK from player 1
+Transfer 27: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 27: HARD_SYNC_DONE to player 0 sent
+Transfer 27: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 28 started in mode 2 at cycle 844414598; expected=[0, 1] beginTargets=[1]
+Transfer 28: forwarding BEGIN to player 1
+Transfer 28: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 28: received data from player 1
+Transfer 28 finalized
+Transfer 28: forwarding RESULT to player 0
+Transfer 28: RESULT to player 0 sent
+Transfer 28: forwarding RESULT to player 1
+Transfer 28: RESULT to player 1 sent
+Transfer 28: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 28: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 28: received HARD_SYNC_ACK from player 0
+Transfer 28: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 28: HARD_SYNC_DONE to player 0 sent
+Transfer 28: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 29 started in mode 2 at cycle 845257284; expected=[0, 1] beginTargets=[1]
+Transfer 29: forwarding BEGIN to player 1
+Transfer 29: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 29: received data from player 1
+Transfer 29 finalized
+Transfer 29: forwarding RESULT to player 0
+Transfer 29: RESULT to player 0 sent
+Transfer 29: forwarding RESULT to player 1
+Transfer 29: RESULT to player 1 sent
+Transfer 29: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 29: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 29: received HARD_SYNC_ACK from player 0
+Transfer 29: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 29: HARD_SYNC_DONE to player 0 sent
+Transfer 29: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 30 started in mode 2 at cycle 846380864; expected=[0, 1] beginTargets=[1]
+Transfer 30: forwarding BEGIN to player 1
+Transfer 30: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 30: received data from player 1
+Transfer 30 finalized
+Transfer 30: forwarding RESULT to player 0
+Transfer 30: RESULT to player 0 sent
+Transfer 30: forwarding RESULT to player 1
+Transfer 30: RESULT to player 1 sent
+Transfer 30: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 30: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 30: received HARD_SYNC_ACK from player 0
+Transfer 30: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 30: HARD_SYNC_DONE to player 0 sent
+Transfer 30: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 31 started in mode 2 at cycle 847504450; expected=[0, 1] beginTargets=[1]
+Transfer 31: forwarding BEGIN to player 1
+Transfer 31: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 31: received data from player 1
+Transfer 31 finalized
+Transfer 31: forwarding RESULT to player 0
+Transfer 31: RESULT to player 0 sent
+Transfer 31: forwarding RESULT to player 1
+Transfer 31: RESULT to player 1 sent
+Transfer 31: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 31: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 31: received HARD_SYNC_ACK from player 0
+Transfer 31: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 31: HARD_SYNC_DONE to player 0 sent
+Transfer 31: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 32 started in mode 2 at cycle 848628034; expected=[0, 1] beginTargets=[1]
+Transfer 32: forwarding BEGIN to player 1
+Transfer 32: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 32: received data from player 1
+Transfer 32 finalized
+Transfer 32: forwarding RESULT to player 0
+Transfer 32: RESULT to player 0 sent
+Transfer 32: forwarding RESULT to player 1
+Transfer 32: RESULT to player 1 sent
+Transfer 32: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 32: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 32: received HARD_SYNC_ACK from player 1
+Transfer 32: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 32: HARD_SYNC_DONE to player 0 sent
+Transfer 32: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 33 started in mode 2 at cycle 849751617; expected=[0, 1] beginTargets=[1]
+Transfer 33: forwarding BEGIN to player 1
+Transfer 33: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 33: received data from player 1
+Transfer 33 finalized
+Transfer 33: forwarding RESULT to player 0
+Transfer 33: RESULT to player 0 sent
+Transfer 33: forwarding RESULT to player 1
+Transfer 33: RESULT to player 1 sent
+Transfer 33: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 33: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 33: received HARD_SYNC_ACK from player 1
+Transfer 33: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 33: HARD_SYNC_DONE to player 0 sent
+Transfer 33: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 34 started in mode 2 at cycle 850875201; expected=[0, 1] beginTargets=[1]
+Transfer 34: forwarding BEGIN to player 1
+Transfer 34: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 34: received data from player 1
+Transfer 34 finalized
+Transfer 34: forwarding RESULT to player 0
+Transfer 34: RESULT to player 0 sent
+Transfer 34: forwarding RESULT to player 1
+Transfer 34: RESULT to player 1 sent
+Transfer 34: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 34: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 34: received HARD_SYNC_ACK from player 0
+Transfer 34: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 34: HARD_SYNC_DONE to player 0 sent
+Transfer 34: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 35 started in mode 2 at cycle 851717889; expected=[0, 1] beginTargets=[1]
+Transfer 35: forwarding BEGIN to player 1
+Transfer 35: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 35: received data from player 1
+Transfer 35 finalized
+Transfer 35: forwarding RESULT to player 0
+Transfer 35: RESULT to player 0 sent
+Transfer 35: forwarding RESULT to player 1
+Transfer 35: RESULT to player 1 sent
+Transfer 35: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 35: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 35: received HARD_SYNC_ACK from player 0
+Transfer 35: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 35: HARD_SYNC_DONE to player 0 sent
+Transfer 35: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 36 started in mode 2 at cycle 852841478; expected=[0, 1] beginTargets=[1]
+Transfer 36: forwarding BEGIN to player 1
+Transfer 36: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 36: received data from player 1
+Transfer 36 finalized
+Transfer 36: forwarding RESULT to player 0
+Transfer 36: RESULT to player 0 sent
+Transfer 36: forwarding RESULT to player 1
+Transfer 36: RESULT to player 1 sent
+Transfer 36: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 36: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 36: received HARD_SYNC_ACK from player 0
+Transfer 36: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 36: HARD_SYNC_DONE to player 0 sent
+Transfer 36: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 37 started in mode 2 at cycle 853965057; expected=[0, 1] beginTargets=[1]
+Transfer 37: forwarding BEGIN to player 1
+Transfer 37: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 37: received data from player 1
+Transfer 37 finalized
+Transfer 37: forwarding RESULT to player 0
+Transfer 37: RESULT to player 0 sent
+Transfer 37: forwarding RESULT to player 1
+Transfer 37: RESULT to player 1 sent
+Transfer 37: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 37: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 37: received HARD_SYNC_ACK from player 0
+Transfer 37: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 37: HARD_SYNC_DONE to player 0 sent
+Transfer 37: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 38 started in mode 2 at cycle 855088640; expected=[0, 1] beginTargets=[1]
+Transfer 38: forwarding BEGIN to player 1
+Transfer 38: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 38: received data from player 1
+Transfer 38 finalized
+Transfer 38: forwarding RESULT to player 0
+Transfer 38: RESULT to player 0 sent
+Transfer 38: forwarding RESULT to player 1
+Transfer 38: RESULT to player 1 sent
+Transfer 38: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 38: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 38: received HARD_SYNC_ACK from player 1
+Transfer 38: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 38: HARD_SYNC_DONE to player 0 sent
+Transfer 38: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 39 started in mode 2 at cycle 856212225; expected=[0, 1] beginTargets=[1]
+Transfer 39: forwarding BEGIN to player 1
+Transfer 39: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 39: received data from player 1
+Transfer 39 finalized
+Transfer 39: forwarding RESULT to player 0
+Transfer 39: RESULT to player 0 sent
+Transfer 39: forwarding RESULT to player 1
+Transfer 39: RESULT to player 1 sent
+Transfer 39: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 39: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 39: received HARD_SYNC_ACK from player 1
+Transfer 39: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 39: HARD_SYNC_DONE to player 0 sent
+Transfer 39: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 40 started in mode 2 at cycle 857335809; expected=[0, 1] beginTargets=[1]
+Transfer 40: forwarding BEGIN to player 1
+Transfer 40: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 40: received data from player 1
+Transfer 40 finalized
+Transfer 40: forwarding RESULT to player 0
+Transfer 40: RESULT to player 0 sent
+Transfer 40: forwarding RESULT to player 1
+Transfer 40: RESULT to player 1 sent
+Transfer 40: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 40: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 40: received HARD_SYNC_ACK from player 0
+Transfer 40: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 40: HARD_SYNC_DONE to player 0 sent
+Transfer 40: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 41 started in mode 2 at cycle 858178496; expected=[0, 1] beginTargets=[1]
+Transfer 41: forwarding BEGIN to player 1
+Transfer 41: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 41: received data from player 1
+Transfer 41 finalized
+Transfer 41: forwarding RESULT to player 0
+Transfer 41: RESULT to player 0 sent
+Transfer 41: forwarding RESULT to player 1
+Transfer 41: RESULT to player 1 sent
+Transfer 41: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 41: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 41: received HARD_SYNC_ACK from player 0
+Transfer 41: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 41: HARD_SYNC_DONE to player 0 sent
+Transfer 41: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 42 started in mode 2 at cycle 859302083; expected=[0, 1] beginTargets=[1]
+Transfer 42: forwarding BEGIN to player 1
+Transfer 42: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 42: received data from player 1
+Transfer 42 finalized
+Transfer 42: forwarding RESULT to player 0
+Transfer 42: RESULT to player 0 sent
+Transfer 42: forwarding RESULT to player 1
+Transfer 42: RESULT to player 1 sent
+Transfer 42: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 42: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 42: received HARD_SYNC_ACK from player 0
+Transfer 42: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 42: HARD_SYNC_DONE to player 0 sent
+Transfer 42: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 43 started in mode 2 at cycle 860425665; expected=[0, 1] beginTargets=[1]
+Transfer 43: forwarding BEGIN to player 1
+Transfer 43: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 43: received data from player 1
+Transfer 43 finalized
+Transfer 43: forwarding RESULT to player 0
+Transfer 43: RESULT to player 0 sent
+Transfer 43: forwarding RESULT to player 1
+Transfer 43: RESULT to player 1 sent
+Transfer 43: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 43: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 43: received HARD_SYNC_ACK from player 0
+Transfer 43: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 43: HARD_SYNC_DONE to player 0 sent
+Transfer 43: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 44 started in mode 2 at cycle 861549249; expected=[0, 1] beginTargets=[1]
+Transfer 44: forwarding BEGIN to player 1
+Transfer 44: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 44: received data from player 1
+Transfer 44 finalized
+Transfer 44: forwarding RESULT to player 0
+Transfer 44: RESULT to player 0 sent
+Transfer 44: forwarding RESULT to player 1
+Transfer 44: RESULT to player 1 sent
+Transfer 44: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 44: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 44: received HARD_SYNC_ACK from player 1
+Transfer 44: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 44: HARD_SYNC_DONE to player 0 sent
+Transfer 44: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 45 started in mode 2 at cycle 862672833; expected=[0, 1] beginTargets=[1]
+Transfer 45: forwarding BEGIN to player 1
+Transfer 45: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 45: received data from player 1
+Transfer 45 finalized
+Transfer 45: forwarding RESULT to player 0
+Transfer 45: RESULT to player 0 sent
+Transfer 45: forwarding RESULT to player 1
+Transfer 45: RESULT to player 1 sent
+Transfer 45: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 45: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 45: received HARD_SYNC_ACK from player 1
+Transfer 45: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 45: HARD_SYNC_DONE to player 0 sent
+Transfer 45: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 46 started in mode 2 at cycle 863796416; expected=[0, 1] beginTargets=[1]
+Transfer 46: forwarding BEGIN to player 1
+Transfer 46: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 46: received data from player 1
+Transfer 46 finalized
+Transfer 46: forwarding RESULT to player 0
+Transfer 46: RESULT to player 0 sent
+Transfer 46: forwarding RESULT to player 1
+Transfer 46: RESULT to player 1 sent
+Transfer 46: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 46: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 46: received HARD_SYNC_ACK from player 0
+Transfer 46: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 46: HARD_SYNC_DONE to player 0 sent
+Transfer 46: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 47 started in mode 2 at cycle 864639104; expected=[0, 1] beginTargets=[1]
+Transfer 47: forwarding BEGIN to player 1
+Transfer 47: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 47: received data from player 1
+Transfer 47 finalized
+Transfer 47: forwarding RESULT to player 0
+Transfer 47: RESULT to player 0 sent
+Transfer 47: forwarding RESULT to player 1
+Transfer 47: RESULT to player 1 sent
+Transfer 47: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 47: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 47: received HARD_SYNC_ACK from player 0
+Transfer 47: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 47: HARD_SYNC_DONE to player 0 sent
+Transfer 47: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 48 started in mode 2 at cycle 865762689; expected=[0, 1] beginTargets=[1]
+Transfer 48: forwarding BEGIN to player 1
+Transfer 48: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 48: received data from player 1
+Transfer 48 finalized
+Transfer 48: forwarding RESULT to player 0
+Transfer 48: RESULT to player 0 sent
+Transfer 48: forwarding RESULT to player 1
+Transfer 48: RESULT to player 1 sent
+Transfer 48: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 48: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 48: received HARD_SYNC_ACK from player 0
+Transfer 48: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 48: HARD_SYNC_DONE to player 0 sent
+Transfer 48: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 49 started in mode 2 at cycle 866886272; expected=[0, 1] beginTargets=[1]
+Transfer 49: forwarding BEGIN to player 1
+Transfer 49: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 49: received data from player 1
+Transfer 49 finalized
+Transfer 49: forwarding RESULT to player 0
+Transfer 49: RESULT to player 0 sent
+Transfer 49: forwarding RESULT to player 1
+Transfer 49: RESULT to player 1 sent
+Transfer 49: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 49: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 49: received HARD_SYNC_ACK from player 0
+Transfer 49: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 49: HARD_SYNC_DONE to player 0 sent
+Transfer 49: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 50 started in mode 2 at cycle 868009856; expected=[0, 1] beginTargets=[1]
+Transfer 50: forwarding BEGIN to player 1
+Transfer 50: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 50: received data from player 1
+Transfer 50 finalized
+Transfer 50: forwarding RESULT to player 0
+Transfer 50: RESULT to player 0 sent
+Transfer 50: forwarding RESULT to player 1
+Transfer 50: RESULT to player 1 sent
+Transfer 50: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 50: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 50: received HARD_SYNC_ACK from player 1
+Transfer 50: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 50: HARD_SYNC_DONE to player 0 sent
+Transfer 50: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 51 started in mode 2 at cycle 869133440; expected=[0, 1] beginTargets=[1]
+Transfer 51: forwarding BEGIN to player 1
+Transfer 51: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 51: received data from player 1
+Transfer 51 finalized
+Transfer 51: forwarding RESULT to player 0
+Transfer 51: RESULT to player 0 sent
+Transfer 51: forwarding RESULT to player 1
+Transfer 51: RESULT to player 1 sent
+Transfer 51: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 51: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 51: received HARD_SYNC_ACK from player 1
+Transfer 51: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 51: HARD_SYNC_DONE to player 0 sent
+Transfer 51: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 52 started in mode 2 at cycle 870257024; expected=[0, 1] beginTargets=[1]
+Transfer 52: forwarding BEGIN to player 1
+Transfer 52: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 52: received data from player 1
+Transfer 52 finalized
+Transfer 52: forwarding RESULT to player 0
+Transfer 52: RESULT to player 0 sent
+Transfer 52: forwarding RESULT to player 1
+Transfer 52: RESULT to player 1 sent
+Transfer 52: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 52: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 52: received HARD_SYNC_ACK from player 0
+Transfer 52: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 52: HARD_SYNC_DONE to player 0 sent
+Transfer 52: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 53 started in mode 2 at cycle 870818820; expected=[0, 1] beginTargets=[1]
+Transfer 53: forwarding BEGIN to player 1
+Transfer 53: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 53: received data from player 1
+Transfer 53 finalized
+Transfer 53: forwarding RESULT to player 0
+Transfer 53: RESULT to player 0 sent
+Transfer 53: forwarding RESULT to player 1
+Transfer 53: RESULT to player 1 sent
+Transfer 53: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 53: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 53: received HARD_SYNC_ACK from player 0
+Transfer 53: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 53: HARD_SYNC_DONE to player 0 sent
+Transfer 53: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 54 started in mode 2 at cycle 871661504; expected=[0, 1] beginTargets=[1]
+Transfer 54: forwarding BEGIN to player 1
+Transfer 54: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 54: received data from player 1
+Transfer 54 finalized
+Transfer 54: forwarding RESULT to player 0
+Transfer 54: RESULT to player 0 sent
+Transfer 54: forwarding RESULT to player 1
+Transfer 54: RESULT to player 1 sent
+Transfer 54: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 54: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 54: received HARD_SYNC_ACK from player 0
+Transfer 54: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 54: HARD_SYNC_DONE to player 0 sent
+Transfer 54: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 55 started in mode 2 at cycle 872785089; expected=[0, 1] beginTargets=[1]
+Transfer 55: forwarding BEGIN to player 1
+Transfer 55: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 55: received data from player 1
+Transfer 55 finalized
+Transfer 55: forwarding RESULT to player 0
+Transfer 55: RESULT to player 0 sent
+Transfer 55: forwarding RESULT to player 1
+Transfer 55: RESULT to player 1 sent
+Transfer 55: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 55: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 55: received HARD_SYNC_ACK from player 0
+Transfer 55: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 55: HARD_SYNC_DONE to player 0 sent
+Transfer 55: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 56 started in mode 2 at cycle 873908672; expected=[0, 1] beginTargets=[1]
+Transfer 56: forwarding BEGIN to player 1
+Transfer 56: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 56: received data from player 1
+Transfer 56 finalized
+Transfer 56: forwarding RESULT to player 0
+Transfer 56: RESULT to player 0 sent
+Transfer 56: forwarding RESULT to player 1
+Transfer 56: RESULT to player 1 sent
+Transfer 56: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 56: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 56: received HARD_SYNC_ACK from player 0
+Transfer 56: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 56: HARD_SYNC_DONE to player 0 sent
+Transfer 56: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 57 started in mode 2 at cycle 875032256; expected=[0, 1] beginTargets=[1]
+Transfer 57: forwarding BEGIN to player 1
+Transfer 57: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 57: received data from player 1
+Transfer 57 finalized
+Transfer 57: forwarding RESULT to player 0
+Transfer 57: RESULT to player 0 sent
+Transfer 57: forwarding RESULT to player 1
+Transfer 57: RESULT to player 1 sent
+Transfer 57: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 57: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 57: received HARD_SYNC_ACK from player 1
+Transfer 57: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 57: HARD_SYNC_DONE to player 0 sent
+Transfer 57: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 58 started in mode 2 at cycle 876155846; expected=[0, 1] beginTargets=[1]
+Transfer 58: forwarding BEGIN to player 1
+Transfer 58: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 58: received data from player 1
+Transfer 58 finalized
+Transfer 58: forwarding RESULT to player 0
+Transfer 58: RESULT to player 0 sent
+Transfer 58: forwarding RESULT to player 1
+Transfer 58: RESULT to player 1 sent
+Transfer 58: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 58: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 58: received HARD_SYNC_ACK from player 1
+Transfer 58: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 58: HARD_SYNC_DONE to player 0 sent
+Transfer 58: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 59 started in mode 2 at cycle 877279431; expected=[0, 1] beginTargets=[1]
+Transfer 59: forwarding BEGIN to player 1
+Transfer 59: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 59: received data from player 1
+Transfer 59 finalized
+Transfer 59: forwarding RESULT to player 0
+Transfer 59: RESULT to player 0 sent
+Transfer 59: forwarding RESULT to player 1
+Transfer 59: RESULT to player 1 sent
+Transfer 59: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 59: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 59: received HARD_SYNC_ACK from player 0
+Transfer 59: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 59: HARD_SYNC_DONE to player 0 sent
+Transfer 59: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 60 started in mode 2 at cycle 878122113; expected=[0, 1] beginTargets=[1]
+Transfer 60: forwarding BEGIN to player 1
+Transfer 60: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 60: received data from player 1
+Transfer 60 finalized
+Transfer 60: forwarding RESULT to player 0
+Transfer 60: RESULT to player 0 sent
+Transfer 60: forwarding RESULT to player 1
+Transfer 60: RESULT to player 1 sent
+Transfer 60: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 60: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 60: received HARD_SYNC_ACK from player 0
+Transfer 60: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 60: HARD_SYNC_DONE to player 0 sent
+Transfer 60: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 61 started in mode 2 at cycle 879245697; expected=[0, 1] beginTargets=[1]
+Transfer 61: forwarding BEGIN to player 1
+Transfer 61: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 61: received data from player 1
+Transfer 61 finalized
+Transfer 61: forwarding RESULT to player 0
+Transfer 61: RESULT to player 0 sent
+Transfer 61: forwarding RESULT to player 1
+Transfer 61: RESULT to player 1 sent
+Transfer 61: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 61: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 61: received HARD_SYNC_ACK from player 0
+Transfer 61: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 61: HARD_SYNC_DONE to player 0 sent
+Transfer 61: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 62 started in mode 2 at cycle 880369282; expected=[0, 1] beginTargets=[1]
+Transfer 62: forwarding BEGIN to player 1
+Transfer 62: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 62: received data from player 1
+Transfer 62 finalized
+Transfer 62: forwarding RESULT to player 0
+Transfer 62: RESULT to player 0 sent
+Transfer 62: forwarding RESULT to player 1
+Transfer 62: RESULT to player 1 sent
+Transfer 62: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 62: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 62: received HARD_SYNC_ACK from player 0
+Transfer 62: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 62: HARD_SYNC_DONE to player 0 sent
+Transfer 62: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 63 started in mode 2 at cycle 881492865; expected=[0, 1] beginTargets=[1]
+Transfer 63: forwarding BEGIN to player 1
+Transfer 63: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 63: received data from player 1
+Transfer 63 finalized
+Transfer 63: forwarding RESULT to player 0
+Transfer 63: RESULT to player 0 sent
+Transfer 63: forwarding RESULT to player 1
+Transfer 63: RESULT to player 1 sent
+Transfer 63: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 63: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 63: received HARD_SYNC_ACK from player 1
+Transfer 63: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 63: HARD_SYNC_DONE to player 0 sent
+Transfer 63: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 64 started in mode 2 at cycle 882616451; expected=[0, 1] beginTargets=[1]
+Transfer 64: forwarding BEGIN to player 1
+Transfer 64: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 64: received data from player 1
+Transfer 64 finalized
+Transfer 64: forwarding RESULT to player 0
+Transfer 64: RESULT to player 0 sent
+Transfer 64: forwarding RESULT to player 1
+Transfer 64: RESULT to player 1 sent
+Transfer 64: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 64: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 64: received HARD_SYNC_ACK from player 1
+Transfer 64: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 64: HARD_SYNC_DONE to player 0 sent
+Transfer 64: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 65 started in mode 2 at cycle 883740032; expected=[0, 1] beginTargets=[1]
+Transfer 65: forwarding BEGIN to player 1
+Transfer 65: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 65: received data from player 1
+Transfer 65 finalized
+Transfer 65: forwarding RESULT to player 0
+Transfer 65: RESULT to player 0 sent
+Transfer 65: forwarding RESULT to player 1
+Transfer 65: RESULT to player 1 sent
+Transfer 65: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 65: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 65: received HARD_SYNC_ACK from player 0
+Transfer 65: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 65: HARD_SYNC_DONE to player 0 sent
+Transfer 65: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 66 started in mode 2 at cycle 884582721; expected=[0, 1] beginTargets=[1]
+Transfer 66: forwarding BEGIN to player 1
+Transfer 66: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 66: received data from player 1
+Transfer 66 finalized
+Transfer 66: forwarding RESULT to player 0
+Transfer 66: RESULT to player 0 sent
+Transfer 66: forwarding RESULT to player 1
+Transfer 66: RESULT to player 1 sent
+Transfer 66: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 66: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 66: received HARD_SYNC_ACK from player 0
+Transfer 66: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 66: HARD_SYNC_DONE to player 0 sent
+Transfer 66: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 67 started in mode 2 at cycle 885706305; expected=[0, 1] beginTargets=[1]
+Transfer 67: forwarding BEGIN to player 1
+Transfer 67: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 67: received data from player 1
+Transfer 67 finalized
+Transfer 67: forwarding RESULT to player 0
+Transfer 67: RESULT to player 0 sent
+Transfer 67: forwarding RESULT to player 1
+Transfer 67: RESULT to player 1 sent
+Transfer 67: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 67: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 67: received HARD_SYNC_ACK from player 0
+Transfer 67: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 67: HARD_SYNC_DONE to player 0 sent
+Transfer 67: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 68 started in mode 2 at cycle 886829888; expected=[0, 1] beginTargets=[1]
+Transfer 68: forwarding BEGIN to player 1
+Transfer 68: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 68: received data from player 1
+Transfer 68 finalized
+Transfer 68: forwarding RESULT to player 0
+Transfer 68: RESULT to player 0 sent
+Transfer 68: forwarding RESULT to player 1
+Transfer 68: RESULT to player 1 sent
+Transfer 68: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 68: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 68: received HARD_SYNC_ACK from player 0
+Transfer 68: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 68: HARD_SYNC_DONE to player 0 sent
+Transfer 68: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 69 started in mode 2 at cycle 887953472; expected=[0, 1] beginTargets=[1]
+Transfer 69: forwarding BEGIN to player 1
+Transfer 69: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 69: received data from player 1
+Transfer 69 finalized
+Transfer 69: forwarding RESULT to player 0
+Transfer 69: RESULT to player 0 sent
+Transfer 69: forwarding RESULT to player 1
+Transfer 69: RESULT to player 1 sent
+Transfer 69: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 69: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 69: received HARD_SYNC_ACK from player 1
+Transfer 69: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 69: HARD_SYNC_DONE to player 0 sent
+Transfer 69: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 70 started in mode 2 at cycle 889077056; expected=[0, 1] beginTargets=[1]
+Transfer 70: forwarding BEGIN to player 1
+Transfer 70: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 70: received data from player 1
+Transfer 70 finalized
+Transfer 70: forwarding RESULT to player 0
+Transfer 70: RESULT to player 0 sent
+Transfer 70: forwarding RESULT to player 1
+Transfer 70: RESULT to player 1 sent
+Transfer 70: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 70: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 70: received HARD_SYNC_ACK from player 1
+Transfer 70: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 70: HARD_SYNC_DONE to player 0 sent
+Transfer 70: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 71 started in mode 2 at cycle 890200640; expected=[0, 1] beginTargets=[1]
+Transfer 71: forwarding BEGIN to player 1
+Transfer 71: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 71: received data from player 1
+Transfer 71 finalized
+Transfer 71: forwarding RESULT to player 0
+Transfer 71: RESULT to player 0 sent
+Transfer 71: forwarding RESULT to player 1
+Transfer 71: RESULT to player 1 sent
+Transfer 71: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 71: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 71: received HARD_SYNC_ACK from player 0
+Transfer 71: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 71: HARD_SYNC_DONE to player 0 sent
+Transfer 71: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 72 started in mode 2 at cycle 890762439; expected=[0, 1] beginTargets=[1]
+Transfer 72: forwarding BEGIN to player 1
+Transfer 72: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 72: received data from player 1
+Transfer 72 finalized
+Transfer 72: forwarding RESULT to player 0
+Transfer 72: RESULT to player 0 sent
+Transfer 72: forwarding RESULT to player 1
+Transfer 72: RESULT to player 1 sent
+Transfer 72: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 72: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 72: received HARD_SYNC_ACK from player 0
+Transfer 72: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 72: HARD_SYNC_DONE to player 0 sent
+Transfer 72: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 73 started in mode 2 at cycle 891605123; expected=[0, 1] beginTargets=[1]
+Transfer 73: forwarding BEGIN to player 1
+Transfer 73: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 73: received data from player 1
+Transfer 73 finalized
+Transfer 73: forwarding RESULT to player 0
+Transfer 73: RESULT to player 0 sent
+Transfer 73: forwarding RESULT to player 1
+Transfer 73: RESULT to player 1 sent
+Transfer 73: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 73: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 73: received HARD_SYNC_ACK from player 0
+Transfer 73: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 73: HARD_SYNC_DONE to player 0 sent
+Transfer 73: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 74 started in mode 2 at cycle 892728704; expected=[0, 1] beginTargets=[1]
+Transfer 74: forwarding BEGIN to player 1
+Transfer 74: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 74: received data from player 1
+Transfer 74 finalized
+Transfer 74: forwarding RESULT to player 0
+Transfer 74: RESULT to player 0 sent
+Transfer 74: forwarding RESULT to player 1
+Transfer 74: RESULT to player 1 sent
+Transfer 74: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 74: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 74: received HARD_SYNC_ACK from player 0
+Transfer 74: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 74: HARD_SYNC_DONE to player 0 sent
+Transfer 74: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 75 started in mode 2 at cycle 893852288; expected=[0, 1] beginTargets=[1]
+Transfer 75: forwarding BEGIN to player 1
+Transfer 75: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 75: received data from player 1
+Transfer 75 finalized
+Transfer 75: forwarding RESULT to player 0
+Transfer 75: RESULT to player 0 sent
+Transfer 75: forwarding RESULT to player 1
+Transfer 75: RESULT to player 1 sent
+Transfer 75: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 75: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 75: received HARD_SYNC_ACK from player 1
+Transfer 75: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 75: HARD_SYNC_DONE to player 0 sent
+Transfer 75: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 76 started in mode 2 at cycle 894975873; expected=[0, 1] beginTargets=[1]
+Transfer 76: forwarding BEGIN to player 1
+Transfer 76: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 76: received data from player 1
+Transfer 76 finalized
+Transfer 76: forwarding RESULT to player 0
+Transfer 76: RESULT to player 0 sent
+Transfer 76: forwarding RESULT to player 1
+Transfer 76: RESULT to player 1 sent
+Transfer 76: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 76: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 76: received HARD_SYNC_ACK from player 1
+Transfer 76: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 76: HARD_SYNC_DONE to player 0 sent
+Transfer 76: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 77 started in mode 2 at cycle 896099457; expected=[0, 1] beginTargets=[1]
+Transfer 77: forwarding BEGIN to player 1
+Transfer 77: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 77: received data from player 1
+Transfer 77 finalized
+Transfer 77: forwarding RESULT to player 0
+Transfer 77: RESULT to player 0 sent
+Transfer 77: forwarding RESULT to player 1
+Transfer 77: RESULT to player 1 sent
+Transfer 77: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 77: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 77: received HARD_SYNC_ACK from player 0
+Transfer 77: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 77: HARD_SYNC_DONE to player 0 sent
+Transfer 77: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 78 started in mode 2 at cycle 896661254; expected=[0, 1] beginTargets=[1]
+Transfer 78: forwarding BEGIN to player 1
+Transfer 78: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 78: received data from player 1
+Transfer 78 finalized
+Transfer 78: forwarding RESULT to player 0
+Transfer 78: RESULT to player 0 sent
+Transfer 78: forwarding RESULT to player 1
+Transfer 78: RESULT to player 1 sent
+Transfer 78: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 78: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 78: received HARD_SYNC_ACK from player 0
+Transfer 78: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 78: HARD_SYNC_DONE to player 0 sent
+Transfer 78: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 79 started in mode 2 at cycle 897223040; expected=[0, 1] beginTargets=[1]
+Transfer 79: forwarding BEGIN to player 1
+Transfer 79: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 79: received data from player 1
+Transfer 79 finalized
+Transfer 79: forwarding RESULT to player 0
+Transfer 79: RESULT to player 0 sent
+Transfer 79: forwarding RESULT to player 1
+Transfer 79: RESULT to player 1 sent
+Transfer 79: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 79: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 79: received HARD_SYNC_ACK from player 0
+Transfer 79: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 79: HARD_SYNC_DONE to player 0 sent
+Transfer 79: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 80 started in mode 2 at cycle 898065728; expected=[0, 1] beginTargets=[1]
+Transfer 80: forwarding BEGIN to player 1
+Transfer 80: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 80: received data from player 1
+Transfer 80 finalized
+Transfer 80: forwarding RESULT to player 0
+Transfer 80: RESULT to player 0 sent
+Transfer 80: forwarding RESULT to player 1
+Transfer 80: RESULT to player 1 sent
+Transfer 80: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 80: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 80: received HARD_SYNC_ACK from player 0
+Transfer 80: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 80: HARD_SYNC_DONE to player 0 sent
+Transfer 80: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 81 started in mode 2 at cycle 899189313; expected=[0, 1] beginTargets=[1]
+Transfer 81: forwarding BEGIN to player 1
+Transfer 81: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 81: received data from player 1
+Transfer 81 finalized
+Transfer 81: forwarding RESULT to player 0
+Transfer 81: RESULT to player 0 sent
+Transfer 81: forwarding RESULT to player 1
+Transfer 81: RESULT to player 1 sent
+Transfer 81: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 81: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 81: received HARD_SYNC_ACK from player 0
+Transfer 81: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 81: HARD_SYNC_DONE to player 0 sent
+Transfer 81: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 82 started in mode 2 at cycle 900312896; expected=[0, 1] beginTargets=[1]
+Transfer 82: forwarding BEGIN to player 1
+Transfer 82: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 82: received data from player 1
+Transfer 82 finalized
+Transfer 82: forwarding RESULT to player 0
+Transfer 82: RESULT to player 0 sent
+Transfer 82: forwarding RESULT to player 1
+Transfer 82: RESULT to player 1 sent
+Transfer 82: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 82: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 82: received HARD_SYNC_ACK from player 0
+Transfer 82: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 82: HARD_SYNC_DONE to player 0 sent
+Transfer 82: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 83 started in mode 2 at cycle 901436486; expected=[0, 1] beginTargets=[1]
+Transfer 83: forwarding BEGIN to player 1
+Transfer 83: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 83: received data from player 1
+Transfer 83 finalized
+Transfer 83: forwarding RESULT to player 0
+Transfer 83: RESULT to player 0 sent
+Transfer 83: forwarding RESULT to player 1
+Transfer 83: RESULT to player 1 sent
+Transfer 83: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 83: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 83: received HARD_SYNC_ACK from player 1
+Transfer 83: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 83: HARD_SYNC_DONE to player 0 sent
+Transfer 83: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 84 started in mode 2 at cycle 902560069; expected=[0, 1] beginTargets=[1]
+Transfer 84: forwarding BEGIN to player 1
+Transfer 84: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 84: received data from player 1
+Transfer 84 finalized
+Transfer 84: forwarding RESULT to player 0
+Transfer 84: RESULT to player 0 sent
+Transfer 84: forwarding RESULT to player 1
+Transfer 84: RESULT to player 1 sent
+Transfer 84: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 84: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 84: received HARD_SYNC_ACK from player 0
+Transfer 84: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 84: HARD_SYNC_DONE to player 0 sent
+Transfer 84: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 85 started in mode 2 at cycle 903121856; expected=[0, 1] beginTargets=[1]
+Transfer 85: forwarding BEGIN to player 1
+Transfer 85: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 85: received data from player 1
+Transfer 85 finalized
+Transfer 85: forwarding RESULT to player 0
+Transfer 85: RESULT to player 0 sent
+Transfer 85: forwarding RESULT to player 1
+Transfer 85: RESULT to player 1 sent
+Transfer 85: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 85: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 85: received HARD_SYNC_ACK from player 0
+Transfer 85: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 85: HARD_SYNC_DONE to player 0 sent
+Transfer 85: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 86 started in mode 2 at cycle 903683650; expected=[0, 1] beginTargets=[1]
+Transfer 86: forwarding BEGIN to player 1
+Transfer 86: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 86: received data from player 1
+Transfer 86 finalized
+Transfer 86: forwarding RESULT to player 0
+Transfer 86: RESULT to player 0 sent
+Transfer 86: forwarding RESULT to player 1
+Transfer 86: RESULT to player 1 sent
+Transfer 86: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 86: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 86: received HARD_SYNC_ACK from player 0
+Transfer 86: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 86: HARD_SYNC_DONE to player 0 sent
+Transfer 86: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 87 started in mode 2 at cycle 904526337; expected=[0, 1] beginTargets=[1]
+Transfer 87: forwarding BEGIN to player 1
+Transfer 87: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 87: received data from player 1
+Transfer 87 finalized
+Transfer 87: forwarding RESULT to player 0
+Transfer 87: RESULT to player 0 sent
+Transfer 87: forwarding RESULT to player 1
+Transfer 87: RESULT to player 1 sent
+Transfer 87: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 87: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 87: received HARD_SYNC_ACK from player 0
+Transfer 87: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 87: HARD_SYNC_DONE to player 0 sent
+Transfer 87: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 88 started in mode 2 at cycle 905649926; expected=[0, 1] beginTargets=[1]
+Transfer 88: forwarding BEGIN to player 1
+Transfer 88: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 88: received data from player 1
+Transfer 88 finalized
+Transfer 88: forwarding RESULT to player 0
+Transfer 88: RESULT to player 0 sent
+Transfer 88: forwarding RESULT to player 1
+Transfer 88: RESULT to player 1 sent
+Transfer 88: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 88: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 88: received HARD_SYNC_ACK from player 0
+Transfer 88: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 88: HARD_SYNC_DONE to player 0 sent
+Transfer 88: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 89 started in mode 2 at cycle 906773506; expected=[0, 1] beginTargets=[1]
+Transfer 89: forwarding BEGIN to player 1
+Transfer 89: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 89: received data from player 1
+Transfer 89 finalized
+Transfer 89: forwarding RESULT to player 0
+Transfer 89: RESULT to player 0 sent
+Transfer 89: forwarding RESULT to player 1
+Transfer 89: RESULT to player 1 sent
+Transfer 89: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 89: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 89: received HARD_SYNC_ACK from player 0
+Transfer 89: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 89: HARD_SYNC_DONE to player 0 sent
+Transfer 89: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 90 started in mode 2 at cycle 907897093; expected=[0, 1] beginTargets=[1]
+Transfer 90: forwarding BEGIN to player 1
+Transfer 90: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 90: received data from player 1
+Transfer 90 finalized
+Transfer 90: forwarding RESULT to player 0
+Transfer 90: RESULT to player 0 sent
+Transfer 90: forwarding RESULT to player 1
+Transfer 90: RESULT to player 1 sent
+Transfer 90: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 90: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 90: received HARD_SYNC_ACK from player 1
+Transfer 90: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 90: HARD_SYNC_DONE to player 0 sent
+Transfer 90: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 91 started in mode 2 at cycle 909020673; expected=[0, 1] beginTargets=[1]
+Transfer 91: forwarding BEGIN to player 1
+Transfer 91: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 91: received data from player 1
+Transfer 91 finalized
+Transfer 91: forwarding RESULT to player 0
+Transfer 91: RESULT to player 0 sent
+Transfer 91: forwarding RESULT to player 1
+Transfer 91: RESULT to player 1 sent
+Transfer 91: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 91: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 91: received HARD_SYNC_ACK from player 1
+Transfer 91: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 91: HARD_SYNC_DONE to player 0 sent
+Transfer 91: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 92 started in mode 2 at cycle 910144256; expected=[0, 1] beginTargets=[1]
+Transfer 92: forwarding BEGIN to player 1
+Transfer 92: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 92: received data from player 1
+Transfer 92 finalized
+Transfer 92: forwarding RESULT to player 0
+Transfer 92: RESULT to player 0 sent
+Transfer 92: forwarding RESULT to player 1
+Transfer 92: RESULT to player 1 sent
+Transfer 92: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 92: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 92: received HARD_SYNC_ACK from player 0
+Transfer 92: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 92: HARD_SYNC_DONE to player 0 sent
+Transfer 92: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 93 started in mode 2 at cycle 910706049; expected=[0, 1] beginTargets=[1]
+Transfer 93: forwarding BEGIN to player 1
+Transfer 93: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 93: received data from player 1
+Transfer 93 finalized
+Transfer 93: forwarding RESULT to player 0
+Transfer 93: RESULT to player 0 sent
+Transfer 93: forwarding RESULT to player 1
+Transfer 93: RESULT to player 1 sent
+Transfer 93: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 93: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 93: received HARD_SYNC_ACK from player 0
+Transfer 93: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 93: HARD_SYNC_DONE to player 0 sent
+Transfer 93: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 94 started in mode 2 at cycle 911548738; expected=[0, 1] beginTargets=[1]
+Transfer 94: forwarding BEGIN to player 1
+Transfer 94: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 94: received data from player 1
+Transfer 94 finalized
+Transfer 94: forwarding RESULT to player 0
+Transfer 94: RESULT to player 0 sent
+Transfer 94: forwarding RESULT to player 1
+Transfer 94: RESULT to player 1 sent
+Transfer 94: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 94: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 94: received HARD_SYNC_ACK from player 0
+Transfer 94: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 94: HARD_SYNC_DONE to player 0 sent
+Transfer 94: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 95 started in mode 2 at cycle 912672321; expected=[0, 1] beginTargets=[1]
+Transfer 95: forwarding BEGIN to player 1
+Transfer 95: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 95: received data from player 1
+Transfer 95 finalized
+Transfer 95: forwarding RESULT to player 0
+Transfer 95: RESULT to player 0 sent
+Transfer 95: forwarding RESULT to player 1
+Transfer 95: RESULT to player 1 sent
+Transfer 95: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 95: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 95: received HARD_SYNC_ACK from player 0
+Transfer 95: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 95: HARD_SYNC_DONE to player 0 sent
+Transfer 95: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 96 started in mode 2 at cycle 913795910; expected=[0, 1] beginTargets=[1]
+Transfer 96: forwarding BEGIN to player 1
+Transfer 96: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 96: received data from player 1
+Transfer 96 finalized
+Transfer 96: forwarding RESULT to player 0
+Transfer 96: RESULT to player 0 sent
+Transfer 96: forwarding RESULT to player 1
+Transfer 96: RESULT to player 1 sent
+Transfer 96: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 96: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 96: received HARD_SYNC_ACK from player 1
+Transfer 96: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 96: HARD_SYNC_DONE to player 0 sent
+Transfer 96: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 97 started in mode 2 at cycle 914919491; expected=[0, 1] beginTargets=[1]
+Transfer 97: forwarding BEGIN to player 1
+Transfer 97: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 97: received data from player 1
+Transfer 97 finalized
+Transfer 97: forwarding RESULT to player 0
+Transfer 97: RESULT to player 0 sent
+Transfer 97: forwarding RESULT to player 1
+Transfer 97: RESULT to player 1 sent
+Transfer 97: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 97: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 97: received HARD_SYNC_ACK from player 1
+Transfer 97: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 97: HARD_SYNC_DONE to player 0 sent
+Transfer 97: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 98 started in mode 2 at cycle 916043076; expected=[0, 1] beginTargets=[1]
+Transfer 98: forwarding BEGIN to player 1
+Transfer 98: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 98: received data from player 1
+Transfer 98 finalized
+Transfer 98: forwarding RESULT to player 0
+Transfer 98: RESULT to player 0 sent
+Transfer 98: forwarding RESULT to player 1
+Transfer 98: RESULT to player 1 sent
+Transfer 98: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 98: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 98: received HARD_SYNC_ACK from player 0
+Transfer 98: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 98: HARD_SYNC_DONE to player 0 sent
+Transfer 98: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 99 started in mode 2 at cycle 916604870; expected=[0, 1] beginTargets=[1]
+Transfer 99: forwarding BEGIN to player 1
+Transfer 99: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 99: received data from player 1
+Transfer 99 finalized
+Transfer 99: forwarding RESULT to player 0
+Transfer 99: RESULT to player 0 sent
+Transfer 99: forwarding RESULT to player 1
+Transfer 99: RESULT to player 1 sent
+Transfer 99: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 99: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 99: received HARD_SYNC_ACK from player 0
+Transfer 99: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 99: HARD_SYNC_DONE to player 0 sent
+Transfer 99: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 100 started in mode 2 at cycle 917447553; expected=[0, 1] beginTargets=[1]
+Transfer 100: forwarding BEGIN to player 1
+Transfer 100: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 100: received data from player 1
+Transfer 100 finalized
+Transfer 100: forwarding RESULT to player 0
+Transfer 100: RESULT to player 0 sent
+Transfer 100: forwarding RESULT to player 1
+Transfer 100: RESULT to player 1 sent
+Transfer 100: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 100: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 100: received HARD_SYNC_ACK from player 0
+Transfer 100: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 100: HARD_SYNC_DONE to player 0 sent
+Transfer 100: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 101 started in mode 2 at cycle 918571136; expected=[0, 1] beginTargets=[1]
+Transfer 101: forwarding BEGIN to player 1
+Transfer 101: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 101: received data from player 1
+Transfer 101 finalized
+Transfer 101: forwarding RESULT to player 0
+Transfer 101: RESULT to player 0 sent
+Transfer 101: forwarding RESULT to player 1
+Transfer 101: RESULT to player 1 sent
+Transfer 101: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 101: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 101: received HARD_SYNC_ACK from player 0
+Transfer 101: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 101: HARD_SYNC_DONE to player 0 sent
+Transfer 101: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 102 started in mode 2 at cycle 919694720; expected=[0, 1] beginTargets=[1]
+Transfer 102: forwarding BEGIN to player 1
+Transfer 102: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 102: received data from player 1
+Transfer 102 finalized
+Transfer 102: forwarding RESULT to player 0
+Transfer 102: RESULT to player 0 sent
+Transfer 102: forwarding RESULT to player 1
+Transfer 102: RESULT to player 1 sent
+Transfer 102: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 102: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 102: received HARD_SYNC_ACK from player 0
+Transfer 102: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 102: HARD_SYNC_DONE to player 0 sent
+Transfer 102: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 103 started in mode 2 at cycle 920818305; expected=[0, 1] beginTargets=[1]
+Transfer 103: forwarding BEGIN to player 1
+Transfer 103: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 103: received data from player 1
+Transfer 103 finalized
+Transfer 103: forwarding RESULT to player 0
+Transfer 103: RESULT to player 0 sent
+Transfer 103: forwarding RESULT to player 1
+Transfer 103: RESULT to player 1 sent
+Transfer 103: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 103: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 103: received HARD_SYNC_ACK from player 1
+Transfer 103: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 103: HARD_SYNC_DONE to player 0 sent
+Transfer 103: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 104 started in mode 2 at cycle 921941888; expected=[0, 1] beginTargets=[1]
+Transfer 104: forwarding BEGIN to player 1
+Transfer 104: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 104: received data from player 1
+Transfer 104 finalized
+Transfer 104: forwarding RESULT to player 0
+Transfer 104: RESULT to player 0 sent
+Transfer 104: forwarding RESULT to player 1
+Transfer 104: RESULT to player 1 sent
+Transfer 104: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 104: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 104: received HARD_SYNC_ACK from player 0
+Transfer 104: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 104: HARD_SYNC_DONE to player 0 sent
+Transfer 104: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 105 started in mode 2 at cycle 922503685; expected=[0, 1] beginTargets=[1]
+Transfer 105: forwarding BEGIN to player 1
+Transfer 105: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 105: received data from player 1
+Transfer 105 finalized
+Transfer 105: forwarding RESULT to player 0
+Transfer 105: RESULT to player 0 sent
+Transfer 105: forwarding RESULT to player 1
+Transfer 105: RESULT to player 1 sent
+Transfer 105: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 105: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 105: received HARD_SYNC_ACK from player 0
+Transfer 105: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 105: HARD_SYNC_DONE to player 0 sent
+Transfer 105: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 106 started in mode 2 at cycle 923346368; expected=[0, 1] beginTargets=[1]
+Transfer 106: forwarding BEGIN to player 1
+Transfer 106: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 106: received data from player 1
+Transfer 106 finalized
+Transfer 106: forwarding RESULT to player 0
+Transfer 106: RESULT to player 0 sent
+Transfer 106: forwarding RESULT to player 1
+Transfer 106: RESULT to player 1 sent
+Transfer 106: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 106: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 106: received HARD_SYNC_ACK from player 0
+Transfer 106: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 106: HARD_SYNC_DONE to player 0 sent
+Transfer 106: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 107 started in mode 2 at cycle 924189808; expected=[0, 1] beginTargets=[1]
+Transfer 107: forwarding BEGIN to player 1
+Transfer 107: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 107: received data from player 1
+Transfer 107 finalized
+Transfer 107: forwarding RESULT to player 0
+Transfer 107: RESULT to player 0 sent
+Transfer 107: forwarding RESULT to player 1
+Transfer 107: RESULT to player 1 sent
+Transfer 107: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 107: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 107: received HARD_SYNC_ACK from player 0
+Transfer 107: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 107: HARD_SYNC_DONE to player 0 sent
+Transfer 107: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 108 started in mode 2 at cycle 925031745; expected=[0, 1] beginTargets=[1]
+Transfer 108: forwarding BEGIN to player 1
+Transfer 108: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 108: received data from player 1
+Transfer 108 finalized
+Transfer 108: forwarding RESULT to player 0
+Transfer 108: RESULT to player 0 sent
+Transfer 108: forwarding RESULT to player 1
+Transfer 108: RESULT to player 1 sent
+Transfer 108: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 108: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 108: received HARD_SYNC_ACK from player 0
+Transfer 108: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 108: HARD_SYNC_DONE to player 0 sent
+Transfer 108: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 109 started in mode 2 at cycle 926155331; expected=[0, 1] beginTargets=[1]
+Transfer 109: forwarding BEGIN to player 1
+Transfer 109: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 109: received data from player 1
+Transfer 109 finalized
+Transfer 109: forwarding RESULT to player 0
+Transfer 109: RESULT to player 0 sent
+Transfer 109: forwarding RESULT to player 1
+Transfer 109: RESULT to player 1 sent
+Transfer 109: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 109: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 109: received HARD_SYNC_ACK from player 0
+Transfer 109: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 109: HARD_SYNC_DONE to player 0 sent
+Transfer 109: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 110 started in mode 2 at cycle 927278912; expected=[0, 1] beginTargets=[1]
+Transfer 110: forwarding BEGIN to player 1
+Transfer 110: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 110: received data from player 1
+Transfer 110 finalized
+Transfer 110: forwarding RESULT to player 0
+Transfer 110: RESULT to player 0 sent
+Transfer 110: forwarding RESULT to player 1
+Transfer 110: RESULT to player 1 sent
+Transfer 110: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 110: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 110: received HARD_SYNC_ACK from player 1
+Transfer 110: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 110: HARD_SYNC_DONE to player 0 sent
+Transfer 110: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 111 started in mode 2 at cycle 928402496; expected=[0, 1] beginTargets=[1]
+Transfer 111: forwarding BEGIN to player 1
+Transfer 111: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 111: received data from player 1
+Transfer 111 finalized
+Transfer 111: forwarding RESULT to player 0
+Transfer 111: RESULT to player 0 sent
+Transfer 111: forwarding RESULT to player 1
+Transfer 111: RESULT to player 1 sent
+Transfer 111: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 111: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 111: received HARD_SYNC_ACK from player 1
+Transfer 111: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 111: HARD_SYNC_DONE to player 0 sent
+Transfer 111: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 112 started in mode 2 at cycle 929526081; expected=[0, 1] beginTargets=[1]
+Transfer 112: forwarding BEGIN to player 1
+Transfer 112: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 112: received data from player 1
+Transfer 112 finalized
+Transfer 112: forwarding RESULT to player 0
+Transfer 112: RESULT to player 0 sent
+Transfer 112: forwarding RESULT to player 1
+Transfer 112: RESULT to player 1 sent
+Transfer 112: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 112: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 112: received HARD_SYNC_ACK from player 0
+Transfer 112: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 112: HARD_SYNC_DONE to player 0 sent
+Transfer 112: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 113 started in mode 2 at cycle 930087876; expected=[0, 1] beginTargets=[1]
+Transfer 113: forwarding BEGIN to player 1
+Transfer 113: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 113: received data from player 1
+Transfer 113 finalized
+Transfer 113: forwarding RESULT to player 0
+Transfer 113: RESULT to player 0 sent
+Transfer 113: forwarding RESULT to player 1
+Transfer 113: RESULT to player 1 sent
+Transfer 113: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 113: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 113: received HARD_SYNC_ACK from player 0
+Transfer 113: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 113: HARD_SYNC_DONE to player 0 sent
+Transfer 113: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 114 started in mode 2 at cycle 930649666; expected=[0, 1] beginTargets=[1]
+Transfer 114: forwarding BEGIN to player 1
+Transfer 114: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 114: received data from player 1
+Transfer 114 finalized
+Transfer 114: forwarding RESULT to player 0
+Transfer 114: RESULT to player 0 sent
+Transfer 114: forwarding RESULT to player 1
+Transfer 114: RESULT to player 1 sent
+Transfer 114: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 114: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 114: received HARD_SYNC_ACK from player 0
+Transfer 114: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 114: HARD_SYNC_DONE to player 0 sent
+Transfer 114: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 115 started in mode 2 at cycle 931492353; expected=[0, 1] beginTargets=[1]
+Transfer 115: forwarding BEGIN to player 1
+Transfer 115: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 115: received data from player 1
+Transfer 115 finalized
+Transfer 115: forwarding RESULT to player 0
+Transfer 115: RESULT to player 0 sent
+Transfer 115: forwarding RESULT to player 1
+Transfer 115: RESULT to player 1 sent
+Transfer 115: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 115: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 115: received HARD_SYNC_ACK from player 0
+Transfer 115: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 115: HARD_SYNC_DONE to player 0 sent
+Transfer 115: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 116 started in mode 2 at cycle 932615937; expected=[0, 1] beginTargets=[1]
+Transfer 116: forwarding BEGIN to player 1
+Transfer 116: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 116: received data from player 1
+Transfer 116 finalized
+Transfer 116: forwarding RESULT to player 0
+Transfer 116: RESULT to player 0 sent
+Transfer 116: forwarding RESULT to player 1
+Transfer 116: RESULT to player 1 sent
+Transfer 116: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 116: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 116: received HARD_SYNC_ACK from player 0
+Transfer 116: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 116: HARD_SYNC_DONE to player 0 sent
+Transfer 116: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 117 started in mode 2 at cycle 933739526; expected=[0, 1] beginTargets=[1]
+Transfer 117: forwarding BEGIN to player 1
+Transfer 117: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 117: received data from player 1
+Transfer 117 finalized
+Transfer 117: forwarding RESULT to player 0
+Transfer 117: RESULT to player 0 sent
+Transfer 117: forwarding RESULT to player 1
+Transfer 117: RESULT to player 1 sent
+Transfer 117: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 117: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 117: received HARD_SYNC_ACK from player 1
+Transfer 117: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 117: HARD_SYNC_DONE to player 0 sent
+Transfer 117: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 118 started in mode 2 at cycle 934863111; expected=[0, 1] beginTargets=[1]
+Transfer 118: forwarding BEGIN to player 1
+Transfer 118: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 118: received data from player 1
+Transfer 118 finalized
+Transfer 118: forwarding RESULT to player 0
+Transfer 118: RESULT to player 0 sent
+Transfer 118: forwarding RESULT to player 1
+Transfer 118: RESULT to player 1 sent
+Transfer 118: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 118: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 118: received HARD_SYNC_ACK from player 0
+Transfer 118: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 118: HARD_SYNC_DONE to player 0 sent
+Transfer 118: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 119 started in mode 2 at cycle 935424899; expected=[0, 1] beginTargets=[1]
+Transfer 119: forwarding BEGIN to player 1
+Transfer 119: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 119: received data from player 1
+Transfer 119 finalized
+Transfer 119: forwarding RESULT to player 0
+Transfer 119: RESULT to player 0 sent
+Transfer 119: forwarding RESULT to player 1
+Transfer 119: RESULT to player 1 sent
+Transfer 119: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 119: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 119: received HARD_SYNC_ACK from player 0
+Transfer 119: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 119: HARD_SYNC_DONE to player 0 sent
+Transfer 119: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 120 started in mode 2 at cycle 935986694; expected=[0, 1] beginTargets=[1]
+Transfer 120: forwarding BEGIN to player 1
+Transfer 120: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 120: received data from player 1
+Transfer 120 finalized
+Transfer 120: forwarding RESULT to player 0
+Transfer 120: RESULT to player 0 sent
+Transfer 120: forwarding RESULT to player 1
+Transfer 120: RESULT to player 1 sent
+Transfer 120: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 120: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 120: received HARD_SYNC_ACK from player 0
+Transfer 120: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 120: HARD_SYNC_DONE to player 0 sent
+Transfer 120: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 121 started in mode 2 at cycle 936548483; expected=[0, 1] beginTargets=[1]
+Transfer 121: forwarding BEGIN to player 1
+Transfer 121: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 121: received data from player 1
+Transfer 121 finalized
+Transfer 121: forwarding RESULT to player 0
+Transfer 121: RESULT to player 0 sent
+Transfer 121: forwarding RESULT to player 1
+Transfer 121: RESULT to player 1 sent
+Transfer 121: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 121: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 121: received HARD_SYNC_ACK from player 0
+Transfer 121: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 121: HARD_SYNC_DONE to player 0 sent
+Transfer 121: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 122 started in mode 2 at cycle 937110278; expected=[0, 1] beginTargets=[1]
+Transfer 122: forwarding BEGIN to player 1
+Transfer 122: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 122: received data from player 1
+Transfer 122 finalized
+Transfer 122: forwarding RESULT to player 0
+Transfer 122: RESULT to player 0 sent
+Transfer 122: forwarding RESULT to player 1
+Transfer 122: RESULT to player 1 sent
+Transfer 122: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 122: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 122: received HARD_SYNC_ACK from player 0
+Transfer 122: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 122: HARD_SYNC_DONE to player 0 sent
+Transfer 122: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 123 started in mode 2 at cycle 937952961; expected=[0, 1] beginTargets=[1]
+Transfer 123: forwarding BEGIN to player 1
+Transfer 123: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 123: received data from player 1
+Transfer 123 finalized
+Transfer 123: forwarding RESULT to player 0
+Transfer 123: RESULT to player 0 sent
+Transfer 123: forwarding RESULT to player 1
+Transfer 123: RESULT to player 1 sent
+Transfer 123: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 123: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 123: received HARD_SYNC_ACK from player 0
+Transfer 123: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 123: HARD_SYNC_DONE to player 0 sent
+Transfer 123: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 124 started in mode 2 at cycle 939076544; expected=[0, 1] beginTargets=[1]
+Transfer 124: forwarding BEGIN to player 1
+Transfer 124: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 124: received data from player 1
+Transfer 124 finalized
+Transfer 124: forwarding RESULT to player 0
+Transfer 124: RESULT to player 0 sent
+Transfer 124: forwarding RESULT to player 1
+Transfer 124: RESULT to player 1 sent
+Transfer 124: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 124: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 124: received HARD_SYNC_ACK from player 0
+Transfer 124: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 124: HARD_SYNC_DONE to player 0 sent
+Transfer 124: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 125 started in mode 2 at cycle 940200128; expected=[0, 1] beginTargets=[1]
+Transfer 125: forwarding BEGIN to player 1
+Transfer 125: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 125: received data from player 1
+Transfer 125 finalized
+Transfer 125: forwarding RESULT to player 0
+Transfer 125: RESULT to player 0 sent
+Transfer 125: forwarding RESULT to player 1
+Transfer 125: RESULT to player 1 sent
+Transfer 125: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 125: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 125: received HARD_SYNC_ACK from player 1
+Transfer 125: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 125: HARD_SYNC_DONE to player 0 sent
+Transfer 125: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 126 started in mode 2 at cycle 941323717; expected=[0, 1] beginTargets=[1]
+Transfer 126: forwarding BEGIN to player 1
+Transfer 126: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 126: received data from player 1
+Transfer 126 finalized
+Transfer 126: forwarding RESULT to player 0
+Transfer 126: RESULT to player 0 sent
+Transfer 126: forwarding RESULT to player 1
+Transfer 126: RESULT to player 1 sent
+Transfer 126: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 126: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 126: received HARD_SYNC_ACK from player 1
+Transfer 126: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 126: HARD_SYNC_DONE to player 0 sent
+Transfer 126: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 127 started in mode 2 at cycle 942447303; expected=[0, 1] beginTargets=[1]
+Transfer 127: forwarding BEGIN to player 1
+Transfer 127: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 127: received data from player 1
+Transfer 127 finalized
+Transfer 127: forwarding RESULT to player 0
+Transfer 127: RESULT to player 0 sent
+Transfer 127: forwarding RESULT to player 1
+Transfer 127: RESULT to player 1 sent
+Transfer 127: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 127: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 127: received HARD_SYNC_ACK from player 0
+Transfer 127: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 127: HARD_SYNC_DONE to player 0 sent
+Transfer 127: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 128 started in mode 2 at cycle 943009092; expected=[0, 1] beginTargets=[1]
+Transfer 128: forwarding BEGIN to player 1
+Transfer 128: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 128: received data from player 1
+Transfer 128 finalized
+Transfer 128: forwarding RESULT to player 0
+Transfer 128: RESULT to player 0 sent
+Transfer 128: forwarding RESULT to player 1
+Transfer 128: RESULT to player 1 sent
+Transfer 128: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 128: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 128: received HARD_SYNC_ACK from player 0
+Transfer 128: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 128: HARD_SYNC_DONE to player 0 sent
+Transfer 128: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 129 started in mode 2 at cycle 943851778; expected=[0, 1] beginTargets=[1]
+Transfer 129: forwarding BEGIN to player 1
+Transfer 129: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 129: received data from player 1
+Transfer 129 finalized
+Transfer 129: forwarding RESULT to player 0
+Transfer 129: RESULT to player 0 sent
+Transfer 129: forwarding RESULT to player 1
+Transfer 129: RESULT to player 1 sent
+Transfer 129: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 129: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 129: received HARD_SYNC_ACK from player 0
+Transfer 129: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 129: HARD_SYNC_DONE to player 0 sent
+Transfer 129: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 130 started in mode 2 at cycle 944975361; expected=[0, 1] beginTargets=[1]
+Transfer 130: forwarding BEGIN to player 1
+Transfer 130: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 130: received data from player 1
+Transfer 130 finalized
+Transfer 130: forwarding RESULT to player 0
+Transfer 130: RESULT to player 0 sent
+Transfer 130: forwarding RESULT to player 1
+Transfer 130: RESULT to player 1 sent
+Transfer 130: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 130: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 130: received HARD_SYNC_ACK from player 0
+Transfer 130: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 130: HARD_SYNC_DONE to player 0 sent
+Transfer 130: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 131 started in mode 2 at cycle 946098946; expected=[0, 1] beginTargets=[1]
+Transfer 131: forwarding BEGIN to player 1
+Transfer 131: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 131: received data from player 1
+Transfer 131 finalized
+Transfer 131: forwarding RESULT to player 0
+Transfer 131: RESULT to player 0 sent
+Transfer 131: forwarding RESULT to player 1
+Transfer 131: RESULT to player 1 sent
+Transfer 131: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 131: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 131: received HARD_SYNC_ACK from player 0
+Transfer 131: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 131: HARD_SYNC_DONE to player 0 sent
+Transfer 131: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 132 started in mode 2 at cycle 947222529; expected=[0, 1] beginTargets=[1]
+Transfer 132: forwarding BEGIN to player 1
+Transfer 132: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 132: received data from player 1
+Transfer 132 finalized
+Transfer 132: forwarding RESULT to player 0
+Transfer 132: RESULT to player 0 sent
+Transfer 132: forwarding RESULT to player 1
+Transfer 132: RESULT to player 1 sent
+Transfer 132: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 132: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 132: received HARD_SYNC_ACK from player 1
+Transfer 132: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 132: HARD_SYNC_DONE to player 0 sent
+Transfer 132: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 133 started in mode 2 at cycle 948346113; expected=[0, 1] beginTargets=[1]
+Transfer 133: forwarding BEGIN to player 1
+Transfer 133: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 133: received data from player 1
+Transfer 133 finalized
+Transfer 133: forwarding RESULT to player 0
+Transfer 133: RESULT to player 0 sent
+Transfer 133: forwarding RESULT to player 1
+Transfer 133: RESULT to player 1 sent
+Transfer 133: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 133: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 133: received HARD_SYNC_ACK from player 0
+Transfer 133: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 133: HARD_SYNC_DONE to player 0 sent
+Transfer 133: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 134 started in mode 2 at cycle 948907904; expected=[0, 1] beginTargets=[1]
+Transfer 134: forwarding BEGIN to player 1
+Transfer 134: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 134: received data from player 1
+Transfer 134 finalized
+Transfer 134: forwarding RESULT to player 0
+Transfer 134: RESULT to player 0 sent
+Transfer 134: forwarding RESULT to player 1
+Transfer 134: RESULT to player 1 sent
+Transfer 134: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 134: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 134: received HARD_SYNC_ACK from player 0
+Transfer 134: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 134: HARD_SYNC_DONE to player 0 sent
+Transfer 134: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 135 started in mode 2 at cycle 949469878; expected=[0, 1] beginTargets=[1]
+Transfer 135: forwarding BEGIN to player 1
+Transfer 135: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 135: received data from player 1
+Transfer 135 finalized
+Transfer 135: forwarding RESULT to player 0
+Transfer 135: RESULT to player 0 sent
+Transfer 135: forwarding RESULT to player 1
+Transfer 135: RESULT to player 1 sent
+Transfer 135: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 135: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 135: received HARD_SYNC_ACK from player 0
+Transfer 135: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 135: HARD_SYNC_DONE to player 0 sent
+Transfer 135: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 136 started in mode 2 at cycle 950312387; expected=[0, 1] beginTargets=[1]
+Transfer 136: forwarding BEGIN to player 1
+Transfer 136: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 136: received data from player 1
+Transfer 136 finalized
+Transfer 136: forwarding RESULT to player 0
+Transfer 136: RESULT to player 0 sent
+Transfer 136: forwarding RESULT to player 1
+Transfer 136: RESULT to player 1 sent
+Transfer 136: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 136: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 136: received HARD_SYNC_ACK from player 0
+Transfer 136: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 136: HARD_SYNC_DONE to player 0 sent
+Transfer 136: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 137 started in mode 2 at cycle 951435973; expected=[0, 1] beginTargets=[1]
+Transfer 137: forwarding BEGIN to player 1
+Transfer 137: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 137: received data from player 1
+Transfer 137 finalized
+Transfer 137: forwarding RESULT to player 0
+Transfer 137: RESULT to player 0 sent
+Transfer 137: forwarding RESULT to player 1
+Transfer 137: RESULT to player 1 sent
+Transfer 137: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 137: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 137: received HARD_SYNC_ACK from player 0
+Transfer 137: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 137: HARD_SYNC_DONE to player 0 sent
+Transfer 137: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 138 started in mode 2 at cycle 952559553; expected=[0, 1] beginTargets=[1]
+Transfer 138: forwarding BEGIN to player 1
+Transfer 138: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 138: received data from player 1
+Transfer 138 finalized
+Transfer 138: forwarding RESULT to player 0
+Transfer 138: RESULT to player 0 sent
+Transfer 138: forwarding RESULT to player 1
+Transfer 138: RESULT to player 1 sent
+Transfer 138: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 138: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 138: received HARD_SYNC_ACK from player 0
+Transfer 138: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 138: HARD_SYNC_DONE to player 0 sent
+Transfer 138: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 139 started in mode 2 at cycle 953683137; expected=[0, 1] beginTargets=[1]
+Transfer 139: forwarding BEGIN to player 1
+Transfer 139: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 139: received data from player 1
+Transfer 139 finalized
+Transfer 139: forwarding RESULT to player 0
+Transfer 139: RESULT to player 0 sent
+Transfer 139: forwarding RESULT to player 1
+Transfer 139: RESULT to player 1 sent
+Transfer 139: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 139: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 139: received HARD_SYNC_ACK from player 1
+Transfer 139: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 139: HARD_SYNC_DONE to player 0 sent
+Transfer 139: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 140 started in mode 2 at cycle 954806723; expected=[0, 1] beginTargets=[1]
+Transfer 140: forwarding BEGIN to player 1
+Transfer 140: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 140: received data from player 1
+Transfer 140 finalized
+Transfer 140: forwarding RESULT to player 0
+Transfer 140: RESULT to player 0 sent
+Transfer 140: forwarding RESULT to player 1
+Transfer 140: RESULT to player 1 sent
+Transfer 140: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 140: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 140: received HARD_SYNC_ACK from player 0
+Transfer 140: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 140: HARD_SYNC_DONE to player 0 sent
+Transfer 140: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 141 started in mode 2 at cycle 955368512; expected=[0, 1] beginTargets=[1]
+Transfer 141: forwarding BEGIN to player 1
+Transfer 141: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 141: received data from player 1
+Transfer 141 finalized
+Transfer 141: forwarding RESULT to player 0
+Transfer 141: RESULT to player 0 sent
+Transfer 141: forwarding RESULT to player 1
+Transfer 141: RESULT to player 1 sent
+Transfer 141: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 141: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 141: received HARD_SYNC_ACK from player 0
+Transfer 141: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 141: HARD_SYNC_DONE to player 0 sent
+Transfer 141: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 142 started in mode 2 at cycle 955930305; expected=[0, 1] beginTargets=[1]
+Transfer 142: forwarding BEGIN to player 1
+Transfer 142: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 142: received data from player 1
+Transfer 142 finalized
+Transfer 142: forwarding RESULT to player 0
+Transfer 142: RESULT to player 0 sent
+Transfer 142: forwarding RESULT to player 1
+Transfer 142: RESULT to player 1 sent
+Transfer 142: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 142: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 142: received HARD_SYNC_ACK from player 0
+Transfer 142: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 142: HARD_SYNC_DONE to player 0 sent
+Transfer 142: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 143 started in mode 2 at cycle 956772997; expected=[0, 1] beginTargets=[1]
+Transfer 143: forwarding BEGIN to player 1
+Transfer 143: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 143: received data from player 1
+Transfer 143 finalized
+Transfer 143: forwarding RESULT to player 0
+Transfer 143: RESULT to player 0 sent
+Transfer 143: forwarding RESULT to player 1
+Transfer 143: RESULT to player 1 sent
+Transfer 143: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 143: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 143: received HARD_SYNC_ACK from player 0
+Transfer 143: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 143: HARD_SYNC_DONE to player 0 sent
+Transfer 143: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 144 started in mode 2 at cycle 957896577; expected=[0, 1] beginTargets=[1]
+Transfer 144: forwarding BEGIN to player 1
+Transfer 144: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 144: received data from player 1
+Transfer 144 finalized
+Transfer 144: forwarding RESULT to player 0
+Transfer 144: RESULT to player 0 sent
+Transfer 144: forwarding RESULT to player 1
+Transfer 144: RESULT to player 1 sent
+Transfer 144: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 144: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 144: received HARD_SYNC_ACK from player 0
+Transfer 144: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 144: HARD_SYNC_DONE to player 0 sent
+Transfer 144: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 145 started in mode 2 at cycle 959020161; expected=[0, 1] beginTargets=[1]
+Transfer 145: forwarding BEGIN to player 1
+Transfer 145: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 145: received data from player 1
+Transfer 145 finalized
+Transfer 145: forwarding RESULT to player 0
+Transfer 145: RESULT to player 0 sent
+Transfer 145: forwarding RESULT to player 1
+Transfer 145: RESULT to player 1 sent
+Transfer 145: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 145: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 145: received HARD_SYNC_ACK from player 0
+Transfer 145: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 145: HARD_SYNC_DONE to player 0 sent
+Transfer 145: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 146 started in mode 2 at cycle 960143745; expected=[0, 1] beginTargets=[1]
+Transfer 146: forwarding BEGIN to player 1
+Transfer 146: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 146: received data from player 1
+Transfer 146 finalized
+Transfer 146: forwarding RESULT to player 0
+Transfer 146: RESULT to player 0 sent
+Transfer 146: forwarding RESULT to player 1
+Transfer 146: RESULT to player 1 sent
+Transfer 146: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 146: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 146: received HARD_SYNC_ACK from player 1
+Transfer 146: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 146: HARD_SYNC_DONE to player 0 sent
+Transfer 146: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 147 started in mode 2 at cycle 961267328; expected=[0, 1] beginTargets=[1]
+Transfer 147: forwarding BEGIN to player 1
+Transfer 147: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 147: received data from player 1
+Transfer 147 finalized
+Transfer 147: forwarding RESULT to player 0
+Transfer 147: RESULT to player 0 sent
+Transfer 147: forwarding RESULT to player 1
+Transfer 147: RESULT to player 1 sent
+Transfer 147: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 147: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 147: received HARD_SYNC_ACK from player 0
+Transfer 147: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 147: HARD_SYNC_DONE to player 0 sent
+Transfer 147: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 148 started in mode 2 at cycle 961829126; expected=[0, 1] beginTargets=[1]
+Transfer 148: forwarding BEGIN to player 1
+Transfer 148: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 148: received data from player 1
+Transfer 148 finalized
+Transfer 148: forwarding RESULT to player 0
+Transfer 148: RESULT to player 0 sent
+Transfer 148: forwarding RESULT to player 1
+Transfer 148: RESULT to player 1 sent
+Transfer 148: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 148: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 148: received HARD_SYNC_ACK from player 0
+Transfer 148: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 148: HARD_SYNC_DONE to player 0 sent
+Transfer 148: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 149 started in mode 2 at cycle 962671809; expected=[0, 1] beginTargets=[1]
+Transfer 149: forwarding BEGIN to player 1
+Transfer 149: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 149: received data from player 1
+Transfer 149 finalized
+Transfer 149: forwarding RESULT to player 0
+Transfer 149: RESULT to player 0 sent
+Transfer 149: forwarding RESULT to player 1
+Transfer 149: RESULT to player 1 sent
+Transfer 149: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 149: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 149: received HARD_SYNC_ACK from player 0
+Transfer 149: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 149: HARD_SYNC_DONE to player 0 sent
+Transfer 149: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 150 started in mode 2 at cycle 963795393; expected=[0, 1] beginTargets=[1]
+Transfer 150: forwarding BEGIN to player 1
+Transfer 150: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 150: received data from player 1
+Transfer 150 finalized
+Transfer 150: forwarding RESULT to player 0
+Transfer 150: RESULT to player 0 sent
+Transfer 150: forwarding RESULT to player 1
+Transfer 150: RESULT to player 1 sent
+Transfer 150: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 150: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 150: received HARD_SYNC_ACK from player 0
+Transfer 150: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 150: HARD_SYNC_DONE to player 0 sent
+Transfer 150: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 151 started in mode 2 at cycle 964918977; expected=[0, 1] beginTargets=[1]
+Transfer 151: forwarding BEGIN to player 1
+Transfer 151: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 151: received data from player 1
+Transfer 151 finalized
+Transfer 151: forwarding RESULT to player 0
+Transfer 151: RESULT to player 0 sent
+Transfer 151: forwarding RESULT to player 1
+Transfer 151: RESULT to player 1 sent
+Transfer 151: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 151: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 151: received HARD_SYNC_ACK from player 0
+Transfer 151: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 151: HARD_SYNC_DONE to player 0 sent
+Transfer 151: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 152 started in mode 2 at cycle 966042560; expected=[0, 1] beginTargets=[1]
+Transfer 152: forwarding BEGIN to player 1
+Transfer 152: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 152: received data from player 1
+Transfer 152 finalized
+Transfer 152: forwarding RESULT to player 0
+Transfer 152: RESULT to player 0 sent
+Transfer 152: forwarding RESULT to player 1
+Transfer 152: RESULT to player 1 sent
+Transfer 152: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 152: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 152: received HARD_SYNC_ACK from player 1
+Transfer 152: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 152: HARD_SYNC_DONE to player 0 sent
+Transfer 152: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 153 started in mode 2 at cycle 967166149; expected=[0, 1] beginTargets=[1]
+Transfer 153: forwarding BEGIN to player 1
+Transfer 153: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 153: received data from player 1
+Transfer 153 finalized
+Transfer 153: forwarding RESULT to player 0
+Transfer 153: RESULT to player 0 sent
+Transfer 153: forwarding RESULT to player 1
+Transfer 153: RESULT to player 1 sent
+Transfer 153: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 153: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 153: received HARD_SYNC_ACK from player 1
+Transfer 153: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 153: HARD_SYNC_DONE to player 0 sent
+Transfer 153: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 154 started in mode 2 at cycle 968289728; expected=[0, 1] beginTargets=[1]
+Transfer 154: forwarding BEGIN to player 1
+Transfer 154: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 154: received data from player 1
+Transfer 154 finalized
+Transfer 154: forwarding RESULT to player 0
+Transfer 154: RESULT to player 0 sent
+Transfer 154: forwarding RESULT to player 1
+Transfer 154: RESULT to player 1 sent
+Transfer 154: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 154: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 154: received HARD_SYNC_ACK from player 1
+Transfer 154: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 154: HARD_SYNC_DONE to player 0 sent
+Transfer 154: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 155 started in mode 2 at cycle 969413313; expected=[0, 1] beginTargets=[1]
+Transfer 155: forwarding BEGIN to player 1
+Transfer 155: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 155: received data from player 1
+Transfer 155 finalized
+Transfer 155: forwarding RESULT to player 0
+Transfer 155: RESULT to player 0 sent
+Transfer 155: forwarding RESULT to player 1
+Transfer 155: RESULT to player 1 sent
+Transfer 155: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 155: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 155: received HARD_SYNC_ACK from player 0
+Transfer 155: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 155: HARD_SYNC_DONE to player 0 sent
+Transfer 155: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 156 started in mode 2 at cycle 970256001; expected=[0, 1] beginTargets=[1]
+Transfer 156: forwarding BEGIN to player 1
+Transfer 156: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 156: received data from player 1
+Transfer 156 finalized
+Transfer 156: forwarding RESULT to player 0
+Transfer 156: RESULT to player 0 sent
+Transfer 156: forwarding RESULT to player 1
+Transfer 156: RESULT to player 1 sent
+Transfer 156: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 156: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 156: received HARD_SYNC_ACK from player 0
+Transfer 156: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 156: HARD_SYNC_DONE to player 0 sent
+Transfer 156: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 157 started in mode 2 at cycle 971379591; expected=[0, 1] beginTargets=[1]
+Transfer 157: forwarding BEGIN to player 1
+Transfer 157: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 157: received data from player 1
+Transfer 157 finalized
+Transfer 157: forwarding RESULT to player 0
+Transfer 157: RESULT to player 0 sent
+Transfer 157: forwarding RESULT to player 1
+Transfer 157: RESULT to player 1 sent
+Transfer 157: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 157: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 157: received HARD_SYNC_ACK from player 0
+Transfer 157: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 157: HARD_SYNC_DONE to player 0 sent
+Transfer 157: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 158 started in mode 2 at cycle 972503171; expected=[0, 1] beginTargets=[1]
+Transfer 158: forwarding BEGIN to player 1
+Transfer 158: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 158: received data from player 1
+Transfer 158 finalized
+Transfer 158: forwarding RESULT to player 0
+Transfer 158: RESULT to player 0 sent
+Transfer 158: forwarding RESULT to player 1
+Transfer 158: RESULT to player 1 sent
+Transfer 158: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 158: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 158: received HARD_SYNC_ACK from player 1
+Transfer 158: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 158: HARD_SYNC_DONE to player 0 sent
+Transfer 158: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 159 started in mode 2 at cycle 973626758; expected=[0, 1] beginTargets=[1]
+Transfer 159: forwarding BEGIN to player 1
+Transfer 159: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 159: received data from player 1
+Transfer 159 finalized
+Transfer 159: forwarding RESULT to player 0
+Transfer 159: RESULT to player 0 sent
+Transfer 159: forwarding RESULT to player 1
+Transfer 159: RESULT to player 1 sent
+Transfer 159: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 159: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 159: received HARD_SYNC_ACK from player 1
+Transfer 159: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 159: HARD_SYNC_DONE to player 0 sent
+Transfer 159: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 160 started in mode 2 at cycle 974750336; expected=[0, 1] beginTargets=[1]
+Transfer 160: forwarding BEGIN to player 1
+Transfer 160: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 160: received data from player 1
+Transfer 160 finalized
+Transfer 160: forwarding RESULT to player 0
+Transfer 160: RESULT to player 0 sent
+Transfer 160: forwarding RESULT to player 1
+Transfer 160: RESULT to player 1 sent
+Transfer 160: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 160: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 160: received HARD_SYNC_ACK from player 0
+Transfer 160: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 160: HARD_SYNC_DONE to player 0 sent
+Transfer 160: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 161 started in mode 2 at cycle 975312128; expected=[0, 1] beginTargets=[1]
+Transfer 161: forwarding BEGIN to player 1
+Transfer 161: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 161: received data from player 1
+Transfer 161 finalized
+Transfer 161: forwarding RESULT to player 0
+Transfer 161: RESULT to player 0 sent
+Transfer 161: forwarding RESULT to player 1
+Transfer 161: RESULT to player 1 sent
+Transfer 161: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 161: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 161: received HARD_SYNC_ACK from player 0
+Transfer 161: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 161: HARD_SYNC_DONE to player 0 sent
+Transfer 161: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 162 started in mode 2 at cycle 975873927; expected=[0, 1] beginTargets=[1]
+Transfer 162: forwarding BEGIN to player 1
+Transfer 162: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 162: received data from player 1
+Transfer 162 finalized
+Transfer 162: forwarding RESULT to player 0
+Transfer 162: RESULT to player 0 sent
+Transfer 162: forwarding RESULT to player 1
+Transfer 162: RESULT to player 1 sent
+Transfer 162: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 162: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 162: received HARD_SYNC_ACK from player 0
+Transfer 162: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 162: HARD_SYNC_DONE to player 0 sent
+Transfer 162: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 163 started in mode 2 at cycle 976716609; expected=[0, 1] beginTargets=[1]
+Transfer 163: forwarding BEGIN to player 1
+Transfer 163: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 163: received data from player 1
+Transfer 163 finalized
+Transfer 163: forwarding RESULT to player 0
+Transfer 163: RESULT to player 0 sent
+Transfer 163: forwarding RESULT to player 1
+Transfer 163: RESULT to player 1 sent
+Transfer 163: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 163: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 163: received HARD_SYNC_ACK from player 0
+Transfer 163: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 163: HARD_SYNC_DONE to player 0 sent
+Transfer 163: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 164 started in mode 2 at cycle 977840193; expected=[0, 1] beginTargets=[1]
+Transfer 164: forwarding BEGIN to player 1
+Transfer 164: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 164: received data from player 1
+Transfer 164 finalized
+Transfer 164: forwarding RESULT to player 0
+Transfer 164: RESULT to player 0 sent
+Transfer 164: forwarding RESULT to player 1
+Transfer 164: RESULT to player 1 sent
+Transfer 164: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 164: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 164: received HARD_SYNC_ACK from player 0
+Transfer 164: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 164: HARD_SYNC_DONE to player 0 sent
+Transfer 164: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 165 started in mode 2 at cycle 978963776; expected=[0, 1] beginTargets=[1]
+Transfer 165: forwarding BEGIN to player 1
+Transfer 165: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 165: received data from player 1
+Transfer 165 finalized
+Transfer 165: forwarding RESULT to player 0
+Transfer 165: RESULT to player 0 sent
+Transfer 165: forwarding RESULT to player 1
+Transfer 165: RESULT to player 1 sent
+Transfer 165: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 165: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 165: received HARD_SYNC_ACK from player 1
+Transfer 165: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 165: HARD_SYNC_DONE to player 0 sent
+Transfer 165: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 166 started in mode 2 at cycle 980087361; expected=[0, 1] beginTargets=[1]
+Transfer 166: forwarding BEGIN to player 1
+Transfer 166: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 166: received data from player 1
+Transfer 166 finalized
+Transfer 166: forwarding RESULT to player 0
+Transfer 166: RESULT to player 0 sent
+Transfer 166: forwarding RESULT to player 1
+Transfer 166: RESULT to player 1 sent
+Transfer 166: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 166: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 166: received HARD_SYNC_ACK from player 1
+Transfer 166: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 166: HARD_SYNC_DONE to player 0 sent
+Transfer 166: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 167 started in mode 2 at cycle 981210945; expected=[0, 1] beginTargets=[1]
+Transfer 167: forwarding BEGIN to player 1
+Transfer 167: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 167: received data from player 1
+Transfer 167 finalized
+Transfer 167: forwarding RESULT to player 0
+Transfer 167: RESULT to player 0 sent
+Transfer 167: forwarding RESULT to player 1
+Transfer 167: RESULT to player 1 sent
+Transfer 167: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 167: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 167: received HARD_SYNC_ACK from player 0
+Transfer 167: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 167: HARD_SYNC_DONE to player 0 sent
+Transfer 167: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 168 started in mode 2 at cycle 981772743; expected=[0, 1] beginTargets=[1]
+Transfer 168: forwarding BEGIN to player 1
+Transfer 168: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 168: received data from player 1
+Transfer 168 finalized
+Transfer 168: forwarding RESULT to player 0
+Transfer 168: RESULT to player 0 sent
+Transfer 168: forwarding RESULT to player 1
+Transfer 168: RESULT to player 1 sent
+Transfer 168: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 168: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 168: received HARD_SYNC_ACK from player 0
+Transfer 168: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 168: HARD_SYNC_DONE to player 0 sent
+Transfer 168: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 169 started in mode 2 at cycle 982334528; expected=[0, 1] beginTargets=[1]
+Transfer 169: forwarding BEGIN to player 1
+Transfer 169: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 169: received data from player 1
+Transfer 169 finalized
+Transfer 169: forwarding RESULT to player 0
+Transfer 169: RESULT to player 0 sent
+Transfer 169: forwarding RESULT to player 1
+Transfer 169: RESULT to player 1 sent
+Transfer 169: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 169: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 169: received HARD_SYNC_ACK from player 0
+Transfer 169: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 169: HARD_SYNC_DONE to player 0 sent
+Transfer 169: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 170 started in mode 2 at cycle 982897071; expected=[0, 1] beginTargets=[1]
+Transfer 170: forwarding BEGIN to player 1
+Transfer 170: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 170: received data from player 1
+Transfer 170 finalized
+Transfer 170: forwarding RESULT to player 0
+Transfer 170: RESULT to player 0 sent
+Transfer 170: forwarding RESULT to player 1
+Transfer 170: RESULT to player 1 sent
+Transfer 170: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 170: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 170: received HARD_SYNC_ACK from player 0
+Transfer 170: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 170: HARD_SYNC_DONE to player 0 sent
+Transfer 170: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 171 started in mode 2 at cycle 983739010; expected=[0, 1] beginTargets=[1]
+Transfer 171: forwarding BEGIN to player 1
+Transfer 171: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 171: received data from player 1
+Transfer 171 finalized
+Transfer 171: forwarding RESULT to player 0
+Transfer 171: RESULT to player 0 sent
+Transfer 171: forwarding RESULT to player 1
+Transfer 171: RESULT to player 1 sent
+Transfer 171: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 171: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 171: received HARD_SYNC_ACK from player 0
+Transfer 171: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 171: HARD_SYNC_DONE to player 0 sent
+Transfer 171: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 172 started in mode 2 at cycle 984862592; expected=[0, 1] beginTargets=[1]
+Transfer 172: forwarding BEGIN to player 1
+Transfer 172: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 172: received data from player 1
+Transfer 172 finalized
+Transfer 172: forwarding RESULT to player 0
+Transfer 172: RESULT to player 0 sent
+Transfer 172: forwarding RESULT to player 1
+Transfer 172: RESULT to player 1 sent
+Transfer 172: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 172: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 172: received HARD_SYNC_ACK from player 0
+Transfer 172: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 172: HARD_SYNC_DONE to player 0 sent
+Transfer 172: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 173 started in mode 2 at cycle 985986179; expected=[0, 1] beginTargets=[1]
+Transfer 173: forwarding BEGIN to player 1
+Transfer 173: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 173: received data from player 1
+Transfer 173 finalized
+Transfer 173: forwarding RESULT to player 0
+Transfer 173: RESULT to player 0 sent
+Transfer 173: forwarding RESULT to player 1
+Transfer 173: RESULT to player 1 sent
+Transfer 173: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 173: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 173: received HARD_SYNC_ACK from player 1
+Transfer 173: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 173: HARD_SYNC_DONE to player 0 sent
+Transfer 173: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 174 started in mode 2 at cycle 987109760; expected=[0, 1] beginTargets=[1]
+Transfer 174: forwarding BEGIN to player 1
+Transfer 174: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 174: received data from player 1
+Transfer 174 finalized
+Transfer 174: forwarding RESULT to player 0
+Transfer 174: RESULT to player 0 sent
+Transfer 174: forwarding RESULT to player 1
+Transfer 174: RESULT to player 1 sent
+Transfer 174: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 174: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 174: received HARD_SYNC_ACK from player 0
+Transfer 174: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 174: HARD_SYNC_DONE to player 0 sent
+Transfer 174: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 175 started in mode 2 at cycle 987671553; expected=[0, 1] beginTargets=[1]
+Transfer 175: forwarding BEGIN to player 1
+Transfer 175: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 175: received data from player 1
+Transfer 175 finalized
+Transfer 175: forwarding RESULT to player 0
+Transfer 175: RESULT to player 0 sent
+Transfer 175: forwarding RESULT to player 1
+Transfer 175: RESULT to player 1 sent
+Transfer 175: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 175: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 175: received HARD_SYNC_ACK from player 0
+Transfer 175: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 175: HARD_SYNC_DONE to player 0 sent
+Transfer 175: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 176 started in mode 2 at cycle 988233344; expected=[0, 1] beginTargets=[1]
+Transfer 176: forwarding BEGIN to player 1
+Transfer 176: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 176: received data from player 1
+Transfer 176 finalized
+Transfer 176: forwarding RESULT to player 0
+Transfer 176: RESULT to player 0 sent
+Transfer 176: forwarding RESULT to player 1
+Transfer 176: RESULT to player 1 sent
+Transfer 176: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 176: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 176: received HARD_SYNC_ACK from player 0
+Transfer 176: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 176: HARD_SYNC_DONE to player 0 sent
+Transfer 176: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 177 started in mode 2 at cycle 988795136; expected=[0, 1] beginTargets=[1]
+Transfer 177: forwarding BEGIN to player 1
+Transfer 177: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 177: received data from player 1
+Transfer 177 finalized
+Transfer 177: forwarding RESULT to player 0
+Transfer 177: RESULT to player 0 sent
+Transfer 177: forwarding RESULT to player 1
+Transfer 177: RESULT to player 1 sent
+Transfer 177: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 177: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 177: received HARD_SYNC_ACK from player 0
+Transfer 177: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 177: HARD_SYNC_DONE to player 0 sent
+Transfer 177: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 178 started in mode 2 at cycle 989356929; expected=[0, 1] beginTargets=[1]
+Transfer 178: forwarding BEGIN to player 1
+Transfer 178: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 178: received data from player 1
+Transfer 178 finalized
+Transfer 178: forwarding RESULT to player 0
+Transfer 178: RESULT to player 0 sent
+Transfer 178: forwarding RESULT to player 1
+Transfer 178: RESULT to player 1 sent
+Transfer 178: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 178: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 178: received HARD_SYNC_ACK from player 0
+Transfer 178: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 178: HARD_SYNC_DONE to player 0 sent
+Transfer 178: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 179 started in mode 2 at cycle 990199618; expected=[0, 1] beginTargets=[1]
+Transfer 179: forwarding BEGIN to player 1
+Transfer 179: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 179: received data from player 1
+Transfer 179 finalized
+Transfer 179: forwarding RESULT to player 0
+Transfer 179: RESULT to player 0 sent
+Transfer 179: forwarding RESULT to player 1
+Transfer 179: RESULT to player 1 sent
+Transfer 179: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 179: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 179: received HARD_SYNC_ACK from player 0
+Transfer 179: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 179: HARD_SYNC_DONE to player 0 sent
+Transfer 179: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 180 started in mode 2 at cycle 991323201; expected=[0, 1] beginTargets=[1]
+Transfer 180: forwarding BEGIN to player 1
+Transfer 180: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 180: received data from player 1
+Transfer 180 finalized
+Transfer 180: forwarding RESULT to player 0
+Transfer 180: RESULT to player 0 sent
+Transfer 180: forwarding RESULT to player 1
+Transfer 180: RESULT to player 1 sent
+Transfer 180: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 180: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 180: received HARD_SYNC_ACK from player 0
+Transfer 180: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 180: HARD_SYNC_DONE to player 0 sent
+Transfer 180: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 181 started in mode 2 at cycle 992446785; expected=[0, 1] beginTargets=[1]
+Transfer 181: forwarding BEGIN to player 1
+Transfer 181: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 181: received data from player 1
+Transfer 181 finalized
+Transfer 181: forwarding RESULT to player 0
+Transfer 181: RESULT to player 0 sent
+Transfer 181: forwarding RESULT to player 1
+Transfer 181: RESULT to player 1 sent
+Transfer 181: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 181: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 181: received HARD_SYNC_ACK from player 1
+Transfer 181: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 181: HARD_SYNC_DONE to player 0 sent
+Transfer 181: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 182 started in mode 2 at cycle 993570371; expected=[0, 1] beginTargets=[1]
+Transfer 182: forwarding BEGIN to player 1
+Transfer 182: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 182: received data from player 1
+Transfer 182 finalized
+Transfer 182: forwarding RESULT to player 0
+Transfer 182: RESULT to player 0 sent
+Transfer 182: forwarding RESULT to player 1
+Transfer 182: RESULT to player 1 sent
+Transfer 182: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 182: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 182: received HARD_SYNC_ACK from player 0
+Transfer 182: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 182: HARD_SYNC_DONE to player 0 sent
+Transfer 182: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 183 started in mode 2 at cycle 994132166; expected=[0, 1] beginTargets=[1]
+Transfer 183: forwarding BEGIN to player 1
+Transfer 183: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 183: received data from player 1
+Transfer 183 finalized
+Transfer 183: forwarding RESULT to player 0
+Transfer 183: RESULT to player 0 sent
+Transfer 183: forwarding RESULT to player 1
+Transfer 183: RESULT to player 1 sent
+Transfer 183: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 183: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 183: received HARD_SYNC_ACK from player 0
+Transfer 183: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 183: HARD_SYNC_DONE to player 0 sent
+Transfer 183: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 184 started in mode 2 at cycle 994693958; expected=[0, 1] beginTargets=[1]
+Transfer 184: forwarding BEGIN to player 1
+Transfer 184: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 184: received data from player 1
+Transfer 184 finalized
+Transfer 184: forwarding RESULT to player 0
+Transfer 184: RESULT to player 0 sent
+Transfer 184: forwarding RESULT to player 1
+Transfer 184: RESULT to player 1 sent
+Transfer 184: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 184: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 184: received HARD_SYNC_ACK from player 0
+Transfer 184: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 184: HARD_SYNC_DONE to player 0 sent
+Transfer 184: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 185 started in mode 2 at cycle 995255744; expected=[0, 1] beginTargets=[1]
+Transfer 185: forwarding BEGIN to player 1
+Transfer 185: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 185: received data from player 1
+Transfer 185 finalized
+Transfer 185: forwarding RESULT to player 0
+Transfer 185: RESULT to player 0 sent
+Transfer 185: forwarding RESULT to player 1
+Transfer 185: RESULT to player 1 sent
+Transfer 185: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 185: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 185: received HARD_SYNC_ACK from player 0
+Transfer 185: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 185: HARD_SYNC_DONE to player 0 sent
+Transfer 185: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 186 started in mode 2 at cycle 995817537; expected=[0, 1] beginTargets=[1]
+Transfer 186: forwarding BEGIN to player 1
+Transfer 186: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 186: received data from player 1
+Transfer 186 finalized
+Transfer 186: forwarding RESULT to player 0
+Transfer 186: RESULT to player 0 sent
+Transfer 186: forwarding RESULT to player 1
+Transfer 186: RESULT to player 1 sent
+Transfer 186: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 186: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 186: received HARD_SYNC_ACK from player 0
+Transfer 186: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 186: HARD_SYNC_DONE to player 0 sent
+Transfer 186: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 187 started in mode 2 at cycle 996660226; expected=[0, 1] beginTargets=[1]
+Transfer 187: forwarding BEGIN to player 1
+Transfer 187: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 187: received data from player 1
+Transfer 187 finalized
+Transfer 187: forwarding RESULT to player 0
+Transfer 187: RESULT to player 0 sent
+Transfer 187: forwarding RESULT to player 1
+Transfer 187: RESULT to player 1 sent
+Transfer 187: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 187: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 187: received HARD_SYNC_ACK from player 0
+Transfer 187: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 187: HARD_SYNC_DONE to player 0 sent
+Transfer 187: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 188 started in mode 2 at cycle 997783813; expected=[0, 1] beginTargets=[1]
+Transfer 188: forwarding BEGIN to player 1
+Transfer 188: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 188: received data from player 1
+Transfer 188 finalized
+Transfer 188: forwarding RESULT to player 0
+Transfer 188: RESULT to player 0 sent
+Transfer 188: forwarding RESULT to player 1
+Transfer 188: RESULT to player 1 sent
+Transfer 188: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 188: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 188: received HARD_SYNC_ACK from player 0
+Transfer 188: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 188: HARD_SYNC_DONE to player 0 sent
+Transfer 188: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 189 started in mode 2 at cycle 998907392; expected=[0, 1] beginTargets=[1]
+Transfer 189: forwarding BEGIN to player 1
+Transfer 189: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 189: received data from player 1
+Transfer 189 finalized
+Transfer 189: forwarding RESULT to player 0
+Transfer 189: RESULT to player 0 sent
+Transfer 189: forwarding RESULT to player 1
+Transfer 189: RESULT to player 1 sent
+Transfer 189: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 189: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 189: received HARD_SYNC_ACK from player 1
+Transfer 189: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 189: HARD_SYNC_DONE to player 0 sent
+Transfer 189: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 190 started in mode 2 at cycle 1000030977; expected=[0, 1] beginTargets=[1]
+Transfer 190: forwarding BEGIN to player 1
+Transfer 190: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 190: received data from player 1
+Transfer 190 finalized
+Transfer 190: forwarding RESULT to player 0
+Transfer 190: RESULT to player 0 sent
+Transfer 190: forwarding RESULT to player 1
+Transfer 190: RESULT to player 1 sent
+Transfer 190: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 190: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 190: received HARD_SYNC_ACK from player 1
+Transfer 190: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 190: HARD_SYNC_DONE to player 0 sent
+Transfer 190: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 191 started in mode 2 at cycle 1001154567; expected=[0, 1] beginTargets=[1]
+Transfer 191: forwarding BEGIN to player 1
+Transfer 191: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 191: received data from player 1
+Transfer 191 finalized
+Transfer 191: forwarding RESULT to player 0
+Transfer 191: RESULT to player 0 sent
+Transfer 191: forwarding RESULT to player 1
+Transfer 191: RESULT to player 1 sent
+Transfer 191: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 191: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 191: received HARD_SYNC_ACK from player 0
+Transfer 191: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 191: HARD_SYNC_DONE to player 0 sent
+Transfer 191: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 192 started in mode 2 at cycle 1001716354; expected=[0, 1] beginTargets=[1]
+Transfer 192: forwarding BEGIN to player 1
+Transfer 192: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 192: received data from player 1
+Transfer 192 finalized
+Transfer 192: forwarding RESULT to player 0
+Transfer 192: RESULT to player 0 sent
+Transfer 192: forwarding RESULT to player 1
+Transfer 192: RESULT to player 1 sent
+Transfer 192: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 192: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 192: received HARD_SYNC_ACK from player 0
+Transfer 192: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 192: HARD_SYNC_DONE to player 0 sent
+Transfer 192: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 193 started in mode 2 at cycle 1002278151; expected=[0, 1] beginTargets=[1]
+Transfer 193: forwarding BEGIN to player 1
+Transfer 193: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 193: received data from player 1
+Transfer 193 finalized
+Transfer 193: forwarding RESULT to player 0
+Transfer 193: RESULT to player 0 sent
+Transfer 193: forwarding RESULT to player 1
+Transfer 193: RESULT to player 1 sent
+Transfer 193: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 193: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 193: received HARD_SYNC_ACK from player 0
+Transfer 193: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 193: HARD_SYNC_DONE to player 0 sent
+Transfer 193: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 194 started in mode 2 at cycle 1003120836; expected=[0, 1] beginTargets=[1]
+Transfer 194: forwarding BEGIN to player 1
+Transfer 194: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 194: received data from player 1
+Transfer 194 finalized
+Transfer 194: forwarding RESULT to player 0
+Transfer 194: RESULT to player 0 sent
+Transfer 194: forwarding RESULT to player 1
+Transfer 194: RESULT to player 1 sent
+Transfer 194: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 194: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 194: received HARD_SYNC_ACK from player 0
+Transfer 194: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 194: HARD_SYNC_DONE to player 0 sent
+Transfer 194: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 195 started in mode 2 at cycle 1004244419; expected=[0, 1] beginTargets=[1]
+Transfer 195: forwarding BEGIN to player 1
+Transfer 195: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 195: received data from player 1
+Transfer 195 finalized
+Transfer 195: forwarding RESULT to player 0
+Transfer 195: RESULT to player 0 sent
+Transfer 195: forwarding RESULT to player 1
+Transfer 195: RESULT to player 1 sent
+Transfer 195: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 195: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 195: received HARD_SYNC_ACK from player 0
+Transfer 195: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 195: HARD_SYNC_DONE to player 0 sent
+Transfer 195: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 196 started in mode 2 at cycle 1005368004; expected=[0, 1] beginTargets=[1]
+Transfer 196: forwarding BEGIN to player 1
+Transfer 196: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 196: received data from player 1
+Transfer 196 finalized
+Transfer 196: forwarding RESULT to player 0
+Transfer 196: RESULT to player 0 sent
+Transfer 196: forwarding RESULT to player 1
+Transfer 196: RESULT to player 1 sent
+Transfer 196: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 196: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 196: received HARD_SYNC_ACK from player 1
+Transfer 196: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 196: HARD_SYNC_DONE to player 0 sent
+Transfer 196: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 197 started in mode 2 at cycle 1006491587; expected=[0, 1] beginTargets=[1]
+Transfer 197: forwarding BEGIN to player 1
+Transfer 197: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 197: received data from player 1
+Transfer 197 finalized
+Transfer 197: forwarding RESULT to player 0
+Transfer 197: RESULT to player 0 sent
+Transfer 197: forwarding RESULT to player 1
+Transfer 197: RESULT to player 1 sent
+Transfer 197: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 197: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 197: received HARD_SYNC_ACK from player 0
+Transfer 197: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 197: HARD_SYNC_DONE to player 0 sent
+Transfer 197: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 198 started in mode 2 at cycle 1007053385; expected=[0, 1] beginTargets=[1]
+Transfer 198: forwarding BEGIN to player 1
+Transfer 198: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 198: received data from player 1
+Transfer 198 finalized
+Transfer 198: forwarding RESULT to player 0
+Transfer 198: RESULT to player 0 sent
+Transfer 198: forwarding RESULT to player 1
+Transfer 198: RESULT to player 1 sent
+Transfer 198: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 198: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 198: received HARD_SYNC_ACK from player 0
+Transfer 198: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 198: HARD_SYNC_DONE to player 0 sent
+Transfer 198: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 199 started in mode 2 at cycle 1007615170; expected=[0, 1] beginTargets=[1]
+Transfer 199: forwarding BEGIN to player 1
+Transfer 199: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 199: received data from player 1
+Transfer 199 finalized
+Transfer 199: forwarding RESULT to player 0
+Transfer 199: RESULT to player 0 sent
+Transfer 199: forwarding RESULT to player 1
+Transfer 199: RESULT to player 1 sent
+Transfer 199: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 199: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 199: received HARD_SYNC_ACK from player 0
+Transfer 199: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 199: HARD_SYNC_DONE to player 0 sent
+Transfer 199: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 200 started in mode 2 at cycle 1008176969; expected=[0, 1] beginTargets=[1]
+Transfer 200: forwarding BEGIN to player 1
+Transfer 200: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 200: received data from player 1
+Transfer 200 finalized
+Transfer 200: forwarding RESULT to player 0
+Transfer 200: RESULT to player 0 sent
+Transfer 200: forwarding RESULT to player 1
+Transfer 200: RESULT to player 1 sent
+Transfer 200: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 200: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 200: received HARD_SYNC_ACK from player 0
+Transfer 200: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 200: HARD_SYNC_DONE to player 0 sent
+Transfer 200: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 201 started in mode 2 at cycle 1008738755; expected=[0, 1] beginTargets=[1]
+Transfer 201: forwarding BEGIN to player 1
+Transfer 201: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 201: received data from player 1
+Transfer 201 finalized
+Transfer 201: forwarding RESULT to player 0
+Transfer 201: RESULT to player 0 sent
+Transfer 201: forwarding RESULT to player 1
+Transfer 201: RESULT to player 1 sent
+Transfer 201: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 201: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 201: received HARD_SYNC_ACK from player 0
+Transfer 201: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 201: HARD_SYNC_DONE to player 0 sent
+Transfer 201: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 202 started in mode 2 at cycle 1009581442; expected=[0, 1] beginTargets=[1]
+Transfer 202: forwarding BEGIN to player 1
+Transfer 202: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 202: received data from player 1
+Transfer 202 finalized
+Transfer 202: forwarding RESULT to player 0
+Transfer 202: RESULT to player 0 sent
+Transfer 202: forwarding RESULT to player 1
+Transfer 202: RESULT to player 1 sent
+Transfer 202: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 202: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 202: received HARD_SYNC_ACK from player 0
+Transfer 202: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 202: HARD_SYNC_DONE to player 0 sent
+Transfer 202: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 203 started in mode 2 at cycle 1010705029; expected=[0, 1] beginTargets=[1]
+Transfer 203: forwarding BEGIN to player 1
+Transfer 203: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 203: received data from player 1
+Transfer 203 finalized
+Transfer 203: forwarding RESULT to player 0
+Transfer 203: RESULT to player 0 sent
+Transfer 203: forwarding RESULT to player 1
+Transfer 203: RESULT to player 1 sent
+Transfer 203: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 203: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 203: received HARD_SYNC_ACK from player 0
+Transfer 203: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 203: HARD_SYNC_DONE to player 0 sent
+Transfer 203: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 204 started in mode 2 at cycle 1011828611; expected=[0, 1] beginTargets=[1]
+Transfer 204: forwarding BEGIN to player 1
+Transfer 204: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 204: received data from player 1
+Transfer 204 finalized
+Transfer 204: forwarding RESULT to player 0
+Transfer 204: RESULT to player 0 sent
+Transfer 204: forwarding RESULT to player 1
+Transfer 204: RESULT to player 1 sent
+Transfer 204: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 204: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 204: received HARD_SYNC_ACK from player 1
+Transfer 204: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 204: HARD_SYNC_DONE to player 0 sent
+Transfer 204: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 205 started in mode 2 at cycle 1012952201; expected=[0, 1] beginTargets=[1]
+Transfer 205: forwarding BEGIN to player 1
+Transfer 205: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 205: received data from player 1
+Transfer 205 finalized
+Transfer 205: forwarding RESULT to player 0
+Transfer 205: RESULT to player 0 sent
+Transfer 205: forwarding RESULT to player 1
+Transfer 205: RESULT to player 1 sent
+Transfer 205: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 205: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 205: received HARD_SYNC_ACK from player 0
+Transfer 205: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 205: HARD_SYNC_DONE to player 0 sent
+Transfer 205: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 206 started in mode 2 at cycle 1013513986; expected=[0, 1] beginTargets=[1]
+Transfer 206: forwarding BEGIN to player 1
+Transfer 206: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 206: received data from player 1
+Transfer 206 finalized
+Transfer 206: forwarding RESULT to player 0
+Transfer 206: RESULT to player 0 sent
+Transfer 206: forwarding RESULT to player 1
+Transfer 206: RESULT to player 1 sent
+Transfer 206: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 206: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 206: received HARD_SYNC_ACK from player 0
+Transfer 206: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 206: HARD_SYNC_DONE to player 0 sent
+Transfer 206: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 207 started in mode 2 at cycle 1014075779; expected=[0, 1] beginTargets=[1]
+Transfer 207: forwarding BEGIN to player 1
+Transfer 207: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 207: received data from player 1
+Transfer 207 finalized
+Transfer 207: forwarding RESULT to player 0
+Transfer 207: RESULT to player 0 sent
+Transfer 207: forwarding RESULT to player 1
+Transfer 207: RESULT to player 1 sent
+Transfer 207: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 207: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 207: received HARD_SYNC_ACK from player 0
+Transfer 207: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 207: HARD_SYNC_DONE to player 0 sent
+Transfer 207: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 208 started in mode 2 at cycle 1014637571; expected=[0, 1] beginTargets=[1]
+Transfer 208: forwarding BEGIN to player 1
+Transfer 208: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 208: received data from player 1
+Transfer 208 finalized
+Transfer 208: forwarding RESULT to player 0
+Transfer 208: RESULT to player 0 sent
+Transfer 208: forwarding RESULT to player 1
+Transfer 208: RESULT to player 1 sent
+Transfer 208: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 208: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 208: received HARD_SYNC_ACK from player 0
+Transfer 208: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 208: HARD_SYNC_DONE to player 0 sent
+Transfer 208: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 209 started in mode 2 at cycle 1015199364; expected=[0, 1] beginTargets=[1]
+Transfer 209: forwarding BEGIN to player 1
+Transfer 209: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 209: received data from player 1
+Transfer 209 finalized
+Transfer 209: forwarding RESULT to player 0
+Transfer 209: RESULT to player 0 sent
+Transfer 209: forwarding RESULT to player 1
+Transfer 209: RESULT to player 1 sent
+Transfer 209: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 209: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 209: received HARD_SYNC_ACK from player 0
+Transfer 209: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 209: HARD_SYNC_DONE to player 0 sent
+Transfer 209: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 210 started in mode 2 at cycle 1016042050; expected=[0, 1] beginTargets=[1]
+Transfer 210: forwarding BEGIN to player 1
+Transfer 210: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 210: received data from player 1
+Transfer 210 finalized
+Transfer 210: forwarding RESULT to player 0
+Transfer 210: RESULT to player 0 sent
+Transfer 210: forwarding RESULT to player 1
+Transfer 210: RESULT to player 1 sent
+Transfer 210: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 210: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 210: received HARD_SYNC_ACK from player 0
+Transfer 210: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 210: HARD_SYNC_DONE to player 0 sent
+Transfer 210: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 211 started in mode 2 at cycle 1017165637; expected=[0, 1] beginTargets=[1]
+Transfer 211: forwarding BEGIN to player 1
+Transfer 211: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 211: received data from player 1
+Transfer 211 finalized
+Transfer 211: forwarding RESULT to player 0
+Transfer 211: RESULT to player 0 sent
+Transfer 211: forwarding RESULT to player 1
+Transfer 211: RESULT to player 1 sent
+Transfer 211: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 211: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 211: received HARD_SYNC_ACK from player 0
+Transfer 211: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 211: HARD_SYNC_DONE to player 0 sent
+Transfer 211: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 212 started in mode 2 at cycle 1018289223; expected=[0, 1] beginTargets=[1]
+Transfer 212: forwarding BEGIN to player 1
+Transfer 212: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 212: received data from player 1
+Transfer 212 finalized
+Transfer 212: forwarding RESULT to player 0
+Transfer 212: RESULT to player 0 sent
+Transfer 212: forwarding RESULT to player 1
+Transfer 212: RESULT to player 1 sent
+Transfer 212: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 212: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 212: received HARD_SYNC_ACK from player 1
+Transfer 212: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 212: HARD_SYNC_DONE to player 0 sent
+Transfer 212: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 213 started in mode 2 at cycle 1019412802; expected=[0, 1] beginTargets=[1]
+Transfer 213: forwarding BEGIN to player 1
+Transfer 213: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 213: received data from player 1
+Transfer 213 finalized
+Transfer 213: forwarding RESULT to player 0
+Transfer 213: RESULT to player 0 sent
+Transfer 213: forwarding RESULT to player 1
+Transfer 213: RESULT to player 1 sent
+Transfer 213: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 213: received HARD_SYNC_ACK from player 0
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 213: received HARD_SYNC_ACK from player 1
+Transfer 213: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 213: HARD_SYNC_DONE to player 0 sent
+Transfer 213: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 214 started in mode 2 at cycle 1020536392; expected=[0, 1] beginTargets=[1]
+Transfer 214: forwarding BEGIN to player 1
+Transfer 214: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 214: received data from player 1
+Transfer 214 finalized
+Transfer 214: forwarding RESULT to player 0
+Transfer 214: RESULT to player 0 sent
+Transfer 214: forwarding RESULT to player 1
+Transfer 214: RESULT to player 1 sent
+Transfer 214: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 214: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 214: received HARD_SYNC_ACK from player 0
+Transfer 214: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 214: HARD_SYNC_DONE to player 0 sent
+Transfer 214: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 215 started in mode 2 at cycle 1021098185; expected=[0, 1] beginTargets=[1]
+Transfer 215: forwarding BEGIN to player 1
+Transfer 215: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 215: received data from player 1
+Transfer 215 finalized
+Transfer 215: forwarding RESULT to player 0
+Transfer 215: RESULT to player 0 sent
+Transfer 215: forwarding RESULT to player 1
+Transfer 215: RESULT to player 1 sent
+Transfer 215: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 215: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 215: received HARD_SYNC_ACK from player 0
+Transfer 215: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 215: HARD_SYNC_DONE to player 0 sent
+Transfer 215: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 216 started in mode 2 at cycle 1021659970; expected=[0, 1] beginTargets=[1]
+Transfer 216: forwarding BEGIN to player 1
+Transfer 216: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 216: received data from player 1
+Transfer 216 finalized
+Transfer 216: forwarding RESULT to player 0
+Transfer 216: RESULT to player 0 sent
+Transfer 216: forwarding RESULT to player 1
+Transfer 216: RESULT to player 1 sent
+Transfer 216: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 216: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 216: received HARD_SYNC_ACK from player 0
+Transfer 216: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 216: HARD_SYNC_DONE to player 0 sent
+Transfer 216: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 217 started in mode 2 at cycle 1022221762; expected=[0, 1] beginTargets=[1]
+Transfer 217: forwarding BEGIN to player 1
+Transfer 217: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 217: received data from player 1
+Transfer 217 finalized
+Transfer 217: forwarding RESULT to player 0
+Transfer 217: RESULT to player 0 sent
+Transfer 217: forwarding RESULT to player 1
+Transfer 217: RESULT to player 1 sent
+Transfer 217: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 217: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 217: received HARD_SYNC_ACK from player 0
+Transfer 217: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 217: HARD_SYNC_DONE to player 0 sent
+Transfer 217: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 218 started in mode 2 at cycle 1023064454; expected=[0, 1] beginTargets=[1]
+Transfer 218: forwarding BEGIN to player 1
+Transfer 218: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 218: received data from player 1
+Transfer 218 finalized
+Transfer 218: forwarding RESULT to player 0
+Transfer 218: RESULT to player 0 sent
+Transfer 218: forwarding RESULT to player 1
+Transfer 218: RESULT to player 1 sent
+Transfer 218: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 218: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 218: received HARD_SYNC_ACK from player 0
+Transfer 218: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 218: HARD_SYNC_DONE to player 0 sent
+Transfer 218: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 219 started in mode 2 at cycle 1024188034; expected=[0, 1] beginTargets=[1]
+Transfer 219: forwarding BEGIN to player 1
+Transfer 219: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 219: received data from player 1
+Transfer 219 finalized
+Transfer 219: forwarding RESULT to player 0
+Transfer 219: RESULT to player 0 sent
+Transfer 219: forwarding RESULT to player 1
+Transfer 219: RESULT to player 1 sent
+Transfer 219: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 219: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 219: received HARD_SYNC_ACK from player 0
+Transfer 219: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 219: HARD_SYNC_DONE to player 0 sent
+Transfer 219: HARD_SYNC_DONE to player 1 sent
+Received TRANSFER_START from player 0 (20 bytes)
+Transfer 220 started in mode 2 at cycle 1025592536; expected=[0, 1] beginTargets=[1]
+Transfer 220: forwarding BEGIN to player 1
+Transfer 220: BEGIN to player 1 sent
+Received TRANSFER_DATA from player 1 (16 bytes)
+Transfer 220: received data from player 1
+Transfer 220 finalized
+Transfer 220: forwarding RESULT to player 0
+Transfer 220: RESULT to player 0 sent
+Transfer 220: forwarding RESULT to player 1
+Transfer 220: RESULT to player 1 sent
+Transfer 220: hard sync started; expected=[0, 1]
+Received HARD_SYNC_ACK from player 1 (4 bytes)
+Transfer 220: received HARD_SYNC_ACK from player 1
+Received HARD_SYNC_ACK from player 0 (4 bytes)
+Transfer 220: received HARD_SYNC_ACK from player 0
+Transfer 220: hard sync complete, forwarding DONE to players [0, 1]
+Transfer 220: HARD_SYNC_DONE to player 0 sent
+Transfer 220: HARD_SYNC_DONE to player 1 sent
