@@ -1813,10 +1813,6 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 						MutexUnlock(&driver->mutex);
 	#endif
 						if (waitingForFreshSample) {
-							bool allowImmediateMandatorySameGenerationFallback = noStaleReuse
-								&& beginMode == GBA_SIO_MULTI
-								&& beginCycleCompared
-								&& writeGeneration == lastSentGeneration;
 							bool allowMandatorySameGenerationFallback = noStaleReuse
 								&& beginMode == GBA_SIO_MULTI
 								&& writeGeneration == lastSentGeneration
@@ -1830,16 +1826,6 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 								NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u no post-BEGIN sample write after %u cycles (mode=%u baselineGen=%u currentGen=%u waitedCycles=%d); reusing current register value",
 								     (unsigned) beginSequence, (unsigned) NETPLAY_SAMPLE_FRESH_REUSE_WAIT_CYCLES,
 								     _modeToWire(beginMode), (unsigned) baselineGeneration, (unsigned) writeGeneration, (int) freshnessElapsed);
-							} else if (allowImmediateMandatorySameGenerationFallback) {
-								/*
-								 * Once mapped BEGIN time is reached, waiting for a future write can
-								 * only add latency for this transfer; allow same-generation send.
-								 */
-								sampleWriteGeneration = writeGeneration;
-								allowSameGenerationFallback = true;
-								NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u reached target cycle with unchanged MULTI sample (gen=%u); sending same-generation value",
-								     (unsigned) beginSequence,
-								     (unsigned) writeGeneration);
 							} else if (allowMandatorySameGenerationFallback) {
 								sampleWriteGeneration = writeGeneration;
 								allowSameGenerationFallback = true;
