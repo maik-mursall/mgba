@@ -1958,10 +1958,12 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 						MutexUnlock(&driver->mutex);
 	#endif
 						if (waitingForFreshSample) {
+							bool lateBeginDelivery = beginCycleCompared && beginCycleDelta < 0;
 							bool allowMandatorySameGenerationFallback = noStaleReuse
 								&& beginMode == GBA_SIO_MULTI
 								&& writeGeneration == lastSentGeneration
-								&& freshnessElapsed >= NETPLAY_MULTI_SAME_GENERATION_FALLBACK_WAIT_CYCLES;
+								&& (freshnessElapsed >= NETPLAY_MULTI_SAME_GENERATION_FALLBACK_WAIT_CYCLES
+									|| lateBeginDelivery);
 							if (reuseGraceExpired) {
 								/*
 								 * If no new write arrives quickly, reuse the current register value
@@ -1974,10 +1976,17 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 							} else if (allowMandatorySameGenerationFallback) {
 								sampleWriteGeneration = writeGeneration;
 								allowSameGenerationFallback = true;
-								NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u no fresh MULTI sample after %u cycles (gen=%u); allowing same-generation send to avoid deadlock",
-								     (unsigned) beginSequence,
-								     (unsigned) NETPLAY_MULTI_SAME_GENERATION_FALLBACK_WAIT_CYCLES,
-								     (unsigned) writeGeneration);
+								if (lateBeginDelivery && freshnessElapsed < NETPLAY_MULTI_SAME_GENERATION_FALLBACK_WAIT_CYCLES) {
+									NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u late by %d cycles with unchanged MULTI sample (gen=%u); allowing immediate same-generation send",
+									     (unsigned) beginSequence,
+									     (int) (-beginCycleDelta),
+									     (unsigned) writeGeneration);
+								} else {
+									NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u no fresh MULTI sample after %u cycles (gen=%u); allowing same-generation send to avoid deadlock",
+									     (unsigned) beginSequence,
+									     (unsigned) NETPLAY_MULTI_SAME_GENERATION_FALLBACK_WAIT_CYCLES,
+									     (unsigned) writeGeneration);
+								}
 							} else {
 								uint32_t waitCycles = EVENT_ACTIVE_INTERVAL;
 								if (!noStaleReuse) {
