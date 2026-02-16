@@ -23,6 +23,7 @@ extern const char GBA_SIO_NETPLAY_LOCKSTEP_DEFAULT_HOST[];
 #define NETPLAY_LOCKSTEP_BEGIN_QUEUE_SIZE 64
 #define NETPLAY_LOCKSTEP_RESULT_QUEUE_SIZE 64
 #define NETPLAY_LOCKSTEP_SYNC_QUEUE_SIZE 64
+#define NETPLAY_LOCKSTEP_MULTI_WRITE_HISTORY_SIZE 64
 
 struct GBASIONetPlayLockstepTransferResult {
 	uint32_t sequence;
@@ -75,6 +76,11 @@ struct GBASIONetPlayLockstepDriver {
 	uint32_t multiSendWriteGeneration;
 	uint32_t normal8WriteGeneration;
 	uint32_t normal32WriteGeneration;
+	uint16_t multiSendWriteHistoryValue[NETPLAY_LOCKSTEP_MULTI_WRITE_HISTORY_SIZE];
+	int32_t multiSendWriteHistoryCycle[NETPLAY_LOCKSTEP_MULTI_WRITE_HISTORY_SIZE];
+	uint32_t multiSendWriteHistoryGeneration[NETPLAY_LOCKSTEP_MULTI_WRITE_HISTORY_SIZE];
+	uint8_t multiSendWriteHistoryWrite;
+	uint8_t multiSendWriteHistoryCount;
 	uint32_t multiSendLastSentGeneration;
 	uint32_t normal8LastSentGeneration;
 	uint32_t normal32LastSentGeneration;
