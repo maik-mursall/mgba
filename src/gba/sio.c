@@ -19,7 +19,7 @@ static const int GBASIOCyclesPerTransfer[4][MAX_GBAS] = {
 };
 
 /* Poll interval used when a driver defers MULTI completion. */
-#define GBA_SIO_MULTI_FINISH_DEFER_CYCLES 1024
+#define GBA_SIO_MULTI_FINISH_DEFER_CYCLES 8192
 
 static void _sioFinish(struct mTiming* timing, void* user, uint32_t cyclesLate);
 
