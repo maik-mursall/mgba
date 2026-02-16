@@ -70,6 +70,8 @@ struct GBASIONetPlayLockstepDriver {
 	bool waitingForHardSync;
 	uint32_t hardSyncSequence;
 	uint32_t transferSequence;
+	bool deferredMultiplayerResultValid;
+	struct GBASIONetPlayLockstepTransferResult deferredMultiplayerResult;
 	bool cycleSyncValid;
 	int32_t cycleSyncOffset;
 	uint32_t cycleSyncSequence;

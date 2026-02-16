@@ -18,6 +18,9 @@ static const int GBASIOCyclesPerTransfer[4][MAX_GBAS] = {
 	{ 3140, 5755, 8376, 10486 }
 };
 
+/* Poll interval used when a driver defers MULTI completion. */
+#define GBA_SIO_MULTI_FINISH_DEFER_CYCLES 1024
+
 static void _sioFinish(struct mTiming* timing, void* user, uint32_t cyclesLate);
 
 static const char* _modeName(enum GBASIOMode mode) {
@@ -415,7 +418,6 @@ void GBASIONormal32FinishTransfer(struct GBASIO* sio, uint32_t data, uint32_t cy
 }
 
 static void _sioFinish(struct mTiming* timing, void* user, uint32_t cyclesLate) {
-	UNUSED(timing);
 	struct GBASIO* sio = user;
 	union {
 		uint16_t multi[4];
@@ -424,8 +426,16 @@ static void _sioFinish(struct mTiming* timing, void* user, uint32_t cyclesLate) 
 	} data = {0};
 	switch (sio->mode) {
 	case GBA_SIO_MULTI:
-		if (sio->driver && sio->driver->finishMultiplayer) {
-			sio->driver->finishMultiplayer(sio->driver, data.multi);
+		if (sio->driver) {
+			if (sio->driver->finishMultiplayerPoll) {
+				if (!sio->driver->finishMultiplayerPoll(sio->driver, data.multi)) {
+					mTimingDeschedule(timing, &sio->completeEvent);
+					mTimingSchedule(timing, &sio->completeEvent, GBA_SIO_MULTI_FINISH_DEFER_CYCLES);
+					return;
+				}
+			} else if (sio->driver->finishMultiplayer) {
+				sio->driver->finishMultiplayer(sio->driver, data.multi);
+			}
 		}
 		GBASIOMultiplayerFinishTransfer(sio, data.multi, cyclesLate);
 		break;

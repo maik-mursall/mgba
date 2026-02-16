@@ -126,6 +126,12 @@ struct GBASIODriver {
 	uint16_t (*writeRegister)(struct GBASIODriver* driver, uint32_t address, uint16_t value);
 	bool (*start)(struct GBASIODriver* driver);
 	void (*finishMultiplayer)(struct GBASIODriver* driver, uint16_t data[4]);
+	/*
+	 * Optional non-blocking MULTI completion hook.
+	 * Return true when transfer data is ready and completion can proceed.
+	 * Return false to defer completion and poll again later.
+	 */
+	bool (*finishMultiplayerPoll)(struct GBASIODriver* driver, uint16_t data[4]);
 	uint8_t (*finishNormal8)(struct GBASIODriver* driver);
 	uint32_t (*finishNormal32)(struct GBASIODriver* driver);
 };
