@@ -57,6 +57,12 @@
 #define NETPLAY_CYCLE_RESYNC_DRIFT_THRESHOLD (64 * EVENT_ACTIVE_INTERVAL)
 /* Grace window for modes that may reuse current register values if no fresh write arrives quickly. */
 #define NETPLAY_SAMPLE_FRESH_REUSE_WAIT_CYCLES 2048
+/*
+ * MULTI is primarily fresh-write driven, but some game states legitimately keep
+ * SIOMLT_SEND unchanged across consecutive transfers. Allow same-generation
+ * fallback after a short wait to avoid transfer deadlock.
+ */
+#define NETPLAY_MULTI_SAME_GENERATION_FALLBACK_WAIT_CYCLES (4 * EVENT_ACTIVE_INTERVAL)
 
 #define MSG_HELLO 0x01
 #define MSG_MODE 0x02
@@ -485,8 +491,9 @@ static bool _requiresStrictFreshSample(enum GBASIOMode mode) {
 
 static bool _requiresFreshSampleWithoutReuse(enum GBASIOMode mode) {
 	/*
-	 * MULTI is latency sensitive and gameplay critical: secondary peers must
-	 * never recycle an already-sent sample when waiting for BEGIN.
+	 * MULTI is latency sensitive and gameplay critical: secondary peers should
+	 * not recycle a previously-sent sample while waiting for BEGIN, except for
+	 * the bounded same-generation fallback in _netPlayEvent.
 	 */
 	return mode == GBA_SIO_MULTI;
 }
@@ -1532,6 +1539,7 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 	int32_t beginTargetCycle = 0;
 	int32_t beginCycleDelta = 0;
 	uint32_t sampleWriteGeneration = 0;
+	bool allowSameGenerationFallback = false;
 	bool beginCycleCompared = false;
 	bool beginHasStartCycle = false;
 	bool shouldLogBeginAttempt = true;
@@ -1794,6 +1802,10 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 						MutexUnlock(&driver->mutex);
 	#endif
 						if (waitingForFreshSample) {
+							bool allowMandatorySameGenerationFallback = noStaleReuse
+								&& beginMode == GBA_SIO_MULTI
+								&& writeGeneration == lastSentGeneration
+								&& freshnessElapsed >= NETPLAY_MULTI_SAME_GENERATION_FALLBACK_WAIT_CYCLES;
 							if (reuseGraceExpired) {
 								/*
 								 * If no new write arrives quickly, reuse the current register value
@@ -1803,6 +1815,13 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 								NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u no post-BEGIN sample write after %u cycles (mode=%u baselineGen=%u currentGen=%u waitedCycles=%d); reusing current register value",
 								     (unsigned) beginSequence, (unsigned) NETPLAY_SAMPLE_FRESH_REUSE_WAIT_CYCLES,
 								     _modeToWire(beginMode), (unsigned) baselineGeneration, (unsigned) writeGeneration, (int) freshnessElapsed);
+							} else if (allowMandatorySameGenerationFallback) {
+								sampleWriteGeneration = writeGeneration;
+								allowSameGenerationFallback = true;
+								NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u no fresh MULTI sample after %u cycles (gen=%u); allowing same-generation send to avoid deadlock",
+								     (unsigned) beginSequence,
+								     (unsigned) NETPLAY_MULTI_SAME_GENERATION_FALLBACK_WAIT_CYCLES,
+								     (unsigned) writeGeneration);
 							} else {
 								uint32_t waitCycles = EVENT_ACTIVE_INTERVAL;
 								if (!noStaleReuse) {
@@ -1838,6 +1857,11 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 #endif
 							currentLastSentGeneration = driver->multiSendLastSentGeneration;
 							generationIsFresh = _isSampleGenerationNewer(sampleWriteGeneration, currentLastSentGeneration);
+							if (!generationIsFresh
+									&& allowSameGenerationFallback
+									&& sampleWriteGeneration == currentLastSentGeneration) {
+								generationIsFresh = true;
+							}
 #ifndef DISABLE_THREADING
 							MutexUnlock(&driver->mutex);
 #endif
