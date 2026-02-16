@@ -63,6 +63,11 @@
  * fallback after a short wait to avoid transfer deadlock.
  */
 #define NETPLAY_MULTI_SAME_GENERATION_FALLBACK_WAIT_CYCLES (4 * EVENT_ACTIVE_INTERVAL)
+/*
+ * If BEGIN handling is already late, don't wait the full fallback window; give
+ * a short grace period for a just-imminent SIOMLT_SEND write first.
+ */
+#define NETPLAY_MULTI_LATE_FRESH_GRACE_CYCLES (2 * EVENT_ACTIVE_INTERVAL)
 
 #define MSG_HELLO 0x01
 #define MSG_MODE 0x02
@@ -1959,11 +1964,13 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 	#endif
 						if (waitingForFreshSample) {
 							bool lateBeginDelivery = beginCycleCompared && beginCycleDelta < 0;
+							bool lateFallbackGraceExpired = lateBeginDelivery
+								&& freshnessElapsed >= NETPLAY_MULTI_LATE_FRESH_GRACE_CYCLES;
 							bool allowMandatorySameGenerationFallback = noStaleReuse
 								&& beginMode == GBA_SIO_MULTI
 								&& writeGeneration == lastSentGeneration
 								&& (freshnessElapsed >= NETPLAY_MULTI_SAME_GENERATION_FALLBACK_WAIT_CYCLES
-									|| lateBeginDelivery);
+									|| lateFallbackGraceExpired);
 							if (reuseGraceExpired) {
 								/*
 								 * If no new write arrives quickly, reuse the current register value
@@ -1976,11 +1983,12 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 							} else if (allowMandatorySameGenerationFallback) {
 								sampleWriteGeneration = writeGeneration;
 								allowSameGenerationFallback = true;
-								if (lateBeginDelivery && freshnessElapsed < NETPLAY_MULTI_SAME_GENERATION_FALLBACK_WAIT_CYCLES) {
-									NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u late by %d cycles with unchanged MULTI sample (gen=%u); allowing immediate same-generation send",
+								if (lateFallbackGraceExpired && freshnessElapsed < NETPLAY_MULTI_SAME_GENERATION_FALLBACK_WAIT_CYCLES) {
+									NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u late by %d cycles with unchanged MULTI sample (gen=%u); allowing same-generation send after grace=%u",
 									     (unsigned) beginSequence,
 									     (int) (-beginCycleDelta),
-									     (unsigned) writeGeneration);
+									     (unsigned) writeGeneration,
+									     (unsigned) NETPLAY_MULTI_LATE_FRESH_GRACE_CYCLES);
 								} else {
 									NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u no fresh MULTI sample after %u cycles (gen=%u); allowing same-generation send to avoid deadlock",
 									     (unsigned) beginSequence,
@@ -1998,15 +2006,25 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 											}
 										}
 									} else {
-										int32_t remainingCycles = NETPLAY_MULTI_SAME_GENERATION_FALLBACK_WAIT_CYCLES - freshnessElapsed;
+										int32_t remainingCycles = 0;
+										if (lateBeginDelivery && !lateFallbackGraceExpired) {
+											remainingCycles = NETPLAY_MULTI_LATE_FRESH_GRACE_CYCLES - freshnessElapsed;
+											NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u late by %d cycles with unchanged MULTI sample (gen=%u); waiting late grace=%u before fallback",
+											     (unsigned) beginSequence,
+											     (int) (-beginCycleDelta),
+											     (unsigned) writeGeneration,
+											     (unsigned) NETPLAY_MULTI_LATE_FRESH_GRACE_CYCLES);
+										} else {
+											remainingCycles = NETPLAY_MULTI_SAME_GENERATION_FALLBACK_WAIT_CYCLES - freshnessElapsed;
+											NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u waiting for mandatory fresh MULTI sample (baselineGen=%u currentGen=%u waitedCycles=%d)",
+											     (unsigned) beginSequence,
+										     (unsigned) baselineGeneration,
+										     (unsigned) writeGeneration,
+										     (int) freshnessElapsed);
+										}
 										if (remainingCycles > 0) {
 											waitCycles = (uint32_t) remainingCycles;
 										}
-										NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u waiting for mandatory fresh MULTI sample (baselineGen=%u currentGen=%u waitedCycles=%d)",
-										     (unsigned) beginSequence,
-									     (unsigned) baselineGeneration,
-									     (unsigned) writeGeneration,
-									     (int) freshnessElapsed);
 								}
 								_rescheduleDriverEvent(timing, driver, connected ? waitCycles : EVENT_IDLE_INTERVAL);
 								return;
