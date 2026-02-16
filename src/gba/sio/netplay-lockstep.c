@@ -117,6 +117,7 @@ static bool _sendTransferSample(struct GBASIONetPlayLockstepDriver* driver, uint
 static bool _waitForTransferResult(struct GBASIONetPlayLockstepDriver* driver, enum GBASIOMode mode, struct GBASIONetPlayLockstepTransferResult* out);
 static bool _sendHardSyncAck(struct GBASIONetPlayLockstepDriver* driver, uint32_t sequence);
 static bool _waitForHardSync(struct GBASIONetPlayLockstepDriver* driver, uint32_t sequence);
+static void _rescheduleDriverEvent(struct mTiming* timing, struct GBASIONetPlayLockstepDriver* driver, uint32_t when);
 static struct mLockstepUser* _wakeDriverLocked(struct GBASIONetPlayLockstepDriver* driver);
 static void _wakeDriver(struct GBASIONetPlayLockstepDriver* driver);
 static void _paceClientDelay(struct GBASIONetPlayLockstepDriver* driver, uint32_t waitMs);
@@ -984,6 +985,16 @@ static void _wakeDriver(struct GBASIONetPlayLockstepDriver* driver) {
 	}
 }
 
+static void _rescheduleDriverEvent(struct mTiming* timing, struct GBASIONetPlayLockstepDriver* driver, uint32_t when) {
+	if (!when) {
+		when = 1;
+	}
+	while (mTimingIsScheduled(timing, &driver->event)) {
+		mTimingDeschedule(timing, &driver->event);
+	}
+	mTimingSchedule(timing, &driver->event, (int32_t) when);
+}
+
 static struct mLockstepUser* _wakeDriverLocked(struct GBASIONetPlayLockstepDriver* driver) {
 	driver->clientIdleEvents = 0;
 	if (driver->asleep && driver->user && driver->user->wake) {
@@ -1594,7 +1605,7 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 	if (hasPendingBegin && beginMode != (enum GBASIOMode) -1) {
 		/* Don't start a new transfer while the current one hasn't fully completed locally. */
 		if (transferActive || waitingForTransfer || waitingForHardSync || hasPendingResult || hasPendingSync) {
-			mTimingSchedule(timing, &driver->event, connected ? EVENT_ACTIVE_INTERVAL : EVENT_IDLE_INTERVAL);
+			_rescheduleDriverEvent(timing, driver, connected ? EVENT_ACTIVE_INTERVAL : EVENT_IDLE_INTERVAL);
 			return;
 		}
 		if (!beginHasStartCycle) {
@@ -1694,7 +1705,7 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 				     (unsigned) (uint32_t) targetCycle,
 				     (unsigned) (uint32_t) localCycle,
 				     (unsigned) waitCycles);
-				mTimingSchedule(timing, &driver->event, connected ? waitCycles : EVENT_IDLE_INTERVAL);
+				_rescheduleDriverEvent(timing, driver, connected ? waitCycles : EVENT_IDLE_INTERVAL);
 				return;
 			}
 #if NETPLAY_CLIENT_PACING_MODE != NETPLAY_CLIENT_PACING_NONE && NETPLAY_CLIENT_ENABLE_AHEAD_PACING
@@ -1802,6 +1813,10 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 						MutexUnlock(&driver->mutex);
 	#endif
 						if (waitingForFreshSample) {
+							bool allowImmediateMandatorySameGenerationFallback = noStaleReuse
+								&& beginMode == GBA_SIO_MULTI
+								&& beginCycleCompared
+								&& writeGeneration == lastSentGeneration;
 							bool allowMandatorySameGenerationFallback = noStaleReuse
 								&& beginMode == GBA_SIO_MULTI
 								&& writeGeneration == lastSentGeneration
@@ -1815,6 +1830,16 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 								NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u no post-BEGIN sample write after %u cycles (mode=%u baselineGen=%u currentGen=%u waitedCycles=%d); reusing current register value",
 								     (unsigned) beginSequence, (unsigned) NETPLAY_SAMPLE_FRESH_REUSE_WAIT_CYCLES,
 								     _modeToWire(beginMode), (unsigned) baselineGeneration, (unsigned) writeGeneration, (int) freshnessElapsed);
+							} else if (allowImmediateMandatorySameGenerationFallback) {
+								/*
+								 * Once mapped BEGIN time is reached, waiting for a future write can
+								 * only add latency for this transfer; allow same-generation send.
+								 */
+								sampleWriteGeneration = writeGeneration;
+								allowSameGenerationFallback = true;
+								NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u reached target cycle with unchanged MULTI sample (gen=%u); sending same-generation value",
+								     (unsigned) beginSequence,
+								     (unsigned) writeGeneration);
 							} else if (allowMandatorySameGenerationFallback) {
 								sampleWriteGeneration = writeGeneration;
 								allowSameGenerationFallback = true;
@@ -1828,18 +1853,22 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 									int32_t remainingCycles = NETPLAY_SAMPLE_FRESH_REUSE_WAIT_CYCLES - freshnessElapsed;
 									if (remainingCycles > 0) {
 										waitCycles = (uint32_t) remainingCycles;
-										if (!waitCycles) {
-											waitCycles = EVENT_ACTIVE_INTERVAL;
+											if (!waitCycles) {
+												waitCycles = EVENT_ACTIVE_INTERVAL;
+											}
 										}
-									}
-								} else {
-									NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u waiting for mandatory fresh MULTI sample (baselineGen=%u currentGen=%u waitedCycles=%d)",
-									     (unsigned) beginSequence,
+									} else {
+										int32_t remainingCycles = NETPLAY_MULTI_SAME_GENERATION_FALLBACK_WAIT_CYCLES - freshnessElapsed;
+										if (remainingCycles > 0) {
+											waitCycles = (uint32_t) remainingCycles;
+										}
+										NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u waiting for mandatory fresh MULTI sample (baselineGen=%u currentGen=%u waitedCycles=%d)",
+										     (unsigned) beginSequence,
 									     (unsigned) baselineGeneration,
 									     (unsigned) writeGeneration,
 									     (int) freshnessElapsed);
 								}
-								mTimingSchedule(timing, &driver->event, connected ? waitCycles : EVENT_IDLE_INTERVAL);
+								_rescheduleDriverEvent(timing, driver, connected ? waitCycles : EVENT_IDLE_INTERVAL);
 								return;
 							}
 						} else if (logFreshReady) {
@@ -1870,7 +1899,7 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 								     (unsigned) beginSequence,
 								     (unsigned) sampleWriteGeneration,
 								     (unsigned) currentLastSentGeneration);
-								mTimingSchedule(timing, &driver->event, connected ? EVENT_ACTIVE_INTERVAL : EVENT_IDLE_INTERVAL);
+								_rescheduleDriverEvent(timing, driver, connected ? EVENT_ACTIVE_INTERVAL : EVENT_IDLE_INTERVAL);
 								return;
 							}
 						}
@@ -2033,17 +2062,17 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 		if (connected) {
 			nextInterval = _isSecondaryIdle(driver) ? EVENT_IDLE_INTERVAL : EVENT_ACTIVE_INTERVAL;
 		}
-		/*
-		 * NetPlay secondaries must never park the core thread indefinitely:
-		 * if the primary is idle, packet-driven wakeups may not arrive.
-		 */
-		driver->asleep = false;
-		MutexUnlock(&driver->mutex);
-		mTimingSchedule(timing, &driver->event, nextInterval);
-		return;
-	}
+			/*
+			 * NetPlay secondaries must never park the core thread indefinitely:
+			 * if the primary is idle, packet-driven wakeups may not arrive.
+			 */
+			driver->asleep = false;
+			MutexUnlock(&driver->mutex);
+			_rescheduleDriverEvent(timing, driver, nextInterval);
+			return;
+		}
 #else
-	mTimingSchedule(timing, &driver->event, connected ? EVENT_ACTIVE_INTERVAL : EVENT_IDLE_INTERVAL);
+		_rescheduleDriverEvent(timing, driver, connected ? EVENT_ACTIVE_INTERVAL : EVENT_IDLE_INTERVAL);
 #endif
 }
 
