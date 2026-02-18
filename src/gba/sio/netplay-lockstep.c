@@ -17,6 +17,7 @@
 #define EVENT_ACTIVE_INTERVAL 4096
 #define MAX_PACKET_SIZE 512
 #define CONNECT_ID_WAIT_MS 5000
+#define READER_IDLE_WAIT_MS 1
 
 #define NETPLAY_CLIENT_PACING_NONE 0
 #define NETPLAY_CLIENT_PACING_SOFT 1
@@ -29,7 +30,7 @@
 #define NETPLAY_CLIENT_ENABLE_AHEAD_PACING 0
 
 #ifndef NETPLAY_CLIENT_PACING_MODE
-#define NETPLAY_CLIENT_PACING_MODE NETPLAY_CLIENT_PACING_SOFT
+#define NETPLAY_CLIENT_PACING_MODE NETPLAY_CLIENT_PACING_NONE
 #endif
 
 #define NETPLAY_CLIENT_SOFT_IDLE_CYCLES 280896
@@ -2725,12 +2726,24 @@ static THREAD_ENTRY _readerThread(void* context) {
 			break;
 		}
 		reads[0] = socket;
-		pollResult = SocketPoll(1, reads, NULL, NULL, 2);
+		/*
+		 * Keep RX poll non-blocking so freshly queued outbound packets can be
+		 * flushed with minimal added latency. Idle backoff is handled via cond.
+		 */
+		pollResult = SocketPoll(1, reads, NULL, NULL, 0);
 		if (pollResult < 0) {
 			mLOG(GBA_SIO, WARN, "NetPlay lockstep: reader poll failed");
 			break;
 		}
 		if (!pollResult || SOCKET_FAILED(reads[0])) {
+			MutexLock(&driver->mutex);
+			if (driver->connected
+					&& !driver->stopping
+					&& !driver->pendingAckCount
+					&& !driver->pendingOutboundCount) {
+				ConditionWaitTimed(&driver->cond, &driver->mutex, READER_IDLE_WAIT_MS);
+			}
+			MutexUnlock(&driver->mutex);
 			continue;
 		}
 		if (!_recvAll(socket, header, sizeof(header))) {
