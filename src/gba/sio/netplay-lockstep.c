@@ -15,6 +15,7 @@
  */
 #define EVENT_IDLE_INTERVAL 8192
 #define EVENT_ACTIVE_INTERVAL 4096
+#define EVENT_BUSY_INTERVAL 1
 #define MAX_PACKET_SIZE 512
 #define CONNECT_ID_WAIT_MS 5000
 #define READER_IDLE_WAIT_MS 1
@@ -41,6 +42,11 @@
 #define NETPLAY_CLIENT_AHEAD_CYCLES_PER_MS 16777
 #define NETPLAY_CLIENT_AHEAD_SOFT_MAX_WAIT_MS 6
 #define NETPLAY_CLIENT_AHEAD_HARD_MAX_WAIT_MS 10
+/*
+ * Secondary netplay clients should prioritize immediate BEGIN handling to keep
+ * host pacing latency minimal.
+ */
+#define NETPLAY_CLIENT_MULTI_BYPASS_BEGIN_CYCLE_SYNC 1
 #ifndef NETPLAY_VERBOSE_TRANSFER_TRACE
 #define NETPLAY_VERBOSE_TRANSFER_TRACE 1
 #endif
@@ -1941,7 +1947,13 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 	if (hasPendingBegin && beginMode != (enum GBASIOMode) -1) {
 		/* Don't start a new transfer while the current one hasn't fully completed locally. */
 		if (transferActive || waitingForTransfer || waitingForHardSync || hasPendingResult || hasPendingSync) {
-			_rescheduleDriverEvent(timing, driver, connected ? EVENT_ACTIVE_INTERVAL : EVENT_IDLE_INTERVAL);
+			uint32_t nextInterval = connected ? EVENT_ACTIVE_INTERVAL : EVENT_IDLE_INTERVAL;
+#if NETPLAY_CLIENT_MULTI_BYPASS_BEGIN_CYCLE_SYNC
+			if (connected && playerId > 0 && beginMode == GBA_SIO_MULTI) {
+				nextInterval = EVENT_BUSY_INTERVAL;
+			}
+#endif
+			_rescheduleDriverEvent(timing, driver, nextInterval);
 			return;
 		}
 		if (!beginHasStartCycle) {
@@ -1954,6 +1966,7 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 			bool calibratedCycleSync = false;
 			bool periodicCycleSync = false;
 			bool driftCycleSync = false;
+			bool bypassBeginCycleSync = false;
 			const char* cycleSyncReason = "initial";
 			uint32_t transfersSinceSync = 0;
 			uint32_t cycleDriftMagnitude = 0;
@@ -1961,48 +1974,54 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 			int32_t localCycle = mTimingCurrentTime(timing);
 			int32_t targetCycle = 0;
 			int32_t untilStartCycle = 0;
-#ifndef DISABLE_THREADING
-			MutexLock(&driver->mutex);
+#if NETPLAY_CLIENT_MULTI_BYPASS_BEGIN_CYCLE_SYNC
+			bypassBeginCycleSync = playerId > 0 && beginMode == GBA_SIO_MULTI;
 #endif
-			if (driver->cycleSyncValid && driver->cycleSyncSequence) {
-				transfersSinceSync = beginSequence - driver->cycleSyncSequence;
-				periodicCycleSync = transfersSinceSync >= NETPLAY_CYCLE_RESYNC_INTERVAL;
-			}
-			if (!driver->cycleSyncValid || periodicCycleSync) {
-				driver->cycleSyncOffset = localCycle - beginStartCycle;
-				driver->cycleSyncValid = true;
-				driver->cycleSyncSequence = beginSequence;
-				calibratedCycleSync = true;
-				cycleSyncReason = periodicCycleSync ? "periodic" : "initial";
-			} else if (!driver->cycleSyncSequence) {
-				driver->cycleSyncSequence = beginSequence;
-			}
-			targetCycle = beginStartCycle + driver->cycleSyncOffset;
-			untilStartCycle = targetCycle - localCycle;
-			{
-				int64_t absDelta = untilStartCycle;
-				if (absDelta < 0) {
-					absDelta = -absDelta;
+			if (!bypassBeginCycleSync) {
+#ifndef DISABLE_THREADING
+				MutexLock(&driver->mutex);
+#endif
+				targetCycle = beginStartCycle + driver->cycleSyncOffset;
+				if (driver->cycleSyncValid && driver->cycleSyncSequence) {
+					transfersSinceSync = beginSequence - driver->cycleSyncSequence;
+					periodicCycleSync = transfersSinceSync >= NETPLAY_CYCLE_RESYNC_INTERVAL;
 				}
-				cycleDriftMagnitude = (uint32_t) absDelta;
-			}
-			if (driver->cycleSyncValid && cycleDriftMagnitude >= NETPLAY_CYCLE_RESYNC_DRIFT_THRESHOLD) {
-				cycleDriftAtResync = cycleDriftMagnitude;
-				driver->cycleSyncOffset = localCycle - beginStartCycle;
-				driver->cycleSyncSequence = beginSequence;
+				if (!driver->cycleSyncValid || periodicCycleSync) {
+					driver->cycleSyncOffset = localCycle - beginStartCycle;
+					driver->cycleSyncValid = true;
+					driver->cycleSyncSequence = beginSequence;
+					calibratedCycleSync = true;
+					cycleSyncReason = periodicCycleSync ? "periodic" : "initial";
+				} else if (!driver->cycleSyncSequence) {
+					driver->cycleSyncSequence = beginSequence;
+				}
 				targetCycle = beginStartCycle + driver->cycleSyncOffset;
 				untilStartCycle = targetCycle - localCycle;
-				calibratedCycleSync = true;
-				driftCycleSync = true;
-				cycleSyncReason = "drift";
-			}
-			deferForCycle = untilStartCycle > 0;
-			beginTargetCycle = targetCycle;
-			beginCycleDelta = untilStartCycle;
-			beginCycleCompared = true;
+				{
+					int64_t absDelta = untilStartCycle;
+					if (absDelta < 0) {
+						absDelta = -absDelta;
+					}
+					cycleDriftMagnitude = (uint32_t) absDelta;
+				}
+				if (driver->cycleSyncValid && cycleDriftMagnitude >= NETPLAY_CYCLE_RESYNC_DRIFT_THRESHOLD) {
+					cycleDriftAtResync = cycleDriftMagnitude;
+					driver->cycleSyncOffset = localCycle - beginStartCycle;
+					driver->cycleSyncSequence = beginSequence;
+					targetCycle = beginStartCycle + driver->cycleSyncOffset;
+					untilStartCycle = targetCycle - localCycle;
+					calibratedCycleSync = true;
+					driftCycleSync = true;
+					cycleSyncReason = "drift";
+				}
+				deferForCycle = untilStartCycle > 0;
+				beginTargetCycle = targetCycle;
+				beginCycleDelta = untilStartCycle;
+				beginCycleCompared = true;
 #ifndef DISABLE_THREADING
-			MutexUnlock(&driver->mutex);
+				MutexUnlock(&driver->mutex);
 #endif
+			}
 			/* Avoid flooding per-event BEGIN logs while freshness wait is active. */
 #ifndef DISABLE_THREADING
 			MutexLock(&driver->mutex);
@@ -2023,7 +2042,7 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 				     (unsigned) transfersSinceSync,
 				     (unsigned) (driftCycleSync ? cycleDriftAtResync : cycleDriftMagnitude));
 			}
-			if (shouldLogBeginAttempt) {
+			if (shouldLogBeginAttempt && !bypassBeginCycleSync) {
 				NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u cycle compare start=%08X local=%08X target=%08X delta=%d",
 				     (unsigned) beginSequence,
 				     (unsigned) (uint32_t) beginStartCycle,
@@ -2031,7 +2050,13 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 				     (unsigned) (uint32_t) targetCycle,
 				     (int) beginCycleDelta);
 			}
-			if (deferForCycle) {
+			if (shouldLogBeginAttempt && bypassBeginCycleSync) {
+				NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u secondary MULTI begin cycle sync bypassed (start=%08X local=%08X)",
+				     (unsigned) beginSequence,
+				     (unsigned) (uint32_t) beginStartCycle,
+				     (unsigned) (uint32_t) localCycle);
+			}
+			if (!bypassBeginCycleSync && deferForCycle) {
 				uint32_t waitCycles = (uint32_t) untilStartCycle;
 				if (!waitCycles || waitCycles > EVENT_ACTIVE_INTERVAL) {
 					waitCycles = EVENT_ACTIVE_INTERVAL;
@@ -2258,7 +2283,9 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 								     (unsigned) beginSequence,
 								     (unsigned) sampleWriteGeneration,
 								     (unsigned) currentLastSentGeneration);
-								_rescheduleDriverEvent(timing, driver, connected ? EVENT_ACTIVE_INTERVAL : EVENT_IDLE_INTERVAL);
+								_rescheduleDriverEvent(timing, driver,
+									(connected && playerId > 0 && beginMode == GBA_SIO_MULTI) ? EVENT_BUSY_INTERVAL
+									: (connected ? EVENT_ACTIVE_INTERVAL : EVENT_IDLE_INTERVAL));
 								return;
 							}
 						}
@@ -2439,15 +2466,30 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 #endif
 
 #ifndef DISABLE_THREADING
-	{
-		uint32_t nextInterval = EVENT_IDLE_INTERVAL;
-		MutexLock(&driver->mutex);
-		connected = driver->connected;
-		if (connected) {
-			nextInterval = _isSecondaryIdle(driver) ? EVENT_IDLE_INTERVAL : EVENT_ACTIVE_INTERVAL;
-		}
-			/*
-			 * NetPlay secondaries must never park the core thread indefinitely:
+		{
+			uint32_t nextInterval = EVENT_IDLE_INTERVAL;
+			bool hasBusyWork = false;
+			MutexLock(&driver->mutex);
+			connected = driver->connected;
+			if (connected) {
+				hasBusyWork = driver->pendingBeginCount
+					|| driver->transferActive
+					|| driver->waitingForTransfer
+					|| driver->waitingForHardSync
+					|| driver->freshnessWaitActive
+					|| _hasPendingResultForTransfer(driver, driver->transferSequence)
+					|| _hasPendingSyncForTransfer(driver, driver->transferSequence);
+#if NETPLAY_CLIENT_MULTI_BYPASS_BEGIN_CYCLE_SYNC
+				if (driver->playerId > 0 && hasBusyWork) {
+					nextInterval = EVENT_BUSY_INTERVAL;
+				} else
+#endif
+				{
+					nextInterval = _isSecondaryIdle(driver) ? EVENT_IDLE_INTERVAL : EVENT_ACTIVE_INTERVAL;
+				}
+			}
+				/*
+				 * NetPlay secondaries must never park the core thread indefinitely:
 			 * if the primary is idle, packet-driven wakeups may not arrive.
 			 */
 			driver->asleep = false;
