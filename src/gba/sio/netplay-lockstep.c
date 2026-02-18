@@ -63,7 +63,7 @@
  * SIOMLT_SEND unchanged across consecutive transfers. Allow same-generation
  * fallback after a short wait to avoid transfer deadlock.
  */
-#define NETPLAY_MULTI_SAME_GENERATION_FALLBACK_WAIT_CYCLES (4 * EVENT_ACTIVE_INTERVAL)
+#define NETPLAY_MULTI_SAME_GENERATION_FALLBACK_WAIT_CYCLES 2048
 /*
  * If BEGIN handling is already late, don't wait the full fallback window; give
  * a short grace period for a just-imminent SIOMLT_SEND write first.
