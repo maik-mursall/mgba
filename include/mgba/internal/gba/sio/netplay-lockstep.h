@@ -106,6 +106,8 @@ struct GBASIONetPlayLockstepDriver {
 	enum GBASIOMode freshnessWaitMode;
 	uint32_t freshnessWaitBaselineGeneration;
 	int32_t freshnessWaitStartCycle;
+	bool multiSameGenerationFastPathActive;
+	uint32_t multiSameGenerationFastPathGeneration;
 
 	int playerId;
 	int attached;

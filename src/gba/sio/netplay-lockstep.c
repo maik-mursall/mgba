@@ -556,6 +556,8 @@ static void GBASIONetPlayLockstepDriverReset(struct GBASIODriver* driver) {
 	net->normal8LastSentGeneration = UINT32_MAX;
 	net->normal32LastSentGeneration = UINT32_MAX;
 	_clearFreshnessWait(net);
+	net->multiSameGenerationFastPathActive = false;
+	net->multiSameGenerationFastPathGeneration = 0;
 	net->asleep = false;
 	net->clientIdleEvents = 0;
 	net->mode = driver->p ? driver->p->mode : (enum GBASIOMode) -1;
@@ -770,6 +772,12 @@ static uint16_t GBASIONetPlayLockstepDriverWriteRegister(struct GBASIODriver* dr
 		++net->multiSendWriteGeneration;
 		++net->normal8WriteGeneration;
 		_recordMultiSendWriteSample(net, value, net->multiSendWriteGeneration, writeCycle, hasWriteCycle);
+		/*
+		 * A new SIOMLT_SEND write ends any prior same-generation plateau.
+		 * Require at least one bounded wait again before re-enabling fast reuse.
+		 */
+		net->multiSameGenerationFastPathActive = false;
+		net->multiSameGenerationFastPathGeneration = net->multiSendWriteGeneration;
 		nudgeFreshness = net->freshnessWaitActive && _requiresStrictFreshSample(net->freshnessWaitMode);
 		break;
 	}
@@ -992,6 +1000,8 @@ bool GBASIONetPlayLockstepDriverConnect(struct GBASIONetPlayLockstepDriver* driv
 	driver->normal8LastSentGeneration = UINT32_MAX;
 	driver->normal32LastSentGeneration = UINT32_MAX;
 	_clearFreshnessWait(driver);
+	driver->multiSameGenerationFastPathActive = false;
+	driver->multiSameGenerationFastPathGeneration = 0;
 	driver->asleep = false;
 	driver->clientIdleEvents = 0;
 	driver->pendingBeginRead = 0;
@@ -1263,6 +1273,8 @@ static void _setDisconnected(struct GBASIONetPlayLockstepDriver* driver, bool re
 	driver->normal8LastSentGeneration = UINT32_MAX;
 	driver->normal32LastSentGeneration = UINT32_MAX;
 	_clearFreshnessWait(driver);
+	driver->multiSameGenerationFastPathActive = false;
+	driver->multiSameGenerationFastPathGeneration = 0;
 	driver->asleep = false;
 	driver->clientIdleEvents = 0;
 	driver->pendingBeginRead = 0;
@@ -1874,6 +1886,7 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 	int32_t beginCycleDelta = 0;
 	uint32_t sampleWriteGeneration = 0;
 	bool allowSameGenerationFallback = false;
+	bool armSameGenerationFastPath = false;
 	bool beginCycleCompared = false;
 	bool beginHasStartCycle = false;
 	bool shouldLogBeginAttempt = true;
@@ -2082,16 +2095,17 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 #endif
 				}
 					_syncSIOCNTFromBegin(driver, beginMode, beginSIOCNT);
-					{
-						bool strictFreshSample = _requiresStrictFreshSample(beginMode);
-						bool noStaleReuse = _requiresFreshSampleWithoutReuse(beginMode);
-						bool waitingForFreshSample = false;
-						bool logFreshReady = false;
-						bool reuseGraceExpired = false;
-						bool generationAdvanced = false;
-						uint32_t writeGeneration = 0;
-						uint32_t baselineGeneration = 0;
-						uint32_t lastSentGeneration = 0;
+						{
+							bool strictFreshSample = _requiresStrictFreshSample(beginMode);
+							bool noStaleReuse = _requiresFreshSampleWithoutReuse(beginMode);
+							bool waitingForFreshSample = false;
+							bool logFreshReady = false;
+							bool reuseGraceExpired = false;
+							bool immediateSameGenerationFallback = false;
+							bool generationAdvanced = false;
+							uint32_t writeGeneration = 0;
+							uint32_t baselineGeneration = 0;
+							uint32_t lastSentGeneration = 0;
 						int32_t localCycle = mTimingCurrentTime(timing);
 						int32_t freshnessElapsed = 0;
 	#ifndef DISABLE_THREADING
@@ -2115,11 +2129,19 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 						}
 						baselineGeneration = driver->freshnessWaitBaselineGeneration;
 						freshnessElapsed = localCycle - driver->freshnessWaitStartCycle;
-						generationAdvanced = !strictFreshSample || _isSampleGenerationNewer(writeGeneration, lastSentGeneration);
-						waitingForFreshSample = strictFreshSample && !generationAdvanced;
-						reuseGraceExpired = waitingForFreshSample
-							&& !noStaleReuse
-							&& freshnessElapsed >= NETPLAY_SAMPLE_FRESH_REUSE_WAIT_CYCLES;
+							generationAdvanced = !strictFreshSample || _isSampleGenerationNewer(writeGeneration, lastSentGeneration);
+							waitingForFreshSample = strictFreshSample && !generationAdvanced;
+							if (waitingForFreshSample
+									&& noStaleReuse
+									&& beginMode == GBA_SIO_MULTI
+									&& writeGeneration == lastSentGeneration
+									&& driver->multiSameGenerationFastPathActive
+									&& driver->multiSameGenerationFastPathGeneration == writeGeneration) {
+								immediateSameGenerationFallback = true;
+							}
+							reuseGraceExpired = waitingForFreshSample
+								&& !noStaleReuse
+								&& freshnessElapsed >= NETPLAY_SAMPLE_FRESH_REUSE_WAIT_CYCLES;
 						if (waitingForFreshSample && !driver->freshnessWaitLogged) {
 							driver->freshnessWaitLogged = true;
 							NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u waiting for fresh sample write (mode=%u lastSentGen=%u currentGen=%u)",
@@ -2136,14 +2158,15 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 						MutexUnlock(&driver->mutex);
 	#endif
 						if (waitingForFreshSample) {
-							bool lateBeginDelivery = beginCycleCompared && beginCycleDelta < 0;
-							bool lateFallbackGraceExpired = lateBeginDelivery
-								&& freshnessElapsed >= NETPLAY_MULTI_LATE_FRESH_GRACE_CYCLES;
-							bool allowMandatorySameGenerationFallback = noStaleReuse
-								&& beginMode == GBA_SIO_MULTI
-								&& writeGeneration == lastSentGeneration
-								&& (freshnessElapsed >= NETPLAY_MULTI_SAME_GENERATION_FALLBACK_WAIT_CYCLES
-									|| lateFallbackGraceExpired);
+								bool lateBeginDelivery = beginCycleCompared && beginCycleDelta < 0;
+								bool lateFallbackGraceExpired = lateBeginDelivery
+									&& freshnessElapsed >= NETPLAY_MULTI_LATE_FRESH_GRACE_CYCLES;
+								bool allowMandatorySameGenerationFallback = noStaleReuse
+									&& beginMode == GBA_SIO_MULTI
+									&& writeGeneration == lastSentGeneration
+									&& (immediateSameGenerationFallback
+										|| freshnessElapsed >= NETPLAY_MULTI_SAME_GENERATION_FALLBACK_WAIT_CYCLES
+										|| lateFallbackGraceExpired);
 							if (reuseGraceExpired) {
 								/*
 								 * If no new write arrives quickly, reuse the current register value
@@ -2153,21 +2176,26 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 								NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u no post-BEGIN sample write after %u cycles (mode=%u baselineGen=%u currentGen=%u waitedCycles=%d); reusing current register value",
 								     (unsigned) beginSequence, (unsigned) NETPLAY_SAMPLE_FRESH_REUSE_WAIT_CYCLES,
 								     _modeToWire(beginMode), (unsigned) baselineGeneration, (unsigned) writeGeneration, (int) freshnessElapsed);
-							} else if (allowMandatorySameGenerationFallback) {
-								sampleWriteGeneration = writeGeneration;
-								allowSameGenerationFallback = true;
-								if (lateFallbackGraceExpired && freshnessElapsed < NETPLAY_MULTI_SAME_GENERATION_FALLBACK_WAIT_CYCLES) {
-									NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u late by %d cycles with unchanged MULTI sample (gen=%u); allowing same-generation send after grace=%u",
-									     (unsigned) beginSequence,
-									     (int) (-beginCycleDelta),
-									     (unsigned) writeGeneration,
-									     (unsigned) NETPLAY_MULTI_LATE_FRESH_GRACE_CYCLES);
-								} else {
-									NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u no fresh MULTI sample after %u cycles (gen=%u); allowing same-generation send to avoid deadlock",
-									     (unsigned) beginSequence,
-									     (unsigned) NETPLAY_MULTI_SAME_GENERATION_FALLBACK_WAIT_CYCLES,
-									     (unsigned) writeGeneration);
-								}
+								} else if (allowMandatorySameGenerationFallback) {
+									sampleWriteGeneration = writeGeneration;
+									allowSameGenerationFallback = true;
+									if (immediateSameGenerationFallback) {
+										NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u immediate same-generation MULTI send (gen=%u) after prior no-write fallback",
+										     (unsigned) beginSequence,
+										     (unsigned) writeGeneration);
+									} else if (lateFallbackGraceExpired && freshnessElapsed < NETPLAY_MULTI_SAME_GENERATION_FALLBACK_WAIT_CYCLES) {
+										NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u late by %d cycles with unchanged MULTI sample (gen=%u); allowing same-generation send after grace=%u",
+										     (unsigned) beginSequence,
+										     (int) (-beginCycleDelta),
+										     (unsigned) writeGeneration,
+										     (unsigned) NETPLAY_MULTI_LATE_FRESH_GRACE_CYCLES);
+									} else {
+										NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u no fresh MULTI sample after %u cycles (gen=%u); allowing same-generation send to avoid deadlock",
+										     (unsigned) beginSequence,
+										     (unsigned) NETPLAY_MULTI_SAME_GENERATION_FALLBACK_WAIT_CYCLES,
+										     (unsigned) writeGeneration);
+									}
+									armSameGenerationFastPath = !immediateSameGenerationFallback;
 							} else {
 								uint32_t waitCycles = EVENT_ACTIVE_INTERVAL;
 								if (!noStaleReuse) {
@@ -2294,13 +2322,24 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 						}
 						NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u begin handled by player %d",
 						     (unsigned) beginSequence, playerId);
-#ifndef DISABLE_THREADING
-						MutexLock(&driver->mutex);
-#endif
-						_setSampleLastSentGenerationForMode(driver, beginMode, sampleWriteGeneration);
-						_clearFreshnessWait(driver);
-#ifndef DISABLE_THREADING
-					MutexUnlock(&driver->mutex);
+					#ifndef DISABLE_THREADING
+							MutexLock(&driver->mutex);
+					#endif
+							_setSampleLastSentGenerationForMode(driver, beginMode, sampleWriteGeneration);
+							if (beginMode == GBA_SIO_MULTI) {
+								if (allowSameGenerationFallback) {
+									if (armSameGenerationFastPath) {
+										driver->multiSameGenerationFastPathActive = true;
+										driver->multiSameGenerationFastPathGeneration = sampleWriteGeneration;
+									}
+								} else {
+									driver->multiSameGenerationFastPathActive = false;
+									driver->multiSameGenerationFastPathGeneration = sampleWriteGeneration;
+								}
+							}
+							_clearFreshnessWait(driver);
+					#ifndef DISABLE_THREADING
+						MutexUnlock(&driver->mutex);
 #endif
 					clearPendingBegin = true;
 				} else {
@@ -2782,6 +2821,8 @@ static THREAD_ENTRY _readerThread(void* context) {
 	driver->normal8LastSentGeneration = UINT32_MAX;
 	driver->normal32LastSentGeneration = UINT32_MAX;
 	_clearFreshnessWait(driver);
+	driver->multiSameGenerationFastPathActive = false;
+	driver->multiSameGenerationFastPathGeneration = 0;
 	driver->asleep = false;
 	driver->clientIdleEvents = 0;
 	driver->pendingResultRead = 0;
