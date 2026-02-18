@@ -1633,7 +1633,7 @@ static bool _pollMultiplayerSecondaryFinish(struct GBASIONetPlayLockstepDriver* 
 
 	/*
 	 * Completing while still connected but without transfer state means the
-	 * client-side MULTI state machine lost ownership of this finish.
+	 * netplay MULTI state machine lost ownership of this finish.
 	 */
 	if (!driver->waitingForTransfer && !driver->waitingForHardSync && !driver->transferActive) {
 		driver->deferredMultiplayerResultValid = false;
@@ -1664,33 +1664,10 @@ static void GBASIONetPlayLockstepDriverFinishMultiplayer(struct GBASIODriver* dr
 
 static bool GBASIONetPlayLockstepDriverFinishMultiplayerPoll(struct GBASIODriver* driver, uint16_t data[4]) {
 	struct GBASIONetPlayLockstepDriver* net = (struct GBASIONetPlayLockstepDriver*) driver;
-	bool connected = false;
-	int playerId = -1;
-
-	memset(data, 0xFF, sizeof(uint16_t) * 4);
-
-#ifndef DISABLE_THREADING
-	MutexLock(&net->mutex);
-#endif
-	connected = net->connected;
-	playerId = net->playerId;
-#ifndef DISABLE_THREADING
-	MutexUnlock(&net->mutex);
-#endif
-
-	if (!connected) {
-		return true;
-	}
-
 	/*
-	 * Keep host behavior unchanged for now; apply non-blocking finish only to
-	 * secondary clients to avoid emulation-thread stalls there.
+	 * Non-blocking finish for both host and client: never park the emulation
+	 * thread on network waits; defer completion via finishMultiplayerPoll.
 	 */
-	if (playerId <= 0) {
-		GBASIONetPlayLockstepDriverFinishMultiplayer(driver, data);
-		return true;
-	}
-
 	return _pollMultiplayerSecondaryFinish(net, data);
 }
 
