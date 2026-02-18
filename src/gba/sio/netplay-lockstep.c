@@ -2307,11 +2307,14 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 								     (unsigned) (uint32_t) beginTargetCycle,
 								     (int) sendDelta);
 								/*
-								 * Anchor completion to the mapped BEGIN cycle so a delayed DATA send
-								 * does not push finish/hard-sync past a fast mode transition.
+								 * Anchor completion to mapped BEGIN timing. If we're already past the
+								 * expected finish point, complete on the next tick to catch up instead
+								 * of adding another full transfer window of delay.
 								 */
 								if (finishDelta <= 0) {
-									completeCycles = transferCycles;
+									completeCycles = 1;
+									NETPLAY_TRANSFER_TRACE("NetPlay lockstep: transfer %u completion catch-up (finishDelta=%d transferCycles=%d)",
+									     (unsigned) beginSequence, (int) finishDelta, transferCycles);
 								} else {
 									completeCycles = finishDelta;
 								}
