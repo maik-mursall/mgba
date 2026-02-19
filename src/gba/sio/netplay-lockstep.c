@@ -16,6 +16,7 @@
 #define EVENT_IDLE_INTERVAL 8192
 #define EVENT_ACTIVE_INTERVAL 4096
 #define EVENT_BUSY_INTERVAL 1
+#define EVENT_WAIT_INTERVAL 512
 #define MAX_PACKET_SIZE 512
 #define CONNECT_ID_WAIT_MS 5000
 #define READER_IDLE_WAIT_MS 1
@@ -79,7 +80,7 @@
  * Deferred MULTI completion poll cadence for netplay.
  * Keep this aggressive to avoid host-visible stalls when running non-blocking.
  */
-#define NETPLAY_MULTI_FINISH_POLL_BUSY_CYCLES 64
+#define NETPLAY_MULTI_FINISH_POLL_WAIT_CYCLES 512
 #define NETPLAY_MULTI_FINISH_POLL_READY_CYCLES 1
 /*
  * Host keeps blocking MULTI completion semantics. Use a conservative timeout so
@@ -1763,7 +1764,7 @@ static bool GBASIONetPlayLockstepDriverFinishMultiplayerPoll(struct GBASIODriver
 
 static uint32_t GBASIONetPlayLockstepDriverFinishMultiplayerPollInterval(struct GBASIODriver* driver) {
 	struct GBASIONetPlayLockstepDriver* net = (struct GBASIONetPlayLockstepDriver*) driver;
-	uint32_t interval = NETPLAY_MULTI_FINISH_POLL_BUSY_CYCLES;
+	uint32_t interval = NETPLAY_MULTI_FINISH_POLL_WAIT_CYCLES;
 #ifndef DISABLE_THREADING
 	MutexLock(&net->mutex);
 #endif
@@ -2037,7 +2038,7 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 			uint32_t nextInterval = connected ? EVENT_ACTIVE_INTERVAL : EVENT_IDLE_INTERVAL;
 #if NETPLAY_CLIENT_MULTI_BYPASS_BEGIN_CYCLE_SYNC
 			if (connected && playerId > 0 && beginMode == GBA_SIO_MULTI) {
-				nextInterval = EVENT_BUSY_INTERVAL;
+				nextInterval = EVENT_WAIT_INTERVAL;
 			}
 #endif
 			_rescheduleDriverEvent(timing, driver, nextInterval);
@@ -2371,7 +2372,7 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 								     (unsigned) sampleWriteGeneration,
 								     (unsigned) currentLastSentGeneration);
 								_rescheduleDriverEvent(timing, driver,
-									(connected && playerId > 0 && beginMode == GBA_SIO_MULTI) ? EVENT_BUSY_INTERVAL
+									(connected && playerId > 0 && beginMode == GBA_SIO_MULTI) ? EVENT_WAIT_INTERVAL
 									: (connected ? EVENT_ACTIVE_INTERVAL : EVENT_IDLE_INTERVAL));
 								return;
 							}
@@ -2555,20 +2556,27 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 #ifndef DISABLE_THREADING
 		{
 			uint32_t nextInterval = EVENT_IDLE_INTERVAL;
-			bool hasBusyWork = false;
+			bool hasImmediateWork = false;
+			bool hasWaitingWork = false;
 			MutexLock(&driver->mutex);
 			connected = driver->connected;
 			if (connected) {
-				hasBusyWork = driver->pendingBeginCount
-					|| driver->transferActive
+				hasImmediateWork = driver->pendingBeginCount;
+				hasWaitingWork = driver->transferActive
 					|| driver->waitingForTransfer
 					|| driver->waitingForHardSync
 					|| driver->freshnessWaitActive
 					|| _hasPendingResultForTransfer(driver, driver->transferSequence)
 					|| _hasPendingSyncForTransfer(driver, driver->transferSequence);
 #if NETPLAY_CLIENT_MULTI_BYPASS_BEGIN_CYCLE_SYNC
-				if (driver->playerId > 0 && hasBusyWork) {
-					nextInterval = EVENT_BUSY_INTERVAL;
+				if (driver->playerId > 0) {
+					if (hasImmediateWork) {
+						nextInterval = EVENT_BUSY_INTERVAL;
+					} else if (hasWaitingWork) {
+						nextInterval = EVENT_WAIT_INTERVAL;
+					} else {
+						nextInterval = _isSecondaryIdle(driver) ? EVENT_IDLE_INTERVAL : EVENT_ACTIVE_INTERVAL;
+					}
 				} else
 #endif
 				{
