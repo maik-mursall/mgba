@@ -20,6 +20,11 @@ static const int GBASIOCyclesPerTransfer[4][MAX_GBAS] = {
 
 /* Poll interval used when a driver defers MULTI completion. */
 #define GBA_SIO_MULTI_FINISH_DEFER_CYCLES 8192
+/*
+ * Allow a small number of immediate polls so drivers can consume already-queued
+ * RESULT/HARD_SYNC_DONE without paying an extra defer tick.
+ */
+#define GBA_SIO_MULTI_FINISH_INLINE_POLLS 2
 
 static void _sioFinish(struct mTiming* timing, void* user, uint32_t cyclesLate);
 
@@ -428,9 +433,21 @@ static void _sioFinish(struct mTiming* timing, void* user, uint32_t cyclesLate) 
 	case GBA_SIO_MULTI:
 		if (sio->driver) {
 			if (sio->driver->finishMultiplayerPoll) {
-				if (!sio->driver->finishMultiplayerPoll(sio->driver, data.multi)) {
+				int pollAttempts = 0;
+				while (!sio->driver->finishMultiplayerPoll(sio->driver, data.multi)) {
+					uint32_t deferCycles = GBA_SIO_MULTI_FINISH_DEFER_CYCLES;
+					++pollAttempts;
+					if (pollAttempts < GBA_SIO_MULTI_FINISH_INLINE_POLLS) {
+						continue;
+					}
+					if (sio->driver->finishMultiplayerPollInterval) {
+						deferCycles = sio->driver->finishMultiplayerPollInterval(sio->driver);
+						if (!deferCycles) {
+							deferCycles = 1;
+						}
+					}
 					mTimingDeschedule(timing, &sio->completeEvent);
-					mTimingSchedule(timing, &sio->completeEvent, GBA_SIO_MULTI_FINISH_DEFER_CYCLES);
+					mTimingSchedule(timing, &sio->completeEvent, (int32_t) deferCycles);
 					return;
 				}
 			} else if (sio->driver->finishMultiplayer) {

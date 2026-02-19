@@ -75,6 +75,12 @@
  * a short grace period for a just-imminent SIOMLT_SEND write first.
  */
 #define NETPLAY_MULTI_LATE_FRESH_GRACE_CYCLES (2 * EVENT_ACTIVE_INTERVAL)
+/*
+ * Deferred MULTI completion poll cadence for netplay.
+ * Keep this aggressive to avoid host-visible stalls when running non-blocking.
+ */
+#define NETPLAY_MULTI_FINISH_POLL_BUSY_CYCLES 64
+#define NETPLAY_MULTI_FINISH_POLL_READY_CYCLES 1
 
 #define MSG_HELLO 0x01
 #define MSG_MODE 0x02
@@ -110,6 +116,7 @@ static uint16_t GBASIONetPlayLockstepDriverWriteRegister(struct GBASIODriver* dr
 static bool GBASIONetPlayLockstepDriverStart(struct GBASIODriver* driver);
 static void GBASIONetPlayLockstepDriverFinishMultiplayer(struct GBASIODriver* driver, uint16_t data[4]);
 static bool GBASIONetPlayLockstepDriverFinishMultiplayerPoll(struct GBASIODriver* driver, uint16_t data[4]);
+static uint32_t GBASIONetPlayLockstepDriverFinishMultiplayerPollInterval(struct GBASIODriver* driver);
 static uint8_t GBASIONetPlayLockstepDriverFinishNormal8(struct GBASIODriver* driver);
 static uint32_t GBASIONetPlayLockstepDriverFinishNormal32(struct GBASIODriver* driver);
 
@@ -483,6 +490,7 @@ void GBASIONetPlayLockstepDriverCreate(struct GBASIONetPlayLockstepDriver* drive
 	driver->d.start = GBASIONetPlayLockstepDriverStart;
 	driver->d.finishMultiplayer = GBASIONetPlayLockstepDriverFinishMultiplayer;
 	driver->d.finishMultiplayerPoll = GBASIONetPlayLockstepDriverFinishMultiplayerPoll;
+	driver->d.finishMultiplayerPollInterval = GBASIONetPlayLockstepDriverFinishMultiplayerPollInterval;
 	driver->d.finishNormal8 = GBASIONetPlayLockstepDriverFinishNormal8;
 	driver->d.finishNormal32 = GBASIONetPlayLockstepDriverFinishNormal32;
 
@@ -1605,6 +1613,33 @@ static bool _pollMultiplayerSecondaryFinish(struct GBASIONetPlayLockstepDriver* 
 			_setDisconnected(driver, true);
 			return true;
 		}
+		/*
+		 * Fast path: if HARD_SYNC_DONE is already queued, consume it now instead
+		 * of waiting for another deferred finish poll tick.
+		 */
+		MutexLock(&driver->mutex);
+		if (driver->connected
+				&& driver->waitingForHardSync
+				&& driver->hardSyncSequence == sequence
+				&& _pendingSyncQueuePopSequence(driver, sequence)) {
+			bool immediateHasResult = false;
+			if (driver->deferredMultiplayerResultValid && driver->deferredMultiplayerResult.sequence == sequence) {
+				result = driver->deferredMultiplayerResult;
+				immediateHasResult = true;
+			}
+			driver->waitingForHardSync = false;
+			driver->hardSyncSequence = 0;
+			driver->deferredMultiplayerResultValid = false;
+			ConditionWake(&driver->cond);
+			MutexUnlock(&driver->mutex);
+			if (!immediateHasResult || result.mode != GBA_SIO_MULTI) {
+				_setDisconnected(driver, true);
+				return true;
+			}
+			memcpy(data, result.multiData, sizeof(uint16_t) * 4);
+			return true;
+		}
+		MutexUnlock(&driver->mutex);
 		return false;
 	}
 
@@ -1669,6 +1704,26 @@ static bool GBASIONetPlayLockstepDriverFinishMultiplayerPoll(struct GBASIODriver
 	 * thread on network waits; defer completion via finishMultiplayerPoll.
 	 */
 	return _pollMultiplayerSecondaryFinish(net, data);
+}
+
+static uint32_t GBASIONetPlayLockstepDriverFinishMultiplayerPollInterval(struct GBASIODriver* driver) {
+	struct GBASIONetPlayLockstepDriver* net = (struct GBASIONetPlayLockstepDriver*) driver;
+	uint32_t interval = NETPLAY_MULTI_FINISH_POLL_BUSY_CYCLES;
+#ifndef DISABLE_THREADING
+	MutexLock(&net->mutex);
+#endif
+	if (!net->connected) {
+		interval = NETPLAY_MULTI_FINISH_POLL_READY_CYCLES;
+	} else if (_hasPendingResultForTransfer(net, net->transferSequence)
+			|| _hasPendingSyncForTransfer(net, net->transferSequence)) {
+		interval = NETPLAY_MULTI_FINISH_POLL_READY_CYCLES;
+	} else if (!net->waitingForTransfer && !net->waitingForHardSync && !net->transferActive) {
+		interval = EVENT_ACTIVE_INTERVAL;
+	}
+#ifndef DISABLE_THREADING
+	MutexUnlock(&net->mutex);
+#endif
+	return interval;
 }
 
 static uint8_t GBASIONetPlayLockstepDriverFinishNormal8(struct GBASIODriver* driver) {

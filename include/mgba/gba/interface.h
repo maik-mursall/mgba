@@ -132,6 +132,11 @@ struct GBASIODriver {
 	 * Return false to defer completion and poll again later.
 	 */
 	bool (*finishMultiplayerPoll)(struct GBASIODriver* driver, uint16_t data[4]);
+	/*
+	 * Optional defer interval (in emulated cycles) used after
+	 * finishMultiplayerPoll() returns false.
+	 */
+	uint32_t (*finishMultiplayerPollInterval)(struct GBASIODriver* driver);
 	uint8_t (*finishNormal8)(struct GBASIODriver* driver);
 	uint32_t (*finishNormal32)(struct GBASIODriver* driver);
 };
