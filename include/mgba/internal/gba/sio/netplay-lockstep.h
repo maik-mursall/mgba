@@ -22,8 +22,6 @@ extern const char GBA_SIO_NETPLAY_LOCKSTEP_DEFAULT_HOST[];
 
 #define NETPLAY_LOCKSTEP_BEGIN_QUEUE_SIZE 64
 #define NETPLAY_LOCKSTEP_RESULT_QUEUE_SIZE 64
-#define NETPLAY_LOCKSTEP_SYNC_QUEUE_SIZE 64
-#define NETPLAY_LOCKSTEP_ACK_QUEUE_SIZE 64
 #define NETPLAY_LOCKSTEP_OUTBOUND_QUEUE_SIZE 128
 #define NETPLAY_LOCKSTEP_OUTBOUND_MAX_PAYLOAD 20
 #define NETPLAY_LOCKSTEP_MULTI_WRITE_HISTORY_SIZE 64
@@ -34,14 +32,6 @@ struct GBASIONetPlayLockstepTransferResult {
 	int attached;
 	uint16_t multiData[MAX_GBAS];
 	uint32_t normalData[MAX_GBAS];
-};
-
-struct GBASIONetPlayLockstepHardSyncDone {
-	uint32_t sequence;
-};
-
-struct GBASIONetPlayLockstepHardSyncAck {
-	uint32_t sequence;
 };
 
 struct GBASIONetPlayLockstepOutboundPacket {
@@ -81,8 +71,6 @@ struct GBASIONetPlayLockstepDriver {
 	uint32_t clientIdleEvents;
 	bool waitingForTransfer;
 	bool transferActive;
-	bool waitingForHardSync;
-	uint32_t hardSyncSequence;
 	uint32_t transferSequence;
 	bool deferredMultiplayerResultValid;
 	struct GBASIONetPlayLockstepTransferResult deferredMultiplayerResult;
@@ -128,16 +116,6 @@ struct GBASIONetPlayLockstepDriver {
 	uint8_t pendingResultRead;
 	uint8_t pendingResultWrite;
 	uint8_t pendingResultCount;
-
-	struct GBASIONetPlayLockstepHardSyncDone pendingSyncs[NETPLAY_LOCKSTEP_SYNC_QUEUE_SIZE];
-	uint8_t pendingSyncRead;
-	uint8_t pendingSyncWrite;
-	uint8_t pendingSyncCount;
-
-	struct GBASIONetPlayLockstepHardSyncAck pendingAcks[NETPLAY_LOCKSTEP_ACK_QUEUE_SIZE];
-	uint8_t pendingAckRead;
-	uint8_t pendingAckWrite;
-	uint8_t pendingAckCount;
 
 	struct GBASIONetPlayLockstepOutboundPacket pendingOutbound[NETPLAY_LOCKSTEP_OUTBOUND_QUEUE_SIZE];
 	uint8_t pendingOutboundRead;

@@ -29,12 +29,10 @@ private const val MSG_HELLO = 0x01
 private const val MSG_MODE = 0x02
 private const val MSG_TRANSFER_START = 0x03
 private const val MSG_TRANSFER_DATA = 0x04
-private const val MSG_HARD_SYNC_ACK = 0x05
 
 private const val MSG_STATE = 0x10
 private const val MSG_TRANSFER_BEGIN = 0x11
 private const val MSG_TRANSFER_RESULT = 0x12
-private const val MSG_HARD_SYNC_DONE = 0x13
 
 private data class TransferSample(
     val send16: Int,
@@ -46,12 +44,6 @@ private data class TransferContext(
     val mode: Int,
     val expected: MutableSet<Int>,
     val samples: MutableMap<Int, TransferSample> = mutableMapOf()
-)
-
-private data class HardSyncContext(
-    val sequence: Int,
-    val expected: MutableSet<Int>,
-    val acked: MutableSet<Int> = mutableSetOf()
 )
 
 private class ClientSession(
@@ -82,7 +74,6 @@ private class RelayCoordinator {
     private val transferLock = Mutex()
     private val clients = mutableMapOf<Int, ClientSession>()
     private var transfer: TransferContext? = null
-    private var hardSync: HardSyncContext? = null
     private var nextSequence = 1
 
     suspend fun attach(socket: Socket): ClientSession? {
@@ -104,9 +95,6 @@ private class RelayCoordinator {
 
     suspend fun detach(session: ClientSession) {
         var finalize = false
-        var completeHardSync = false
-        var doneSequence = 0
-        var doneTargets = emptyList<ClientSession>()
         transferLock.withLock {
             stateLock.withLock {
                 clients.remove(session.id)
@@ -117,23 +105,10 @@ private class RelayCoordinator {
                         finalize = true
                     }
                 }
-                hardSync?.let { ctx ->
-                    ctx.expected.remove(session.id)
-                    ctx.acked.remove(session.id)
-                    if (ctx.expected.all { ctx.acked.contains(it) }) {
-                        completeHardSync = true
-                        doneSequence = ctx.sequence
-                        doneTargets = ctx.expected.mapNotNull { clients[it] }
-                        hardSync = null
-                    }
-                }
                 logInfo("Client disconnected from player ${session.id}")
             }
             if (finalize) {
                 finalizeTransferLocked()
-            }
-            if (completeHardSync) {
-                sendHardSyncDoneLocked(doneSequence, doneTargets)
             }
         }
         broadcastState()
@@ -170,13 +145,6 @@ private class RelayCoordinator {
                 logDebug("Received TRANSFER_DATA from player ${session.id} (${payload.size} bytes)")
                 transferLock.withLock {
                     handleTransferDataLocked(session, payload)
-                }
-            }
-
-            MSG_HARD_SYNC_ACK -> {
-                logDebug("Received HARD_SYNC_ACK from player ${session.id} (${payload.size} bytes)")
-                transferLock.withLock {
-                    handleHardSyncAckLocked(session, payload)
                 }
             }
         }
@@ -220,10 +188,6 @@ private class RelayCoordinator {
                 return
             }
             if (transfer != null) {
-                return
-            }
-            if (hardSync != null) {
-                logDebug("Ignoring TRANSFER_START from player ${session.id}: hard sync pending for transfer ${hardSync?.sequence}")
                 return
             }
             val expectedIds = clients.keys.toMutableSet()
@@ -324,9 +288,6 @@ private class RelayCoordinator {
     private suspend fun finalizeTransferLocked() {
         var payload = byteArrayOf()
         var targets = emptyList<ClientSession>()
-        var createHardSync = false
-        var hardSyncSequence = 0
-        var hardSyncExpected = mutableSetOf<Int>()
         stateLock.withLock {
             val ctx = transfer ?: return
             if (!ctx.expected.all { ctx.samples.containsKey(it) }) {
@@ -359,9 +320,6 @@ private class RelayCoordinator {
                 putIntBE(payload, 16 + i * 4, normalData[i])
             }
             targets = ctx.expected.mapNotNull { clients[it] }
-            hardSyncSequence = ctx.sequence
-            hardSyncExpected = ctx.expected.toMutableSet()
-            createHardSync = hardSyncExpected.isNotEmpty()
             transfer = null
             logDebug("Transfer ${ctx.sequence} finalized")
         }
@@ -369,69 +327,6 @@ private class RelayCoordinator {
             logDebug("Transfer ${readIntBE(payload, 0)}: forwarding RESULT to player ${target.id}")
             val sent = safeSend(target, MSG_TRANSFER_RESULT, payload)
             logDebug("Transfer ${readIntBE(payload, 0)}: RESULT to player ${target.id} ${if (sent) "sent" else "failed"}")
-        }
-        if (createHardSync) {
-            stateLock.withLock {
-                if (hardSync == null) {
-                    hardSync = HardSyncContext(hardSyncSequence, hardSyncExpected)
-                    logDebug("Transfer $hardSyncSequence: hard sync started; expected=${hardSyncExpected.sorted()}")
-                } else {
-                    logDebug("Transfer $hardSyncSequence: hard sync already active for transfer ${hardSync?.sequence}, replacing")
-                    hardSync = HardSyncContext(hardSyncSequence, hardSyncExpected)
-                }
-            }
-        } else {
-            logDebug("Transfer $hardSyncSequence: hard sync skipped (no expected players)")
-        }
-    }
-
-    private suspend fun handleHardSyncAckLocked(session: ClientSession, payload: ByteArray) {
-        if (payload.size < 4) {
-            return
-        }
-        val sequence = readIntBE(payload, 0)
-        var accepted = false
-        var rejectedReason: String? = null
-        var doneNow = false
-        var doneTargets = emptyList<ClientSession>()
-        stateLock.withLock {
-            val ctx = hardSync
-            if (ctx == null) {
-                rejectedReason = "no active hard sync"
-                return@withLock
-            }
-            if (sequence != ctx.sequence) {
-                rejectedReason = "sequence mismatch (expected ${ctx.sequence}, got $sequence)"
-                return@withLock
-            }
-            if (!ctx.expected.contains(session.id)) {
-                rejectedReason = "unexpected player ${session.id}"
-                return@withLock
-            }
-            accepted = ctx.acked.add(session.id)
-            if (ctx.expected.all { ctx.acked.contains(it) }) {
-                doneNow = true
-                doneTargets = ctx.expected.mapNotNull { clients[it] }
-                hardSync = null
-            }
-        }
-        if (accepted) {
-            logDebug("Transfer $sequence: received HARD_SYNC_ACK from player ${session.id}")
-        } else if (rejectedReason != null) {
-            logDebug("Transfer $sequence: ignored HARD_SYNC_ACK from player ${session.id}: $rejectedReason")
-        }
-        if (doneNow) {
-            sendHardSyncDoneLocked(sequence, doneTargets)
-        }
-    }
-
-    private suspend fun sendHardSyncDoneLocked(sequence: Int, targets: List<ClientSession>) {
-        val payload = ByteArray(4)
-        putIntBE(payload, 0, sequence)
-        logDebug("Transfer $sequence: hard sync complete, forwarding DONE to players ${targets.map { it.id }}")
-        for (target in targets) {
-            val sent = safeSend(target, MSG_HARD_SYNC_DONE, payload)
-            logDebug("Transfer $sequence: HARD_SYNC_DONE to player ${target.id} ${if (sent) "sent" else "failed"}")
         }
     }
 
