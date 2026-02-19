@@ -22,8 +22,6 @@ extern const char GBA_SIO_NETPLAY_LOCKSTEP_DEFAULT_HOST[];
 
 #define NETPLAY_LOCKSTEP_BEGIN_QUEUE_SIZE 64
 #define NETPLAY_LOCKSTEP_RESULT_QUEUE_SIZE 64
-#define NETPLAY_LOCKSTEP_OUTBOUND_QUEUE_SIZE 128
-#define NETPLAY_LOCKSTEP_OUTBOUND_MAX_PAYLOAD 20
 #define NETPLAY_LOCKSTEP_MULTI_WRITE_HISTORY_SIZE 64
 
 struct GBASIONetPlayLockstepTransferResult {
@@ -32,12 +30,6 @@ struct GBASIONetPlayLockstepTransferResult {
 	int attached;
 	uint16_t multiData[MAX_GBAS];
 	uint32_t normalData[MAX_GBAS];
-};
-
-struct GBASIONetPlayLockstepOutboundPacket {
-	uint8_t type;
-	uint8_t size;
-	uint8_t payload[NETPLAY_LOCKSTEP_OUTBOUND_MAX_PAYLOAD];
 };
 
 struct GBASIONetPlayLockstepPendingBegin {
@@ -116,11 +108,6 @@ struct GBASIONetPlayLockstepDriver {
 	uint8_t pendingResultRead;
 	uint8_t pendingResultWrite;
 	uint8_t pendingResultCount;
-
-	struct GBASIONetPlayLockstepOutboundPacket pendingOutbound[NETPLAY_LOCKSTEP_OUTBOUND_QUEUE_SIZE];
-	uint8_t pendingOutboundRead;
-	uint8_t pendingOutboundWrite;
-	uint8_t pendingOutboundCount;
 };
 
 typedef struct GBASIONetPlayLockstepDriver NetPlayLockstepDriver;

@@ -11,7 +11,7 @@ private const val MAX_PLAYERS = 4
 private const val MAX_PAYLOAD_SIZE = 4096
 private const val SEND_TIMEOUT_MS = 2000L
 private var isInfo = true
-private var isDebug = true
+private var isDebug = false
 
 private fun logInfo(message: String) {
     if (isInfo) {
