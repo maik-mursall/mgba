@@ -608,7 +608,9 @@ static void _resyncToTimestampLocked(struct GBASIONetPlayLockstepDriver* net, in
 
 	int32_t now = _now(net);
 	int32_t skew = now - timestamp;
-	if (skew >= -0x2000 && skew <= 0x2000) {
+	// Keep event-time resync extremely conservative to avoid oscillating cycle
+	// offsets from normal socket scheduling jitter.
+	if (skew >= -0x40000 && skew <= 0x40000) {
 		return;
 	}
 
@@ -936,8 +938,8 @@ static void _maybeProcessPendingTransferStartLocked(struct GBASIONetPlayLockstep
 	if (lag < 0) {
 		return;
 	}
-	if (lag > 0x2000) {
-		_resyncToTimestampLocked(net, net->pendingTransferStartTimestamp, "TRANSFER_START");
+	if (lag > 0x20000) {
+		_resyncToTimestampLocked(net, net->pendingTransferStartTimestamp, "TRANSFER_START_LATE");
 		now = _now(net);
 	}
 
@@ -1157,7 +1159,6 @@ static void _handleEventLocked(struct GBASIONetPlayLockstepDriver* net, int type
 		_updateMultiplayerIdentityLocked(net);
 		break;
 	case NP_EV_HARD_SYNC:
-		_resyncToTimestampLocked(net, timestamp, "HARD_SYNC");
 		if (net->playerId != 0 && net->connected && net->helloSent) {
 			_sendCommandLocked(net, "ACK");
 		}
@@ -1171,7 +1172,6 @@ static void _handleEventLocked(struct GBASIONetPlayLockstepDriver* net, int type
 		}
 		_setReadyLocked(net, playerId, mode);
 		if (playerId == 0) {
-			_resyncToTimestampLocked(net, timestamp, "MODE_SET");
 			net->transferMode = mode;
 		}
 		if (playerId == 0 && net->playerId != 0 && net->connected && net->helloSent) {
@@ -1195,7 +1195,6 @@ static void _handleEventLocked(struct GBASIONetPlayLockstepDriver* net, int type
 				     net->pendingTransferStartsOverwritten);
 			}
 			++net->pendingTransferStartsSeen;
-			_resyncToTimestampLocked(net, timestamp, "TRANSFER_START_EVENT");
 			net->pendingTransferStart = true;
 			net->pendingTransferStartTimestamp = timestamp;
 			net->pendingTransferFinishCycle = value;
