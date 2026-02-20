@@ -46,6 +46,7 @@ struct GBASIONetPlayLockstepDriver {
 
 	uint16_t multiData[MAX_GBAS];
 	uint32_t normalData[MAX_GBAS];
+	int32_t cycleOffset;
 
 	uint8_t rxBuffer[GBA_SIO_NETPLAY_LOCKSTEP_RX_BUFFER_SIZE];
 	size_t rxBufferSize;

@@ -124,6 +124,7 @@ void GBASIONetPlayLockstepDriverCreate(struct GBASIONetPlayLockstepDriver* net, 
 	net->outQueueRead = 0;
 	net->outQueueWrite = 0;
 	net->outQueueHeadOffset = 0;
+	net->cycleOffset = 0;
 	net->helloPending = false;
 
 	int i;
@@ -190,6 +191,7 @@ bool GBASIONetPlayLockstepDriverConnect(struct GBASIONetPlayLockstepDriver* net,
 	net->outQueueRead = 0;
 	net->outQueueWrite = 0;
 	net->outQueueHeadOffset = 0;
+	net->cycleOffset = 0;
 	net->helloPending = false;
 	if (net->d.p) {
 		net->mode = net->d.p->mode;
@@ -587,7 +589,7 @@ static int32_t _now(struct GBASIONetPlayLockstepDriver* net) {
 	if (!net->d.p || !net->d.p->p) {
 		return 0;
 	}
-	return mTimingCurrentTime(&net->d.p->p->timing);
+	return mTimingCurrentTime(&net->d.p->p->timing) - net->cycleOffset;
 }
 
 static uint32_t _readLocalTransferData(struct GBASIONetPlayLockstepDriver* net, enum GBASIOMode mode) {
@@ -623,6 +625,7 @@ static void _setDisconnectedLocked(struct GBASIONetPlayLockstepDriver* net) {
 	net->pendingTransferFinishCycle = 0;
 	net->attached = 1;
 	net->playerId = 0;
+	net->cycleOffset = 0;
 	net->rxBufferSize = 0;
 	net->lineQueueRead = 0;
 	net->lineQueueWrite = 0;
@@ -1125,15 +1128,22 @@ static void _handleLineLocked(struct GBASIONetPlayLockstepDriver* net, char* lin
 		int32_t playerId;
 		int32_t attached;
 		int32_t transferMode;
+		int32_t cycle;
 		int oldPlayerId;
 		if (nTokens < 7
 		    || !_parseInt32(tokens[2], &playerId)
 		    || !_parseInt32(tokens[3], &attached)
-		    || !_parseInt32(tokens[4], &transferMode)) {
+		    || !_parseInt32(tokens[4], &transferMode)
+		    || !_parseInt32(tokens[5], &cycle)) {
 			return;
 		}
 
 		oldPlayerId = net->playerId;
+		if (net->d.p && net->d.p->p) {
+			net->cycleOffset = mTimingCurrentTime(&net->d.p->p->timing) - cycle;
+		}
+		mLOG(GBA_SIO, DEBUG, "NetPlay lockstep: WELCOME player=%" PRId32 " attached=%" PRId32 " transferMode=%" PRId32 " cycle=%" PRId32 " offset=%" PRId32,
+		     playerId, attached, transferMode, cycle, net->cycleOffset);
 		net->helloPending = false;
 		net->helloSent = true;
 		net->playerId = playerId;
