@@ -101,7 +101,6 @@ private data class PlayerState(
     val conn: ClientConnection,
     var playerId: Int = -1,
     var mode: Int = SioMode.INVALID,
-    var requestedId: Int = MAX_GBAS - 1,
     val otherModes: IntArray = IntArray(MAX_GBAS) { SioMode.INVALID },
     var asleep: Boolean = false,
     var dataReceived: Boolean = false,
@@ -197,7 +196,6 @@ private class RemoteLockstepCoordinator(
             lockstepId = lockstepId,
             conn = conn,
             mode = mode,
-            requestedId = requestedId,
             lastTimestamp = timestamp,
         )
 
@@ -363,14 +361,13 @@ private class RemoteLockstepCoordinator(
         )
 
         setData(player.playerId, txData)
-        return listOf(Outbound(conn, "OK SUBMIT_DATA"))
+        return emptyList()
     }
 
     private fun handleAck(conn: ClientConnection): List<Outbound> {
         val player = conn.player ?: return listOf(Outbound(conn, "ERR not_attached"))
         val out = mutableListOf<Outbound>()
         ackPlayer(out, player)
-        send(out, conn, "OK ACK")
         return out
     }
 
@@ -390,7 +387,6 @@ private class RemoteLockstepCoordinator(
         }
 
         hardSync(out, player, timestamp)
-        send(out, conn, "OK HARD_SYNC")
         return out
     }
 
@@ -411,12 +407,13 @@ private class RemoteLockstepCoordinator(
                 wakeSecondaries(out)
             }
 
-            if (nextHardSync < 0 && waiting == 0) {
+            if (nAttached > 1 && nextHardSync < 0 && waiting == 0) {
                 hardSync(out, player, timestamp)
+            } else if (nAttached < 2 && nextHardSync < 0) {
+                nextHardSync = HARD_SYNC_INTERVAL
             }
         }
 
-        send(out, conn, "OK TICK")
         return out
     }
 
@@ -540,6 +537,11 @@ private class RemoteLockstepCoordinator(
     }
 
     private fun hardSync(out: MutableList<Outbound>, primary: PlayerState, timestamp: Int) {
+        if (nAttached < 2) {
+            nextHardSync = HARD_SYNC_INTERVAL
+            return
+        }
+
         logger.info(
             "Hard sync requested: lockstepId={}, timestamp={}, attached={}, waitingMask=0x{}",
             primary.lockstepId,
@@ -834,51 +836,14 @@ private class RemoteLockstepCoordinator(
             player.playerId = -1
         }
 
-        val preferences = Array(MAX_GBAS) { ArrayDeque<Long>() }
-
-        var seen = 0
+        var attached = 0
         for ((lockstepId, player) in players) {
-            if (seen >= MAX_GBAS) {
+            if (attached >= MAX_GBAS) {
                 break
             }
-
-            var requested = player.requestedId
-            if (requested < 0) {
-                continue
-            }
-            if (requested >= MAX_GBAS) {
-                requested = MAX_GBAS - 1
-            }
-
-            preferences[requested].addLast(lockstepId)
-            seen += 1
-        }
-
-        seen = 0
-        for (i in 0 until MAX_GBAS) {
-            for (j in 0..i) {
-                while (preferences[j].isNotEmpty() && seen < MAX_GBAS) {
-                    val lockstepId = preferences[j].removeFirst()
-                    val player = players[lockstepId] ?: continue
-                    attachedPlayers[seen] = lockstepId
-                    player.playerId = seen
-                    seen += 1
-                }
-            }
-        }
-
-        var attached = 0
-        for (i in 0 until MAX_GBAS) {
-            val lockstepId = attachedPlayers[i]
-            if (lockstepId == 0L) {
-                continue
-            }
-
-            if (!players.containsKey(lockstepId)) {
-                attachedPlayers[i] = 0
-            } else {
-                attached += 1
-            }
+            attachedPlayers[attached] = lockstepId
+            player.playerId = attached
+            attached += 1
         }
 
         nAttached = attached

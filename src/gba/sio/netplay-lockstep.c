@@ -451,7 +451,7 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 		if (!net->helloSent) {
 			_sendHelloLocked(net);
 		}
-		if (net->connected && net->helloSent && net->playerId == 0) {
+		if (net->connected && net->helloSent && net->playerId == 0 && net->attached > 1) {
 			_sendCommandLocked(net, "TICK %" PRId32, _now(net));
 		}
 		if (net->connected) {
