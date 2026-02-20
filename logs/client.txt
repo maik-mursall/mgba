@@ -1,6 +1,5 @@
 [DEBUG] GBA Serial I/O:	NetPlay lockstep: SIOCNT <- 0000
 [DEBUG] GBA Serial I/O:	NetPlay lockstep: RCNT <- 8000
-[WARN] GBA Serial I/O:	NetPlay lockstep server error: already_attached
 [DEBUG] GBA Serial I/O:	Switching mode from GPIO to NORMAL8
 [DEBUG] GBA Serial I/O:	NetPlay lockstep: RCNT <- 0100
 [DEBUG] GBA Serial I/O:	Switching mode from NORMAL8 to NORMAL32
@@ -1257,6 +1256,7 @@
 [DEBUG] GBA Serial I/O:	Switching mode from GPIO to NORMAL32
 [DEBUG] GBA Serial I/O:	NetPlay lockstep: RCNT <- 0000
 [DEBUG] GBA Serial I/O:	NetPlay lockstep: SIOCNT <- 1000
+[DEBUG] GBA Serial I/O:	Secondary player attempted to start transfer
 [DEBUG] GBA Serial I/O:	NetPlay lockstep: SIOCNT <- 5080
 [DEBUG] GBA Serial I/O:	NetPlay lockstep: SIOCNT <- 5081
 [DEBUG] GBA Serial I/O:	NetPlay lockstep: SIOCNT <- 5081

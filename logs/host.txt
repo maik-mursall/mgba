@@ -1,7 +1,5 @@
 [DEBUG] GBA Serial I/O:	NetPlay lockstep: SIOCNT <- 0000
 [DEBUG] GBA Serial I/O:	NetPlay lockstep: RCNT <- 8000
-[WARN] GBA Serial I/O:	NetPlay lockstep server error: already_attached
-[WARN] GBA Serial I/O:	NetPlay lockstep server error: already_attached
 [DEBUG] GBA Serial I/O:	Switching mode from GPIO to NORMAL8
 [DEBUG] GBA Serial I/O:	NetPlay lockstep: RCNT <- 0100
 [DEBUG] GBA Serial I/O:	Switching mode from NORMAL8 to NORMAL32
@@ -1377,3 +1375,40 @@
 [DEBUG] GBA Serial I/O:	NetPlay lockstep: RCNT <- C000
 [DEBUG] GBA Serial I/O:	JOY write: CNT <- 0047
 [DEBUG] GBA Serial I/O:	JOY write: STAT <- 0000
+[DEBUG] GBA Serial I/O:	Switching mode from JOYBUS to GPIO
+[DEBUG] GBA Serial I/O:	NetPlay lockstep: RCNT <- 8000
+[DEBUG] GBA Serial I/O:	Switching mode from GPIO to JOYBUS
+[DEBUG] GBA Serial I/O:	NetPlay lockstep: RCNT <- C000
+[DEBUG] GBA Serial I/O:	JOY write: CNT <- 0047
+[DEBUG] GBA Serial I/O:	JOY write: STAT <- 0000
+[DEBUG] GBA Serial I/O:	Switching mode from JOYBUS to GPIO
+[DEBUG] GBA Serial I/O:	NetPlay lockstep: RCNT <- 8000
+[DEBUG] GBA Serial I/O:	Switching mode from GPIO to JOYBUS
+[DEBUG] GBA Serial I/O:	NetPlay lockstep: RCNT <- C000
+[DEBUG] GBA Serial I/O:	JOY write: CNT <- 0047
+[DEBUG] GBA Serial I/O:	JOY write: STAT <- 0000
+[DEBUG] GBA Serial I/O:	Switching mode from JOYBUS to GPIO
+[DEBUG] GBA Serial I/O:	NetPlay lockstep: RCNT <- 8000
+[DEBUG] GBA Serial I/O:	Switching mode from GPIO to JOYBUS
+[DEBUG] GBA Serial I/O:	NetPlay lockstep: RCNT <- C000
+[DEBUG] GBA Serial I/O:	JOY write: CNT <- 0047
+[DEBUG] GBA Serial I/O:	JOY write: STAT <- 0000
+[DEBUG] GBA Serial I/O:	Switching mode from JOYBUS to GPIO
+[DEBUG] GBA Serial I/O:	NetPlay lockstep: RCNT <- 8000
+[DEBUG] GBA Serial I/O:	Switching mode from GPIO to JOYBUS
+[DEBUG] GBA Serial I/O:	NetPlay lockstep: RCNT <- C000
+[DEBUG] GBA Serial I/O:	JOY write: CNT <- 0047
+[DEBUG] GBA Serial I/O:	JOY write: STAT <- 0000
+[ERROR] GBA Serial I/O:	NetPlay lockstep: outgoing line queue overflow
+[DEBUG] GBA Serial I/O:	JOY write: CNT <- 0007
+[DEBUG] GBA Serial I/O:	Switching mode from JOYBUS to GPIO
+[DEBUG] GBA Serial I/O:	NetPlay lockstep: RCNT <- 8000
+[DEBUG] GBA Serial I/O:	Switching mode from GPIO to MULTI
+[DEBUG] GBA Serial I/O:	NetPlay lockstep: RCNT <- 0000
+[DEBUG] GBA Serial I/O:	NetPlay lockstep: SIOCNT <- 200C
+[DEBUG] GBA Serial I/O:	NetPlay lockstep: SIOCNT <- 600F
+[DEBUG] GBA Serial I/O:	MULTI 0 write: SIOMLT_SEND <- 0000
+[DEBUG] GBA Serial I/O:	NetPlay lockstep: SIOCNT <- 200C
+[DEBUG] GBA Serial I/O:	MULTI 0 write: SIOMLT_SEND <- 0000
+[DEBUG] GBA Serial I/O:	NetPlay lockstep: SIOCNT <- 200C
+[DEBUG] GBA Serial I/O:	MULTI 0 write: SIOMLT_SEND <- 0000

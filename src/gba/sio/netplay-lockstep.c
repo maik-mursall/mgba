@@ -260,13 +260,15 @@ static void GBASIONetPlayLockstepDriverReset(struct GBASIODriver* driver) {
 	net->transferMode = net->mode;
 	net->transferActive = false;
 	net->dataReceived = false;
-	net->rxBufferSize = 0;
-	net->lineQueueRead = 0;
-	net->lineQueueWrite = 0;
-	net->outQueueRead = 0;
-	net->outQueueWrite = 0;
-	net->outQueueHeadOffset = 0;
-	net->helloPending = false;
+	if (!net->connected) {
+		net->rxBufferSize = 0;
+		net->lineQueueRead = 0;
+		net->lineQueueWrite = 0;
+		net->outQueueRead = 0;
+		net->outQueueWrite = 0;
+		net->outQueueHeadOffset = 0;
+		net->helloPending = false;
+	}
 
 	int i;
 	for (i = 0; i < MAX_GBAS; ++i) {
