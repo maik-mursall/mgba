@@ -326,13 +326,14 @@ private class RemoteLockstepCoordinator(
         )
 
         if (waiting != 0) {
-            logger.warn(
-                "Transfer start rejected due to active wait: lockstepId={}, waitingMask=0x{}",
+            logger.info(
+                "Transfer start preempting active wait: lockstepId={}, waitingMask=0x{}",
                 player.lockstepId,
                 waiting.toString(16),
             )
-            send(out, conn, "ERR wait_in_progress")
-            return out
+            waiting = 0
+            pendingTransferSubmit = 0
+            wakePlayer(out, player)
         }
 
         resetTransferBuffers()
@@ -997,8 +998,14 @@ private suspend fun handleClient(
                 writer.writeStringUtf8(line)
                 writer.writeStringUtf8("\n")
             }
-        } catch (_: Throwable) {
-            // Socket is likely closed.
+        } catch (t: Throwable) {
+            logger.error(
+                "Client#{} writer failed for {}: {}",
+                clientId,
+                remoteAddress,
+                t.message ?: t::class.simpleName ?: "unknown_error",
+            )
+            logger.debug("Client#{} writer exception", clientId, t)
         }
     }
 
@@ -1008,14 +1015,14 @@ private suspend fun handleClient(
         while (true) {
             val line = reader.readUTF8Line() ?: break
             val actions = coordinator.onCommand(conn, line)
-            dispatch(actions)
+            dispatch(actions, logger)
         }
     } catch (t: Throwable) {
         logger.debug("Client#{} handler terminated", clientId, t)
     } finally {
         val lockstepId = conn.player?.lockstepId
         val actions = coordinator.onDisconnect(conn)
-        dispatch(actions)
+        dispatch(actions, logger)
 
         outbox.close()
         writerJob.cancelAndJoin()
@@ -1030,8 +1037,16 @@ private suspend fun handleClient(
     }
 }
 
-private fun dispatch(actions: List<Outbound>) {
+private fun dispatch(actions: List<Outbound>, logger: Logger) {
     for (action in actions) {
-        action.conn.sendQueue.trySend(action.line)
+        val result = action.conn.sendQueue.trySend(action.line)
+        if (result.isFailure) {
+            logger.error(
+                "Dropping outbound line for Client#{} ({}): queue closed, line={}",
+                action.conn.connectionId,
+                action.conn.remoteAddress,
+                action.line,
+            )
+        }
     }
 }

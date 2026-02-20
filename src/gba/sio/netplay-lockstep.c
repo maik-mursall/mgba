@@ -21,7 +21,7 @@
 #define EVENT_ACTIVE_INTERVAL 4096
 #define EVENT_SLEEP_INTERVAL 64
 #define EVENT_DISCONNECTED_INTERVAL 8192
-#define WRITE_POLL_MS 5
+#define IO_POLL_ACTIVE_MS 1
 
 #define MAX_TOKENS 16
 #define MAX_LINE GBA_SIO_NETPLAY_LOCKSTEP_MAX_LINE
@@ -66,7 +66,6 @@ static void _setReadyLocked(struct GBASIONetPlayLockstepDriver* net, int playerI
 static void _updateMultiplayerIdentityLocked(struct GBASIONetPlayLockstepDriver* net);
 static void _updateReadyStateLocked(struct GBASIONetPlayLockstepDriver* net);
 
-static bool _sendRawLocked(struct GBASIONetPlayLockstepDriver* net, const void* data, size_t size);
 static bool _sendCommandLocked(struct GBASIONetPlayLockstepDriver* net, const char* fmt, ...);
 static bool _sendHelloLocked(struct GBASIONetPlayLockstepDriver* net);
 
@@ -77,6 +76,8 @@ static int _tokenize(char* line, char* tokens[], int maxTokens);
 static THREAD_ENTRY _ioThread(void* context);
 static void _joinIoThread(struct GBASIONetPlayLockstepDriver* net);
 static bool _queueLineLocked(struct GBASIONetPlayLockstepDriver* net, const char* line, size_t lineLength);
+static bool _queueOutgoingLocked(struct GBASIONetPlayLockstepDriver* net, const char* line, size_t lineLength);
+static void _flushOutgoingLocked(struct GBASIONetPlayLockstepDriver* net);
 static void _drainIncomingLocked(struct GBASIONetPlayLockstepDriver* net);
 
 static void _handleLineLocked(struct GBASIONetPlayLockstepDriver* net, char* line);
@@ -114,6 +115,10 @@ void GBASIONetPlayLockstepDriverCreate(struct GBASIONetPlayLockstepDriver* net, 
 	net->ioThreadRunning = false;
 	net->lineQueueRead = 0;
 	net->lineQueueWrite = 0;
+	net->outQueueRead = 0;
+	net->outQueueWrite = 0;
+	net->outQueueHeadOffset = 0;
+	net->helloPending = false;
 
 	int i;
 	for (i = 0; i < MAX_GBAS; ++i) {
@@ -164,6 +169,7 @@ bool GBASIONetPlayLockstepDriverConnect(struct GBASIONetPlayLockstepDriver* net,
 	net->socket = socket;
 	net->connected = true;
 	net->helloSent = false;
+	net->helloPending = false;
 	net->asleep = false;
 	net->transferActive = false;
 	net->dataReceived = false;
@@ -172,6 +178,10 @@ bool GBASIONetPlayLockstepDriverConnect(struct GBASIONetPlayLockstepDriver* net,
 	net->rxBufferSize = 0;
 	net->lineQueueRead = 0;
 	net->lineQueueWrite = 0;
+	net->outQueueRead = 0;
+	net->outQueueWrite = 0;
+	net->outQueueHeadOffset = 0;
+	net->helloPending = false;
 	if (net->d.p) {
 		net->mode = net->d.p->mode;
 	}
@@ -215,6 +225,7 @@ void GBASIONetPlayLockstepDriverDisconnect(struct GBASIONetPlayLockstepDriver* n
 	MutexLock(&net->mutex);
 	if (net->connected && net->helloSent) {
 		_sendCommandLocked(net, "DETACH %" PRId32, _now(net));
+		_flushOutgoingLocked(net);
 	}
 	_setDisconnectedLocked(net);
 	MutexUnlock(&net->mutex);
@@ -250,6 +261,12 @@ static void GBASIONetPlayLockstepDriverReset(struct GBASIODriver* driver) {
 	net->transferActive = false;
 	net->dataReceived = false;
 	net->rxBufferSize = 0;
+	net->lineQueueRead = 0;
+	net->lineQueueWrite = 0;
+	net->outQueueRead = 0;
+	net->outQueueWrite = 0;
+	net->outQueueHeadOffset = 0;
+	net->helloPending = false;
 
 	int i;
 	for (i = 0; i < MAX_GBAS; ++i) {
@@ -548,6 +565,7 @@ static void _setDisconnectedLocked(struct GBASIONetPlayLockstepDriver* net) {
 	net->socket = INVALID_SOCKET;
 	net->connected = false;
 	net->helloSent = false;
+	net->helloPending = false;
 	net->transferActive = false;
 	net->dataReceived = false;
 	net->attached = 1;
@@ -631,33 +649,66 @@ static void _updateReadyStateLocked(struct GBASIONetPlayLockstepDriver* net) {
 	_updateMultiplayerIdentityLocked(net);
 }
 
-static bool _sendRawLocked(struct GBASIONetPlayLockstepDriver* net, const void* data, size_t size) {
-	size_t sent = 0;
-	int retries = 0;
-	while (sent < size) {
-		ssize_t written = SocketSend(net->socket, (const uint8_t*) data + sent, size - sent);
+static bool _queueOutgoingLocked(struct GBASIONetPlayLockstepDriver* net, const char* line, size_t lineLength) {
+	size_t next = net->outQueueWrite + 1;
+	if (next >= GBA_SIO_NETPLAY_LOCKSTEP_LINE_QUEUE_SIZE) {
+		next = 0;
+	}
+	if (next == net->outQueueRead) {
+		mLOG(GBA_SIO, ERROR, "NetPlay lockstep: outgoing line queue overflow");
+		_setDisconnectedLocked(net);
+		return false;
+	}
+
+	if (lineLength >= MAX_LINE) {
+		lineLength = MAX_LINE - 1;
+	}
+	char* slot = net->outQueue[net->outQueueWrite];
+	memcpy(slot, line, lineLength);
+	slot[lineLength] = '\0';
+	net->outQueueWrite = next;
+	return true;
+}
+
+static void _flushOutgoingLocked(struct GBASIONetPlayLockstepDriver* net) {
+	while (net->connected && net->outQueueRead != net->outQueueWrite) {
+		size_t index = net->outQueueRead;
+		size_t lineLength = strlen(net->outQueue[index]);
+		if (net->outQueueHeadOffset >= lineLength) {
+			net->outQueueHeadOffset = 0;
+			net->outQueueRead = (index + 1) % GBA_SIO_NETPLAY_LOCKSTEP_LINE_QUEUE_SIZE;
+			continue;
+		}
+
+		Socket socket = net->socket;
+		const uint8_t* chunk = (const uint8_t*) &net->outQueue[index][net->outQueueHeadOffset];
+		size_t remaining = lineLength - net->outQueueHeadOffset;
+
+		MutexUnlock(&net->mutex);
+		ssize_t written = SocketSend(socket, chunk, remaining);
+		bool wouldBlock = written < 0 && SocketWouldBlock();
+		MutexLock(&net->mutex);
+
+		if (!net->connected || SOCKET_FAILED(net->socket) || net->socket != socket) {
+			if (!net->connected) {
+				return;
+			}
+			continue;
+		}
 		if (written > 0) {
-			sent += written;
-			retries = 0;
+			net->outQueueHeadOffset += (size_t) written;
 			continue;
 		}
 		if (!written) {
 			_setDisconnectedLocked(net);
-			return false;
+			return;
 		}
-		if (!SocketWouldBlock()) {
-			_setDisconnectedLocked(net);
-			return false;
+		if (wouldBlock) {
+			return;
 		}
-		Socket w = net->socket;
-		if (SocketPoll(1, NULL, &w, NULL, WRITE_POLL_MS) < 0 || SOCKET_FAILED(w)) {
-			if (++retries > 200) {
-				_setDisconnectedLocked(net);
-				return false;
-			}
-		}
+		_setDisconnectedLocked(net);
+		return;
 	}
-	return true;
 }
 
 static bool _sendCommandLocked(struct GBASIONetPlayLockstepDriver* net, const char* fmt, ...) {
@@ -671,11 +722,14 @@ static bool _sendCommandLocked(struct GBASIONetPlayLockstepDriver* net, const ch
 	}
 	line[length++] = '\n';
 	line[length] = '\0';
-	return _sendRawLocked(net, line, length);
+	if (!net->connected || SOCKET_FAILED(net->socket)) {
+		return false;
+	}
+	return _queueOutgoingLocked(net, line, (size_t) length);
 }
 
 static bool _sendHelloLocked(struct GBASIONetPlayLockstepDriver* net) {
-	if (!net->connected || net->helloSent) {
+	if (!net->connected || net->helloSent || net->helloPending) {
 		return net->connected;
 	}
 	int requestedId = MAX_GBAS - 1;
@@ -686,8 +740,9 @@ static bool _sendHelloLocked(struct GBASIONetPlayLockstepDriver* net) {
 	                       _modeEnumToInt(net->mode),
 	                       requestedId,
 	                       _now(net))) {
-		net->helloSent = true;
-		return true;
+		net->helloPending = true;
+		_flushOutgoingLocked(net);
+		return net->connected;
 	}
 	return false;
 }
@@ -756,6 +811,7 @@ THREAD_ENTRY _ioThread(void* context) {
 
 	while (true) {
 		Socket r;
+		int pollTimeout;
 
 		MutexLock(&net->mutex);
 		if (!net->connected || SOCKET_FAILED(net->socket)) {
@@ -763,10 +819,17 @@ THREAD_ENTRY _ioThread(void* context) {
 			MutexUnlock(&net->mutex);
 			break;
 		}
+		_flushOutgoingLocked(net);
+		if (!net->connected || SOCKET_FAILED(net->socket)) {
+			net->ioThreadRunning = false;
+			MutexUnlock(&net->mutex);
+			break;
+		}
 		r = net->socket;
+		pollTimeout = IO_POLL_ACTIVE_MS;
 		MutexUnlock(&net->mutex);
 
-		int poll = SocketPoll(1, &r, NULL, NULL, EVENT_SLEEP_INTERVAL);
+		int poll = SocketPoll(1, &r, NULL, NULL, pollTimeout);
 		if (poll <= 0) {
 			continue;
 		}
@@ -972,6 +1035,8 @@ static void _handleLineLocked(struct GBASIONetPlayLockstepDriver* net, char* lin
 		}
 
 		oldPlayerId = net->playerId;
+		net->helloPending = false;
+		net->helloSent = true;
 		net->playerId = playerId;
 		net->attached = attached;
 		net->transferMode = _modeIntToEnum(transferMode);
@@ -1057,6 +1122,34 @@ static void _handleLineLocked(struct GBASIONetPlayLockstepDriver* net, char* lin
 		return;
 	}
 
+	if (!strcmp(tokens[0], "OK")) {
+		return;
+	}
+
+	if (!strcmp(tokens[0], "ERR")) {
+		const char* reason = nTokens >= 2 ? tokens[1] : "unknown";
+		mLOG(GBA_SIO, WARN, "NetPlay lockstep server error: %s", reason);
+		if (!strcmp(reason, "not_attached_send_HELLO_first")) {
+			net->helloSent = false;
+			net->helloPending = false;
+			net->transferActive = false;
+			net->dataReceived = false;
+			_sendHelloLocked(net);
+			return;
+		}
+		if (!strcmp(reason, "transfer_already_active")
+		    || !strcmp(reason, "no_secondary_players")
+		    || !strcmp(reason, "only_primary_can_start")
+		    || !strcmp(reason, "wait_in_progress")
+		    || !strcmp(reason, "desync_waiting_not_empty")
+		    || !strcmp(reason, "desync_primary_asleep")
+		    || !strcmp(reason, "desync_non_primary_wait")) {
+			net->transferActive = false;
+			net->dataReceived = false;
+		}
+		return;
+	}
+
 	if (!strcmp(tokens[0], "TRANSFER_DONE")) {
 		int32_t mode;
 		uint32_t values[8];
@@ -1069,6 +1162,17 @@ static void _handleLineLocked(struct GBASIONetPlayLockstepDriver* net, char* lin
 				return;
 			}
 		}
+		mLOG(GBA_SIO, DEBUG,
+		     "NetPlay lockstep: parsed TRANSFER_DONE mode=%d multi=%04X,%04X,%04X,%04X normal=%08X,%08X,%08X,%08X",
+		     mode,
+		     values[0] & 0xFFFF,
+		     values[1] & 0xFFFF,
+		     values[2] & 0xFFFF,
+		     values[3] & 0xFFFF,
+		     values[4],
+		     values[5],
+		     values[6],
+		     values[7]);
 		net->transferMode = _modeIntToEnum(mode);
 		for (i = 0; i < MAX_GBAS; ++i) {
 			net->multiData[i] = values[i];

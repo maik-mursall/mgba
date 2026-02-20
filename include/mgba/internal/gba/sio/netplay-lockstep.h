@@ -33,6 +33,7 @@ struct GBASIONetPlayLockstepDriver {
 
 	bool connected;
 	bool helloSent;
+	bool helloPending;
 	bool asleep;
 	bool transferActive;
 	bool dataReceived;
@@ -55,6 +56,10 @@ struct GBASIONetPlayLockstepDriver {
 	size_t lineQueueRead;
 	size_t lineQueueWrite;
 	char lineQueue[GBA_SIO_NETPLAY_LOCKSTEP_LINE_QUEUE_SIZE][GBA_SIO_NETPLAY_LOCKSTEP_MAX_LINE];
+	size_t outQueueRead;
+	size_t outQueueWrite;
+	size_t outQueueHeadOffset;
+	char outQueue[GBA_SIO_NETPLAY_LOCKSTEP_LINE_QUEUE_SIZE][GBA_SIO_NETPLAY_LOCKSTEP_MAX_LINE];
 };
 
 void GBASIONetPlayLockstepDriverCreate(struct GBASIONetPlayLockstepDriver*, struct mLockstepUser*);
