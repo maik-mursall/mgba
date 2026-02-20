@@ -49,14 +49,12 @@ struct GBASIONetPlayLockstepDriver {
 	uint8_t rxBuffer[GBA_SIO_NETPLAY_LOCKSTEP_RX_BUFFER_SIZE];
 	size_t rxBufferSize;
 
-#ifndef DISABLE_THREADING
 	Thread ioThread;
 	bool ioThreadActive;
 	bool ioThreadRunning;
 	size_t lineQueueRead;
 	size_t lineQueueWrite;
 	char lineQueue[GBA_SIO_NETPLAY_LOCKSTEP_LINE_QUEUE_SIZE][GBA_SIO_NETPLAY_LOCKSTEP_MAX_LINE];
-#endif
 };
 
 void GBASIONetPlayLockstepDriverCreate(struct GBASIONetPlayLockstepDriver*, struct mLockstepUser*);

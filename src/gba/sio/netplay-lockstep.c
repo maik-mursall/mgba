@@ -74,14 +74,10 @@ static bool _parseInt32(const char* text, int32_t* out);
 static bool _parseUint32(const char* text, uint32_t* out);
 static int _tokenize(char* line, char* tokens[], int maxTokens);
 
-#ifndef DISABLE_THREADING
 static THREAD_ENTRY _ioThread(void* context);
 static void _joinIoThread(struct GBASIONetPlayLockstepDriver* net);
 static bool _queueLineLocked(struct GBASIONetPlayLockstepDriver* net, const char* line, size_t lineLength);
 static void _drainIncomingLocked(struct GBASIONetPlayLockstepDriver* net);
-#else
-static bool _pumpSocketLocked(struct GBASIONetPlayLockstepDriver* net);
-#endif
 
 static void _handleLineLocked(struct GBASIONetPlayLockstepDriver* net, char* line);
 static void _handleEventLocked(struct GBASIONetPlayLockstepDriver* net, int type, int32_t timestamp, int playerId, int32_t value);
@@ -114,12 +110,10 @@ void GBASIONetPlayLockstepDriverCreate(struct GBASIONetPlayLockstepDriver* net, 
 	net->attached = 1;
 	net->mode = (enum GBASIOMode) -1;
 	net->transferMode = (enum GBASIOMode) -1;
-#ifndef DISABLE_THREADING
 	net->ioThreadActive = false;
 	net->ioThreadRunning = false;
 	net->lineQueueRead = 0;
 	net->lineQueueWrite = 0;
-#endif
 
 	int i;
 	for (i = 0; i < MAX_GBAS; ++i) {
@@ -133,9 +127,7 @@ void GBASIONetPlayLockstepDriverCreate(struct GBASIONetPlayLockstepDriver* net, 
 
 void GBASIONetPlayLockstepDriverDestroy(struct GBASIONetPlayLockstepDriver* net) {
 	GBASIONetPlayLockstepDriverDisconnect(net);
-#ifndef DISABLE_THREADING
 	_joinIoThread(net);
-#endif
 	MutexDeinit(&net->mutex);
 }
 
@@ -178,10 +170,8 @@ bool GBASIONetPlayLockstepDriverConnect(struct GBASIONetPlayLockstepDriver* net,
 	net->playerId = 0;
 	net->attached = 1;
 	net->rxBufferSize = 0;
-#ifndef DISABLE_THREADING
 	net->lineQueueRead = 0;
 	net->lineQueueWrite = 0;
-#endif
 	if (net->d.p) {
 		net->mode = net->d.p->mode;
 	}
@@ -199,7 +189,6 @@ bool GBASIONetPlayLockstepDriverConnect(struct GBASIONetPlayLockstepDriver* net,
 		return false;
 	}
 
-#ifndef DISABLE_THREADING
 	if (ThreadCreate(&net->ioThread, _ioThread, net)) {
 		mLOG(GBA_SIO, ERROR, "NetPlay lockstep: failed to start socket IO thread");
 		_setDisconnectedLocked(net);
@@ -209,7 +198,6 @@ bool GBASIONetPlayLockstepDriverConnect(struct GBASIONetPlayLockstepDriver* net,
 	}
 	net->ioThreadActive = true;
 	net->ioThreadRunning = true;
-#endif
 
 	if (net->d.p && net->d.p->p) {
 		mTimingDeschedule(&net->d.p->p->timing, &net->event);
@@ -230,9 +218,7 @@ void GBASIONetPlayLockstepDriverDisconnect(struct GBASIONetPlayLockstepDriver* n
 	}
 	_setDisconnectedLocked(net);
 	MutexUnlock(&net->mutex);
-#ifndef DISABLE_THREADING
 	_joinIoThread(net);
-#endif
 }
 
 bool GBASIONetPlayLockstepDriverIsConnected(const struct GBASIONetPlayLockstepDriver* net) {
@@ -459,9 +445,7 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 	UNUSED(cyclesLate);
 	struct GBASIONetPlayLockstepDriver* net = context;
 	uint32_t next = EVENT_DISCONNECTED_INTERVAL;
-#ifndef DISABLE_THREADING
 	bool joinIoThread = false;
-#endif
 	MutexLock(&net->mutex);
 	if (net->connected) {
 		if (!net->helloSent) {
@@ -471,27 +455,19 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 			_sendCommandLocked(net, "TICK %" PRId32, _now(net));
 		}
 		if (net->connected) {
-#ifndef DISABLE_THREADING
 			_drainIncomingLocked(net);
-#else
-			_pumpSocketLocked(net);
-#endif
 		}
 	}
 	if (net->connected) {
 		next = net->asleep ? EVENT_SLEEP_INTERVAL : EVENT_ACTIVE_INTERVAL;
 	}
-#ifndef DISABLE_THREADING
 	if (!net->connected && net->ioThreadActive && !net->ioThreadRunning) {
 		joinIoThread = true;
 	}
-#endif
 	MutexUnlock(&net->mutex);
-#ifndef DISABLE_THREADING
 	if (joinIoThread) {
 		_joinIoThread(net);
 	}
-#endif
 	mTimingSchedule(timing, &net->event, next);
 }
 
@@ -559,10 +535,8 @@ static void _setDisconnectedLocked(struct GBASIONetPlayLockstepDriver* net) {
 	net->attached = 1;
 	net->playerId = 0;
 	net->rxBufferSize = 0;
-#ifndef DISABLE_THREADING
 	net->lineQueueRead = 0;
 	net->lineQueueWrite = 0;
-#endif
 
 	int i;
 	for (i = 0; i < MAX_GBAS; ++i) {
@@ -700,7 +674,6 @@ static bool _sendHelloLocked(struct GBASIONetPlayLockstepDriver* net) {
 	return false;
 }
 
-#ifndef DISABLE_THREADING
 static void _joinIoThread(struct GBASIONetPlayLockstepDriver* net) {
 	Thread thread;
 	bool join = false;
@@ -857,7 +830,6 @@ THREAD_ENTRY _ioThread(void* context) {
 
 	THREAD_EXIT(0);
 }
-#endif
 
 static bool _parseInt32(const char* text, int32_t* out) {
 	char* end = NULL;
@@ -1086,64 +1058,3 @@ static void _handleLineLocked(struct GBASIONetPlayLockstepDriver* net, char* lin
 		return;
 	}
 }
-
-#ifdef DISABLE_THREADING
-static bool _pumpSocketLocked(struct GBASIONetPlayLockstepDriver* net) {
-	uint8_t input[512];
-	while (net->connected) {
-		Socket r = net->socket;
-		int result = SocketPoll(1, &r, NULL, NULL, 0);
-		if (result <= 0 || SOCKET_FAILED(r)) {
-			break;
-		}
-
-		ssize_t read = SocketRecv(net->socket, input, sizeof(input));
-		if (!read) {
-			_setDisconnectedLocked(net);
-			return false;
-		}
-		if (read < 0) {
-			if (SocketWouldBlock()) {
-				break;
-			}
-			_setDisconnectedLocked(net);
-			return false;
-		}
-		if (net->rxBufferSize + read > sizeof(net->rxBuffer)) {
-			mLOG(GBA_SIO, ERROR, "NetPlay lockstep: receive buffer overflow");
-			_setDisconnectedLocked(net);
-			return false;
-		}
-		memcpy(&net->rxBuffer[net->rxBufferSize], input, read);
-		net->rxBufferSize += read;
-
-		while (true) {
-			uint8_t* newline = memchr(net->rxBuffer, '\n', net->rxBufferSize);
-			if (!newline) {
-				break;
-			}
-			size_t lineLength = newline - net->rxBuffer;
-			size_t consumed = lineLength + 1;
-			char line[MAX_LINE];
-
-			if (lineLength && net->rxBuffer[lineLength - 1] == '\r') {
-				--lineLength;
-			}
-			if (lineLength >= sizeof(line)) {
-				lineLength = sizeof(line) - 1;
-			}
-			memcpy(line, net->rxBuffer, lineLength);
-			line[lineLength] = '\0';
-
-			memmove(net->rxBuffer, &net->rxBuffer[consumed], net->rxBufferSize - consumed);
-			net->rxBufferSize -= consumed;
-
-			_handleLineLocked(net, line);
-			if (!net->connected) {
-				return false;
-			}
-		}
-	}
-	return true;
-}
-#endif
