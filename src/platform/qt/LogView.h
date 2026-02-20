@@ -37,7 +37,7 @@ protected:
 	virtual void paintEvent(QPaintEvent*) override;
 
 private:
-	static const int DEFAULT_LINE_LIMIT = 1000;
+	static const int DEFAULT_LINE_LIMIT = 9999;
 
 	Ui::LogView m_ui;
 	int m_lines = 0;
