@@ -1,0 +1,329 @@
+1. Scope and goal
+
+Implement the SIO Multi-Player Mode (aka “multiplay”, “16-bit multi”) behavior of the GBA serial interface for an emulator SIO driver (mGBA). This mode supports 2–4 GBAs in a daisy-chain link cable topology, where a single transfer exchanges one 16-bit word per unit and makes the resulting set of words visible to all participants.
+
+The implementation must accurately emulate:
+
+Register semantics (reads/writes, read-only bits, auto-clears, reset behavior).
+
+Master/parent vs child/slave behavior.
+
+Transfer lifecycle and when data becomes visible.
+
+“Ready”, “Busy/Start”, “Error”, and ID bit behavior.
+
+IRQ-on-completion behavior.
+
+2. Registers and bitfields (memory-mapped I/O)
+2.1 Mode selection register: RCNT @ 0x4000134 (R/W in this mode)
+
+Relevant bits/notes:
+
+RCNT[15] must be 0 for Normal/Multi/UART modes.
+
+RCNT[14] “Not used (should be 0, but is R/W)”.
+
+RCNT[0..3] reflect current SC, SD, SI, SO line states (undocumented but used by games). In particular, “many Nintendo games are using Bit 0 to test current SC state in multiplay mode.”
+
+Emulator requirement: maintain realistic line-state reporting through RCNT[0..3] during idle and transfer (at least RCNT[0]=SC must be credible).
+
+2.2 Control register: SIOCNT @ 0x4000128 (Multi-Player mode interpretation)
+
+Bit meanings in Multi-Player mode:
+
+SIOCNT[0..1] Baud rate select:
+
+0: 9600 bps
+
+1: 38400 bps
+
+2: 57600 bps
+
+3: 115200 bps
+
+SIOCNT[2] SI-Terminal (RO): 0=Parent, 1=Child
+
+SIOCNT[3] SD-Terminal (RO): 0=Bad connection, 1=All GBAs Ready
+
+SIOCNT[4..5] Multi-Player ID (RO): 0=Parent, 1..3=1st..3rd child
+Undefined until the first transfer completes.
+
+SIOCNT[6] Multi-Player Error (RO): 0=Normal, 1=Error
+
+SIOCNT[7] Start/Busy:
+
+For master/parent: writable “Start” (initiates transfer)
+
+For slaves/children: read-only Busy indication
+
+SIOCNT[8..11] unused R/W; should be 0
+
+SIOCNT[12] must be 0 in Multi-Player mode
+
+SIOCNT[13] must be 1 in Multi-Player mode
+
+SIOCNT[14] IRQ enable (completion IRQ request)
+
+SIOCNT[15] unused RO always 0
+
+Emulator requirement: enforce RO vs RW behavior per role, especially for Start/Busy and terminal/ID/error bits.
+
+2.3 Data registers (Multi-Player)
+
+SIOMULTI0 @ 0x4000120 (R/W): Data 0 (Parent slot)
+
+SIOMULTI1 @ 0x4000122 (R/W): Data 1 (1st child slot)
+
+SIOMULTI2 @ 0x4000124 (R/W): Data 2 (2nd child slot)
+
+SIOMULTI3 @ 0x4000126 (R/W): Data 3 (3rd child slot)
+
+SIOMLT_SEND @ 0x400012A (R/W): local outgoing 16-bit word to be sent in the next transfer
+
+Transfer-visible behavior:
+
+At transfer start, SIOMULTI0..3 are automatically reset to 0xFFFF.
+
+After transfer completes, SIOMULTI0..3 contain:
+
+incoming words from all remote GBAs (or 0xFFFF for non-present units),
+
+plus the local unit’s outgoing SIOMLT_SEND word,
+
+and all connected GBAs see the same final SIOMULTI0..3 set.
+
+Emulator requirement: treat SIOMLT_SEND as the sole “source” of that unit’s transmitted 16-bit payload for the upcoming transfer, and update all participants’ SIOMULTI* registers identically at completion.
+
+3. Initialization requirements
+
+To enter Multi-Player mode:
+
+Configure RCNT[14..15] and SIOCNT[12..13] so Multi-Player mode is selected.
+
+Practically, ensure: RCNT[15]=0 (required), RCNT[14]=0 (recommended), SIOCNT[12]=0, SIOCNT[13]=1.
+
+Read SIOCNT[3] to verify “all GBAs ready” (all in Multi-Player mode).
+
+Read SIOCNT[2] to detect whether this unit is the Parent/Master (0) or Child (1).
+
+Emulator requirement: model readiness such that SIOCNT[3]=1 only when the link topology and modes are consistent enough to proceed (see §6).
+
+4. Recommended software-side transmission procedure
+
+As stated in the source:
+
+Each unit writes its outgoing word to SIOMLT_SEND.
+
+The master sets SIOCNT[7]=1 (Start).
+
+All units wait until transfer completes, then read/process SIOMULTI0..3.
+
+After the first successful transfer, SIOCNT[4..5] ID bits become valid.
+
+Repeat as needed.
+
+Important behavioral note:
+
+The parent “blindly sends data regardless of whether childs have already processed old data/supplied new data”, so a real game may insert delays or do error checking.
+
+Slaves may temporarily signal “not ready” by switching to another mode (so SD no longer idles high as it does in Multi-Player idle).
+
+Emulator requirement: do not implicitly throttle the parent beyond what the hardware enforces; allow back-to-back transfers if the guest does so, and expose readiness/error bits rather than silently “fixing” timing.
+
+5. Wire-level / protocol-level transfer model (what hardware does)
+
+The GBATEK section provides a conceptual step sequence for the daisy chain.
+
+5.1 Idle / preconditions (Beginning)
+
+Master’s SI pin is always LOW.
+
+When all GBAs are in Multi-Player mode (ready), SD is HIGH.
+
+When master starts transfer, it sets SC=LOW; slaves observe Busy.
+
+Emulator requirement: represent SC transitions and expose them via RCNT low bits (notably RCNT[0] used by games).
+
+5.2 Data phases (Step A–D)
+
+Each phase corresponds to one unit’s payload being broadcast into one of the SIOMULTI* slots on all GBAs.
+
+Step A (Master/Parent contributes slot 0):
+
+ID bits in master are set to 0.
+
+Master outputs: Startbit (LOW), 16-bit data, Stopbit (HIGH) via SD.
+
+That data is written into SIOMULTI0 of all GBAs (including master).
+
+Master forwards LOW from its SO to 1st child’s SI.
+
+Transfer ends if next child does not output data after a certain time.
+
+Step B (1st child contributes slot 1):
+
+1st child ID bits become 1.
+
+1st child outputs Startbit + 16-bit data + Stopbit via SD.
+
+Data is written into SIOMULTI1 of all GBAs.
+
+1st child forwards LOW from SO to 2nd child SI.
+
+Transfer ends if next child does not output data after a certain time.
+
+Step C (2nd child contributes slot 2): similarly, fills SIOMULTI2.
+
+Step D (3rd child contributes slot 3): similarly, fills SIOMULTI3, then chain ends.
+
+5.3 Transfer end
+
+Master sets SC=HIGH, all GBAs set SO=HIGH.
+
+Start/Busy bits automatically clear.
+
+Completion IRQ is requested in all GBAs where enabled (SIOCNT[14]=1).
+
+6. Role assignment, IDs, and topology
+6.1 Parent vs child detection
+
+SIOCNT[2] indicates whether the unit is parent (0) or child (1).
+
+Emulator requirement: parent/child must be derived from the emulated link topology (which instance is “master end” of the chain).
+
+6.2 Multi-player ID bits validity
+
+SIOCNT[4..5] are undefined until the first transfer completes.
+
+Emulator requirement: before first successful transfer, return an “undefined” but stable-ish value. In practice for emulators, a deterministic value is often necessary; however, do not promise correctness to software until after first completion. (This is an implementation choice; the hardware guarantee is “undefined”.)
+
+6.3 “Missing child timeout” behavior
+
+The protocol explicitly says a phase ends if the next child does not output data after a certain time (Steps A–C).
+
+Emulator requirement: model the chain as up to N participants, where N is the number of attached GBAs in the configured link session. If fewer than 4 are connected, the transfer should stop after the last connected child’s phase, leaving remaining SIOMULTI slots as 0xFFFF (consistent with “otherwise still FFFFh”).
+
+7. Timing model (emulator-facing requirements)
+
+The documentation gives baud-rate selections but not an explicit “transfer duration” formula. You should still model time in a way that:
+
+prevents instantaneous completion (games may poll Busy),
+
+keeps relative speed consistent with baud selection,
+
+allows synchronization between emulator instances.
+
+7.1 Bitrate selection
+
+Use SIOCNT[0..1] to select one of: 9600/38400/57600/115200 bps.
+
+7.2 Transfer length (inference, recommended)
+
+Each participant phase is described as Startbit + 16 data bits + Stopbit ⇒ 18 bits per participant.
+Therefore, for P active participants (2–4), approximate wire time:
+
+t_transfer ≈ (18 * P) / baud_rate seconds
+
+Callout: this formula is an inference from the described framing; the source does not provide an explicit duration constant. Keep it adjustable if later validation shows off-by-overhead behavior.
+
+7.3 Busy/Start behavior during timing window
+
+On master start: set Busy (Start bit reads as 1) on all participants until completion.
+
+On completion: auto-clear Busy/Start.
+
+8. Error and “ready” signaling
+8.1 Ready (SIOCNT[3])
+
+1 means “All GBAs Ready”; 0 means “Bad connection”.
+
+Additionally, the doc notes slaves may drop readiness by switching to another mode (so SD no longer high in idle).
+
+Emulator requirement: compute readiness based on:
+
+All participants in Multi-Player mode (SIOCNT[12]=0 and SIOCNT[13]=1, and RCNT[15]=0 as applicable),
+
+Link session connected and consistent,
+
+No in-progress transfer (optional, but typically Ready stays meaningful in idle; during Busy you can still report Ready=1 if you want “all in mode”).
+
+8.2 Error (SIOCNT[6])
+
+Exposed as RO “Multi-Player Error (0=Normal, 1=Error)”.
+
+Emulator requirement: set error when protocol expectations fail (examples):
+
+Master starts a transfer when not all are ready (SIOCNT[3]=0).
+
+A configured child disappears mid-transfer (topology change).
+
+Timing/synchronization constraints cause a “missed phase” (child fails to “output data after certain time”).
+
+(Exact triggers are not fully specified in the snippet; choose behavior that matches observed game expectations, but keep the bit meaningful.)
+
+9. Interrupt behavior
+
+At transfer end:
+
+“Interrupts are requested in all GBAs (as far as enabled).”
+The enable is SIOCNT[14] (“Want IRQ upon completion”).
+
+Emulator requirement:
+
+If SIOCNT[14]=1 on a given unit at completion, raise that unit’s serial IRQ (GBA “Serial” interrupt source).
+
+IRQ should occur after registers have been updated (SIOMULTI*, Busy cleared), consistent with “upon completion.”
+
+10. Deterministic state machine (implementation blueprint)
+
+A robust emulation approach is to implement Multi-Player as a small state machine per link-session:
+
+States
+
+IDLE_READY / IDLE_NOT_READY
+
+BUSY_PHASE_PARENT
+
+BUSY_PHASE_CHILD1
+
+BUSY_PHASE_CHILD2
+
+BUSY_PHASE_CHILD3
+
+COMPLETE
+
+Key transitions
+
+Enter BUSY_* only when master writes Start=1.
+
+On entry to BUSY:
+
+set SC low (for RCNT[0] visibility)
+
+set Busy on slaves (RO reflection in SIOCNT[7])
+
+clear SIOMULTI0..3 = 0xFFFF on all participants
+
+For each connected participant slot i:
+
+sample that unit’s SIOMLT_SEND
+
+write it into SIOMULTIi for all participants
+
+After last connected slot:
+
+set SC high, SO high
+
+clear Busy/Start bits
+
+assert completion IRQ if enabled
+
+mark IDs valid from now on (SIOCNT[4..5])
+
+11. Practical emulator notes (mGBA-oriented)
+
+Synchronized multi-instance timing: Multi-Player transfers inherently couple multiple GBAs; ensure the transfer completion is scheduled in a way that all participants observe consistent completion timing and identical SIOMULTI* contents.
+
+Polling-heavy games: Because games may poll SIOCNT[7] and/or RCNT[0], avoid “same-cycle immediate completion” unless baud-rate timing truly implies it.
+
+Undefined ID bits until first completion: Many titles likely assume IDs after first transfer; keep that contract.
