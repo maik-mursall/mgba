@@ -53,6 +53,9 @@ struct GBASIONetPlayLockstepDriver {
 	Thread ioThread;
 	bool ioThreadActive;
 	bool ioThreadRunning;
+	bool pendingTransferStart;
+	int32_t pendingTransferStartTimestamp;
+	int32_t pendingTransferFinishCycle;
 	size_t lineQueueRead;
 	size_t lineQueueWrite;
 	char lineQueue[GBA_SIO_NETPLAY_LOCKSTEP_LINE_QUEUE_SIZE][GBA_SIO_NETPLAY_LOCKSTEP_MAX_LINE];

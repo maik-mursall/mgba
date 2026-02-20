@@ -326,14 +326,8 @@ private class RemoteLockstepCoordinator(
         )
 
         if (waiting != 0) {
-            logger.info(
-                "Transfer start preempting active wait: lockstepId={}, waitingMask=0x{}",
-                player.lockstepId,
-                waiting.toString(16),
-            )
-            waiting = 0
-            pendingTransferSubmit = 0
-            wakePlayer(out, player)
+            send(out, conn, "ERR wait_in_progress")
+            return out
         }
 
         resetTransferBuffers()

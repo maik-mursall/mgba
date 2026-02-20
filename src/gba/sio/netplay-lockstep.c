@@ -80,6 +80,8 @@ static bool _queueOutgoingLocked(struct GBASIONetPlayLockstepDriver* net, const 
 static void _flushOutgoingLocked(struct GBASIONetPlayLockstepDriver* net);
 static size_t _outQueueDepth(const struct GBASIONetPlayLockstepDriver* net);
 static void _drainIncomingLocked(struct GBASIONetPlayLockstepDriver* net);
+static void _maybeProcessPendingTransferStartLocked(struct GBASIONetPlayLockstepDriver* net);
+static void _completeTransferSoonLocked(struct GBASIONetPlayLockstepDriver* net);
 
 static void _handleLineLocked(struct GBASIONetPlayLockstepDriver* net, char* line);
 static void _handleEventLocked(struct GBASIONetPlayLockstepDriver* net, int type, int32_t timestamp, int playerId, int32_t value);
@@ -114,6 +116,9 @@ void GBASIONetPlayLockstepDriverCreate(struct GBASIONetPlayLockstepDriver* net, 
 	net->transferMode = (enum GBASIOMode) -1;
 	net->ioThreadActive = false;
 	net->ioThreadRunning = false;
+	net->pendingTransferStart = false;
+	net->pendingTransferStartTimestamp = 0;
+	net->pendingTransferFinishCycle = 0;
 	net->lineQueueRead = 0;
 	net->lineQueueWrite = 0;
 	net->outQueueRead = 0;
@@ -174,6 +179,9 @@ bool GBASIONetPlayLockstepDriverConnect(struct GBASIONetPlayLockstepDriver* net,
 	net->asleep = false;
 	net->transferActive = false;
 	net->dataReceived = false;
+	net->pendingTransferStart = false;
+	net->pendingTransferStartTimestamp = 0;
+	net->pendingTransferFinishCycle = 0;
 	net->playerId = 0;
 	net->attached = 1;
 	net->rxBufferSize = 0;
@@ -261,6 +269,9 @@ static void GBASIONetPlayLockstepDriverReset(struct GBASIODriver* driver) {
 	net->transferMode = net->mode;
 	net->transferActive = false;
 	net->dataReceived = false;
+	net->pendingTransferStart = false;
+	net->pendingTransferStartTimestamp = 0;
+	net->pendingTransferFinishCycle = 0;
 	if (!net->connected) {
 		net->rxBufferSize = 0;
 		net->lineQueueRead = 0;
@@ -311,7 +322,11 @@ static void GBASIONetPlayLockstepDriverSetMode(struct GBASIODriver* driver, enum
 	}
 	_updateReadyStateLocked(net);
 	if (net->connected && net->helloSent) {
-		_sendCommandLocked(net, "SET_MODE %d %" PRId32, _modeEnumToInt(mode), _now(net));
+		if (_sendCommandLocked(net, "SET_MODE %d %" PRId32, _modeEnumToInt(mode), _now(net))) {
+			if (net->playerId == 0 && net->attached > 1) {
+				_sleepLocked(net);
+			}
+		}
 	}
 	MutexUnlock(&net->mutex);
 }
@@ -404,6 +419,11 @@ static bool GBASIONetPlayLockstepDriverStart(struct GBASIODriver* driver) {
 	                             timestamp, finishCycle, (int32_t) txData);
 	if (!started) {
 		net->transferActive = false;
+		// Never leave SIOMULTI start bit latched if the remote coordinator rejected
+		// or could not accept this transfer start.
+		_completeTransferSoonLocked(net);
+	} else {
+		_sleepLocked(net);
 	}
 out:
 	MutexUnlock(&net->mutex);
@@ -425,7 +445,11 @@ static void GBASIONetPlayLockstepDriverFinishMultiplayer(struct GBASIODriver* dr
 		}
 		net->dataReceived = false;
 		if (net->playerId == 0 && net->connected && net->helloSent) {
-			_sendCommandLocked(net, "HARD_SYNC %" PRId32, _now(net));
+			if (_sendCommandLocked(net, "HARD_SYNC %" PRId32, _now(net))) {
+				if (net->attached > 1) {
+					_sleepLocked(net);
+				}
+			}
 		}
 	}
 	MutexUnlock(&net->mutex);
@@ -448,7 +472,11 @@ static uint8_t GBASIONetPlayLockstepDriverFinishNormal8(struct GBASIODriver* dri
 		}
 		net->dataReceived = false;
 		if (net->playerId == 0 && net->connected && net->helloSent) {
-			_sendCommandLocked(net, "HARD_SYNC %" PRId32, _now(net));
+			if (_sendCommandLocked(net, "HARD_SYNC %" PRId32, _now(net))) {
+				if (net->attached > 1) {
+					_sleepLocked(net);
+				}
+			}
 		}
 	}
 	MutexUnlock(&net->mutex);
@@ -472,7 +500,11 @@ static uint32_t GBASIONetPlayLockstepDriverFinishNormal32(struct GBASIODriver* d
 		}
 		net->dataReceived = false;
 		if (net->playerId == 0 && net->connected && net->helloSent) {
-			_sendCommandLocked(net, "HARD_SYNC %" PRId32, _now(net));
+			if (_sendCommandLocked(net, "HARD_SYNC %" PRId32, _now(net))) {
+				if (net->attached > 1) {
+					_sleepLocked(net);
+				}
+			}
 		}
 	}
 	MutexUnlock(&net->mutex);
@@ -489,7 +521,7 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 		if (!net->helloSent) {
 			_sendHelloLocked(net);
 		}
-		if (net->connected && net->helloSent && net->playerId == 0 && net->attached > 1) {
+		if (net->connected && net->helloSent && net->playerId == 0 && net->attached > 1 && !net->asleep) {
 			// Avoid unbounded TICK buildup if the socket writer falls behind.
 			if (_outQueueDepth(net) < (GBA_SIO_NETPLAY_LOCKSTEP_LINE_QUEUE_SIZE / 2)) {
 				_sendCommandLocked(net, "TICK %" PRId32, _now(net));
@@ -498,9 +530,21 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 		if (net->connected) {
 			_drainIncomingLocked(net);
 		}
+		if (net->connected) {
+			_maybeProcessPendingTransferStartLocked(net);
+		}
 	}
 	if (net->connected) {
 		next = net->asleep ? EVENT_SLEEP_INTERVAL : EVENT_ACTIVE_INTERVAL;
+		if (net->pendingTransferStart) {
+			int32_t untilTransferStart = net->pendingTransferStartTimestamp - _now(net);
+			if (untilTransferStart < 1) {
+				untilTransferStart = 1;
+			}
+			if ((uint32_t) untilTransferStart < next) {
+				next = (uint32_t) untilTransferStart;
+			}
+		}
 	}
 	if (!net->connected && net->ioThreadActive && !net->ioThreadRunning) {
 		joinIoThread = true;
@@ -574,6 +618,9 @@ static void _setDisconnectedLocked(struct GBASIONetPlayLockstepDriver* net) {
 	net->helloPending = false;
 	net->transferActive = false;
 	net->dataReceived = false;
+	net->pendingTransferStart = false;
+	net->pendingTransferStartTimestamp = 0;
+	net->pendingTransferFinishCycle = 0;
 	net->attached = 1;
 	net->playerId = 0;
 	net->rxBufferSize = 0;
@@ -823,6 +870,45 @@ static void _drainIncomingLocked(struct GBASIONetPlayLockstepDriver* net) {
 
 		_handleLineLocked(net, line);
 	}
+	_maybeProcessPendingTransferStartLocked(net);
+}
+
+static void _maybeProcessPendingTransferStartLocked(struct GBASIONetPlayLockstepDriver* net) {
+	if (!net->pendingTransferStart || !net->connected || !net->helloSent || net->playerId <= 0 || !net->d.p || !net->d.p->p) {
+		return;
+	}
+
+	int32_t now = _now(net);
+	if (net->pendingTransferStartTimestamp - now > 0) {
+		return;
+	}
+
+	uint32_t txData = _readLocalTransferData(net, net->transferMode);
+	int32_t delay = net->pendingTransferFinishCycle - now;
+	if (delay < 1) {
+		delay = 1;
+	}
+
+	_sendCommandLocked(net, "SUBMIT_DATA %" PRId32, (int32_t) txData);
+
+	net->d.p->siocnt |= 0x80;
+	mTimingDeschedule(&net->d.p->p->timing, &net->d.p->completeEvent);
+	mTimingSchedule(&net->d.p->p->timing, &net->d.p->completeEvent, delay);
+	_sendCommandLocked(net, "ACK");
+
+	net->pendingTransferStart = false;
+	net->pendingTransferStartTimestamp = 0;
+	net->pendingTransferFinishCycle = 0;
+}
+
+static void _completeTransferSoonLocked(struct GBASIONetPlayLockstepDriver* net) {
+	struct GBASIO* sio = net->d.p;
+	if (!sio || !sio->p || !(sio->siocnt & 0x80)) {
+		return;
+	}
+
+	mTimingDeschedule(&sio->p->timing, &sio->completeEvent);
+	mTimingSchedule(&sio->p->timing, &sio->completeEvent, 1);
 }
 
 THREAD_ENTRY _ioThread(void* context) {
@@ -984,7 +1070,6 @@ static int _tokenize(char* line, char* tokens[], int maxTokens) {
 }
 
 static void _handleEventLocked(struct GBASIONetPlayLockstepDriver* net, int type, int32_t timestamp, int playerId, int32_t value) {
-	UNUSED(timestamp);
 	switch (type) {
 	case NP_EV_ATTACH:
 		_setReadyLocked(net, playerId, -1);
@@ -1020,18 +1105,10 @@ static void _handleEventLocked(struct GBASIONetPlayLockstepDriver* net, int type
 	}
 	case NP_EV_TRANSFER_START:
 		if (net->playerId > 0 && net->connected && net->helloSent && net->d.p && net->d.p->p) {
-			uint32_t txData = _readLocalTransferData(net, net->transferMode);
-			int32_t delay = value - _now(net);
-			if (delay < 1) {
-				delay = 1;
-			}
-
-			_sendCommandLocked(net, "SUBMIT_DATA %" PRId32, (int32_t) txData);
-
-			net->d.p->siocnt |= 0x80;
-			mTimingDeschedule(&net->d.p->p->timing, &net->d.p->completeEvent);
-			mTimingSchedule(&net->d.p->p->timing, &net->d.p->completeEvent, delay);
-			_sendCommandLocked(net, "ACK");
+			net->pendingTransferStart = true;
+			net->pendingTransferStartTimestamp = timestamp;
+			net->pendingTransferFinishCycle = value;
+			_maybeProcessPendingTransferStartLocked(net);
 		}
 		break;
 	}
@@ -1168,6 +1245,13 @@ static void _handleLineLocked(struct GBASIONetPlayLockstepDriver* net, char* lin
 		    || !strcmp(reason, "desync_non_primary_wait")) {
 			net->transferActive = false;
 			net->dataReceived = false;
+			net->pendingTransferStart = false;
+			net->pendingTransferStartTimestamp = 0;
+			net->pendingTransferFinishCycle = 0;
+			_completeTransferSoonLocked(net);
+			if (!strcmp(reason, "wait_in_progress")) {
+				_sleepLocked(net);
+			}
 		}
 		return;
 	}
