@@ -192,9 +192,6 @@ MultiplayerController::MultiplayerController() {
 
 MultiplayerController::~MultiplayerController() {
 	mLockstepDeinit(&m_lockstep);
-	if (m_platform == mPLATFORM_GBA) {
-		GBASIOLockstepCoordinatorDeinit(&m_gbaCoordinator);
-	}
 }
 
 bool MultiplayerController::attachGame(CoreController* controller) {
@@ -204,12 +201,10 @@ bool MultiplayerController::attachGame(CoreController* controller) {
 		interrupters.append(p.controller);
 	}
 
-	bool doDelayedAttach = false;
 	if (m_platform == mPLATFORM_NONE) {
 		switch (controller->platform()) {
 #ifdef M_CORE_GBA
 		case mPLATFORM_GBA:
-			GBASIOLockstepCoordinatorInit(&m_gbaCoordinator);
 			break;
 #endif
 #ifdef M_CORE_GB
@@ -246,29 +241,29 @@ bool MultiplayerController::attachGame(CoreController* controller) {
 			return false;
 		}
 
-		GBASIOLockstepDriver* node = new GBASIOLockstepDriver;
+		GBASIONetPlayLockstepDriver* node = new GBASIONetPlayLockstepDriver;
 		LockstepUser* user = new LockstepUser;
 		mLockstepThreadUserInit(user, thread);
 		user->controller = this;
 		user->pid = m_nextPid;
+		user->preferredId = player.preferredId;
 		user->d.requestedId = [](mLockstepUser* ctx) {
 			mLockstepThreadUser* tctx = reinterpret_cast<mLockstepThreadUser*>(ctx);
 			LockstepUser* user = static_cast<LockstepUser*>(tctx);
-			MultiplayerController* controller = user->controller;
-			const auto iter = controller->m_pids.find(user->pid);
-			if (iter == controller->m_pids.end()) {
-				return -1;
-			}
-			const Player& p = iter.value();
-			return p.preferredId;
+			return user->preferredId;
 		};
 
-		GBASIOLockstepDriverCreate(node, &user->d);
-		player.node.gba = node;
-
-		if (m_pids.size()) {
-			doDelayedAttach = true;
+		GBASIONetPlayLockstepDriverCreate(node, &user->d);
+		if (!GBASIONetPlayLockstepDriverConnectDefault(node)) {
+			GBASIONetPlayLockstepDriverDestroy(node);
+			delete user;
+			delete node;
+			LOG(QT, ERROR) << tr("Failed to connect to netplay lockstep coordinator");
+			return false;
 		}
+		thread->core->setPeripheral(thread->core, mPERIPH_GBA_LINK_PORT, &node->d);
+		player.node.gba = node;
+		player.attached = true;
 		break;
 	}
 #endif
@@ -324,19 +319,6 @@ bool MultiplayerController::attachGame(CoreController* controller) {
 	++m_nextPid;
 	fixOrder();
 
-	if (doDelayedAttach) {
-		for (auto pid: m_players) {
-			Player& player = m_pids.find(pid).value();
-			if (player.attached) {
-				continue;
-			}
-			struct mCore* core = player.controller->thread()->core;
-			GBASIOLockstepCoordinatorAttach(&m_gbaCoordinator, player.node.gba);
-			core->setPeripheral(core, mPERIPH_GBA_LINK_PORT, &player.node.gba->d);
-			player.attached = true;
-		}
-	}
-
 	emit gameAttached();
 	return true;
 }
@@ -377,9 +359,10 @@ void MultiplayerController::detachGame(CoreController* controller) {
 			thread->core->setPeripheral(thread->core, mPERIPH_GBA_LINK_PORT, NULL);
 		}
 		if (p.attached) {
-			GBASIOLockstepCoordinatorDetach(&m_gbaCoordinator, p.node.gba);
+			GBASIONetPlayLockstepDriverDisconnect(p.node.gba);
 		}
 		delete reinterpret_cast<LockstepUser*>(p.node.gba->user);
+		GBASIONetPlayLockstepDriverDestroy(p.node.gba);
 		delete p.node.gba;
 		break;
 	}
@@ -420,9 +403,6 @@ void MultiplayerController::detachGame(CoreController* controller) {
 
 	m_pids.remove(pid);
 	if (m_pids.size() == 0) {
-		if (m_platform == mPLATFORM_GBA) {
-			GBASIOLockstepCoordinatorDeinit(&m_gbaCoordinator);
-		}
 		m_platform = mPLATFORM_NONE;
 	} else {
 		fixOrder();
@@ -465,7 +445,7 @@ int MultiplayerController::attached() {
 		num = m_lockstep.attached;
 		break;
 	case mPLATFORM_GBA:
-		num = saturateCast<int>(GBASIOLockstepCoordinatorAttached(&m_gbaCoordinator));
+		num = m_pids.size();
 		break;
 	default:
 		break;
@@ -508,7 +488,7 @@ void MultiplayerController::fixOrder() {
 		/*for (int pid : m_pids.keys()) {
 			Player& p = m_pids.find(pid).value();
 			GBA* gba = static_cast<GBA*>(p.controller->thread()->core->board);
-			GBASIOLockstepDriver* node = reinterpret_cast<GBASIOLockstepDriver*>(gba->sio.driver);
+			GBASIONetPlayLockstepDriver* node = reinterpret_cast<GBASIONetPlayLockstepDriver*>(gba->sio.driver);
 			m_players[node->d.deviceId(&node->d)] = pid;
 		}*/
 		break;

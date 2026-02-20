@@ -13,7 +13,7 @@
 #include <mgba/core/core.h>
 #include <mgba/core/lockstep.h>
 #ifdef M_CORE_GBA
-#include <mgba/internal/gba/sio/lockstep.h>
+#include <mgba/internal/gba/sio/netplay-lockstep.h>
 #endif
 #ifdef M_CORE_GB
 #include <mgba/internal/gb/sio/lockstep.h>
@@ -22,7 +22,6 @@
 #include <memory>
 
 struct GBSIOLockstepNode;
-struct GBASIOLockstepNode;
 
 namespace QGBA {
 
@@ -49,7 +48,7 @@ signals:
 private:
 	union Node {
 		GBSIOLockstepNode* gb;
-		GBASIOLockstepDriver* gba;
+		GBASIONetPlayLockstepDriver* gba;
 	};
 	struct Player {
 		Player(CoreController* controller);
@@ -69,6 +68,7 @@ private:
 	struct LockstepUser : mLockstepThreadUser {
 		MultiplayerController* controller;
 		int pid;
+		int preferredId = MAX_GBAS - 1;
 	};
 
 	Player* player(int id);
@@ -81,10 +81,6 @@ private:
 		GBSIOLockstep m_gbLockstep;
 #endif
 	};
-
-#ifdef M_CORE_GBA
-	GBASIOLockstepCoordinator m_gbaCoordinator;
-#endif
 
 	mPlatform m_platform = mPLATFORM_NONE;
 	int m_nextPid = 0;

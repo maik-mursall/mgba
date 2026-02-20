@@ -75,7 +75,7 @@ CoreController::CoreController(mCore* core, QObject* parent)
 
 		controller->updateFastForward();
 
-		if (controller->m_multiplayer) {
+		if (controller->m_multiplayer && controller->m_multiplayer->playerId(controller) < 0) {
 			controller->m_multiplayer->attachGame(controller);
 			controller->updatePlayerSave();
 		}
@@ -481,6 +481,12 @@ void CoreController::start() {
 	if (!m_patched) {
 		mCoreAutoloadPatch(m_threadContext.core);
 	}
+#ifdef M_CORE_GBA
+	if (platform() == mPLATFORM_GBA && m_multiplayer && m_multiplayer->playerId(this) < 0) {
+		m_multiplayer->attachGame(this);
+		updatePlayerSave();
+	}
+#endif
 	if (!mCoreThreadStart(&m_threadContext)) {
 		emit failed();
 		emit stopping();
