@@ -78,6 +78,7 @@ static void _joinIoThread(struct GBASIONetPlayLockstepDriver* net);
 static bool _queueLineLocked(struct GBASIONetPlayLockstepDriver* net, const char* line, size_t lineLength);
 static bool _queueOutgoingLocked(struct GBASIONetPlayLockstepDriver* net, const char* line, size_t lineLength);
 static void _flushOutgoingLocked(struct GBASIONetPlayLockstepDriver* net);
+static size_t _outQueueDepth(const struct GBASIONetPlayLockstepDriver* net);
 static void _drainIncomingLocked(struct GBASIONetPlayLockstepDriver* net);
 
 static void _handleLineLocked(struct GBASIONetPlayLockstepDriver* net, char* line);
@@ -489,7 +490,10 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 			_sendHelloLocked(net);
 		}
 		if (net->connected && net->helloSent && net->playerId == 0 && net->attached > 1) {
-			_sendCommandLocked(net, "TICK %" PRId32, _now(net));
+			// Avoid unbounded TICK buildup if the socket writer falls behind.
+			if (_outQueueDepth(net) < (GBA_SIO_NETPLAY_LOCKSTEP_LINE_QUEUE_SIZE / 2)) {
+				_sendCommandLocked(net, "TICK %" PRId32, _now(net));
+			}
 		}
 		if (net->connected) {
 			_drainIncomingLocked(net);
@@ -657,9 +661,18 @@ static bool _queueOutgoingLocked(struct GBASIONetPlayLockstepDriver* net, const 
 		next = 0;
 	}
 	if (next == net->outQueueRead) {
-		mLOG(GBA_SIO, ERROR, "NetPlay lockstep: outgoing line queue overflow");
-		_setDisconnectedLocked(net);
-		return false;
+		_flushOutgoingLocked(net);
+		if (!net->connected || SOCKET_FAILED(net->socket)) {
+			return false;
+		}
+		next = net->outQueueWrite + 1;
+		if (next >= GBA_SIO_NETPLAY_LOCKSTEP_LINE_QUEUE_SIZE) {
+			next = 0;
+		}
+		if (next == net->outQueueRead) {
+			mLOG(GBA_SIO, WARN, "NetPlay lockstep: outgoing line queue full, dropping command");
+			return false;
+		}
 	}
 
 	if (lineLength >= MAX_LINE) {
@@ -670,6 +683,13 @@ static bool _queueOutgoingLocked(struct GBASIONetPlayLockstepDriver* net, const 
 	slot[lineLength] = '\0';
 	net->outQueueWrite = next;
 	return true;
+}
+
+static size_t _outQueueDepth(const struct GBASIONetPlayLockstepDriver* net) {
+	if (net->outQueueWrite >= net->outQueueRead) {
+		return net->outQueueWrite - net->outQueueRead;
+	}
+	return GBA_SIO_NETPLAY_LOCKSTEP_LINE_QUEUE_SIZE - (net->outQueueRead - net->outQueueWrite);
 }
 
 static void _flushOutgoingLocked(struct GBASIONetPlayLockstepDriver* net) {
