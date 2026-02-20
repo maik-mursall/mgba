@@ -57,6 +57,7 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 static int _modeEnumToInt(enum GBASIOMode mode);
 static enum GBASIOMode _modeIntToEnum(int mode);
 static int32_t _now(struct GBASIONetPlayLockstepDriver* net);
+static void _resyncClockLocked(struct GBASIONetPlayLockstepDriver* net, int32_t remoteTimestamp, const char* source);
 static uint32_t _readLocalTransferData(struct GBASIONetPlayLockstepDriver* net, enum GBASIOMode mode);
 
 static void _setDisconnectedLocked(struct GBASIONetPlayLockstepDriver* net);
@@ -592,6 +593,26 @@ static int32_t _now(struct GBASIONetPlayLockstepDriver* net) {
 	return mTimingCurrentTime(&net->d.p->p->timing) - net->cycleOffset;
 }
 
+static void _resyncClockLocked(struct GBASIONetPlayLockstepDriver* net, int32_t remoteTimestamp, const char* source) {
+	int32_t localTimestamp = _now(net);
+	int32_t drift = localTimestamp - remoteTimestamp;
+	if (!drift) {
+		return;
+	}
+
+	net->cycleOffset += drift;
+
+	if (drift > 0x1000 || drift < -0x1000) {
+		mLOG(GBA_SIO, WARN,
+		     "NetPlay lockstep: clock drift corrected at %s: local=%" PRId32 " remote=%" PRId32 " drift=%" PRId32 " newOffset=%" PRId32,
+		     source,
+		     localTimestamp,
+		     remoteTimestamp,
+		     drift,
+		     net->cycleOffset);
+	}
+}
+
 static uint32_t _readLocalTransferData(struct GBASIONetPlayLockstepDriver* net, enum GBASIOMode mode) {
 	struct GBASIO* sio = net->d.p;
 	if (!sio || !sio->p) {
@@ -1087,6 +1108,7 @@ static void _handleEventLocked(struct GBASIONetPlayLockstepDriver* net, int type
 		break;
 	case NP_EV_HARD_SYNC:
 		if (net->playerId != 0 && net->connected && net->helloSent) {
+			_resyncClockLocked(net, timestamp, "HARD_SYNC");
 			_sendCommandLocked(net, "ACK");
 		}
 		break;

@@ -557,7 +557,7 @@ private class RemoteLockstepCoordinator(
             return
         }
         if (waiting != 0) {
-            logger.debug(
+            logger.warn(
                 "Hard sync ignored while wait is active: lockstepId={}, waitingMask=0x{}, transferActive={}, pendingSubmitMask=0x{}",
                 primary.lockstepId,
                 waiting.toString(16),
@@ -566,14 +566,6 @@ private class RemoteLockstepCoordinator(
             )
             return
         }
-
-        logger.info(
-            "Hard sync requested: lockstepId={}, timestamp={}, attached={}, waitingMask=0x{}",
-            primary.lockstepId,
-            timestamp,
-            nAttached,
-            waiting.toString(16),
-        )
 
         enqueueEvent(
             out,
@@ -609,29 +601,36 @@ private class RemoteLockstepCoordinator(
         }
 
         if (primary.playerId != 0) {
+            logger.warn(
+                "Sync failure: non-primary wait attempt lockstepId={}, playerId={}",
+                primary.lockstepId,
+                primary.playerId,
+            )
             send(out, primary.conn, "ERR desync_non_primary_wait")
             return
         }
 
         if (waiting != 0) {
+            logger.warn(
+                "Sync failure: wait requested while waiting active lockstepId={}, waitingMask=0x{}",
+                primary.lockstepId,
+                waiting.toString(16),
+            )
             send(out, primary.conn, "ERR desync_waiting_not_empty")
             return
         }
 
         if (primary.asleep) {
+            logger.warn(
+                "Sync failure: primary asleep during wait lockstepId={}",
+                primary.lockstepId,
+            )
             send(out, primary.conn, "ERR desync_primary_asleep")
             return
         }
 
         advanceCycle(timestamp)
         waiting = ((1 shl nAttached) - 1) and target(primary.playerId).inv()
-
-        logger.info(
-            "Primary waiting for ACKs: lockstepId={}, timestamp={}, waitingMask=0x{}",
-            primary.lockstepId,
-            timestamp,
-            waiting.toString(16),
-        )
 
         sleepPlayer(out, primary)
         wakeSecondaries(out)
@@ -644,7 +643,7 @@ private class RemoteLockstepCoordinator(
 
         val playerMask = target(player.playerId)
         if ((waiting and playerMask) == 0) {
-            logger.debug(
+            logger.warn(
                 "Ignoring out-of-window ACK: lockstepId={}, playerId={}, waitingMask=0x{}",
                 player.lockstepId,
                 player.playerId,
@@ -662,16 +661,7 @@ private class RemoteLockstepCoordinator(
             return
         }
 
-        val oldWaiting = waiting
         waiting = waiting and playerMask.inv()
-
-        logger.info(
-            "ACK received: lockstepId={}, playerId={}, waitingMask=0x{}->0x{}",
-            player.lockstepId,
-            player.playerId,
-            oldWaiting.toString(16),
-            waiting.toString(16),
-        )
 
         if (waiting == 0) {
             if (transferActive) {
