@@ -57,7 +57,6 @@ static void _netPlayEvent(struct mTiming* timing, void* context, uint32_t cycles
 static int _modeEnumToInt(enum GBASIOMode mode);
 static enum GBASIOMode _modeIntToEnum(int mode);
 static int32_t _now(struct GBASIONetPlayLockstepDriver* net);
-static void _resyncClockLocked(struct GBASIONetPlayLockstepDriver* net, int32_t remoteTimestamp, const char* source);
 static uint32_t _readLocalTransferData(struct GBASIONetPlayLockstepDriver* net, enum GBASIOMode mode);
 
 static void _setDisconnectedLocked(struct GBASIONetPlayLockstepDriver* net);
@@ -120,6 +119,10 @@ void GBASIONetPlayLockstepDriverCreate(struct GBASIONetPlayLockstepDriver* net, 
 	net->pendingTransferStart = false;
 	net->pendingTransferStartTimestamp = 0;
 	net->pendingTransferFinishCycle = 0;
+	net->pendingTransferStartsSeen = 0;
+	net->pendingTransferStartsProcessed = 0;
+	net->pendingTransferStartsOverwritten = 0;
+	net->pendingTransferStartsLate = 0;
 	net->lineQueueRead = 0;
 	net->lineQueueWrite = 0;
 	net->outQueueRead = 0;
@@ -184,6 +187,10 @@ bool GBASIONetPlayLockstepDriverConnect(struct GBASIONetPlayLockstepDriver* net,
 	net->pendingTransferStart = false;
 	net->pendingTransferStartTimestamp = 0;
 	net->pendingTransferFinishCycle = 0;
+	net->pendingTransferStartsSeen = 0;
+	net->pendingTransferStartsProcessed = 0;
+	net->pendingTransferStartsOverwritten = 0;
+	net->pendingTransferStartsLate = 0;
 	net->playerId = 0;
 	net->attached = 1;
 	net->rxBufferSize = 0;
@@ -593,26 +600,6 @@ static int32_t _now(struct GBASIONetPlayLockstepDriver* net) {
 	return mTimingCurrentTime(&net->d.p->p->timing) - net->cycleOffset;
 }
 
-static void _resyncClockLocked(struct GBASIONetPlayLockstepDriver* net, int32_t remoteTimestamp, const char* source) {
-	int32_t localTimestamp = _now(net);
-	int32_t drift = localTimestamp - remoteTimestamp;
-	if (!drift) {
-		return;
-	}
-
-	net->cycleOffset += drift;
-
-	if (drift > 0x1000 || drift < -0x1000) {
-		mLOG(GBA_SIO, WARN,
-		     "NetPlay lockstep: clock drift corrected at %s: local=%" PRId32 " remote=%" PRId32 " drift=%" PRId32 " newOffset=%" PRId32,
-		     source,
-		     localTimestamp,
-		     remoteTimestamp,
-		     drift,
-		     net->cycleOffset);
-	}
-}
-
 static uint32_t _readLocalTransferData(struct GBASIONetPlayLockstepDriver* net, enum GBASIOMode mode) {
 	struct GBASIO* sio = net->d.p;
 	if (!sio || !sio->p) {
@@ -632,6 +619,10 @@ static uint32_t _readLocalTransferData(struct GBASIONetPlayLockstepDriver* net, 
 
 static void _setDisconnectedLocked(struct GBASIONetPlayLockstepDriver* net) {
 	int oldPlayerId = net->playerId;
+	uint32_t pendingSeen = net->pendingTransferStartsSeen;
+	uint32_t pendingProcessed = net->pendingTransferStartsProcessed;
+	uint32_t pendingOverwritten = net->pendingTransferStartsOverwritten;
+	uint32_t pendingLate = net->pendingTransferStartsLate;
 	if (!SOCKET_FAILED(net->socket)) {
 		SocketCloseQuiet(net->socket);
 	}
@@ -644,6 +635,10 @@ static void _setDisconnectedLocked(struct GBASIONetPlayLockstepDriver* net) {
 	net->pendingTransferStart = false;
 	net->pendingTransferStartTimestamp = 0;
 	net->pendingTransferFinishCycle = 0;
+	net->pendingTransferStartsSeen = 0;
+	net->pendingTransferStartsProcessed = 0;
+	net->pendingTransferStartsOverwritten = 0;
+	net->pendingTransferStartsLate = 0;
 	net->attached = 1;
 	net->playerId = 0;
 	net->cycleOffset = 0;
@@ -663,6 +658,14 @@ static void _setDisconnectedLocked(struct GBASIONetPlayLockstepDriver* net) {
 		_wakeLocked(net);
 	}
 	_updateReadyStateLocked(net);
+	if ((pendingSeen || pendingProcessed || pendingOverwritten || pendingLate) && pendingSeen != pendingProcessed) {
+		mLOG(GBA_SIO, WARN,
+		     "NetPlay lockstep: disconnect with pending transfer mismatch seen=%" PRIu32 " processed=%" PRIu32 " overwritten=%" PRIu32 " late=%" PRIu32,
+		     pendingSeen,
+		     pendingProcessed,
+		     pendingOverwritten,
+		     pendingLate);
+	}
 }
 
 static void _sleepLocked(struct GBASIONetPlayLockstepDriver* net) {
@@ -903,8 +906,21 @@ static void _maybeProcessPendingTransferStartLocked(struct GBASIONetPlayLockstep
 	}
 
 	int32_t now = _now(net);
-	if (net->pendingTransferStartTimestamp - now > 0) {
+	int32_t lag = now - net->pendingTransferStartTimestamp;
+	if (lag < 0) {
 		return;
+	}
+	if (lag > 0x2000) {
+		++net->pendingTransferStartsLate;
+		mLOG(GBA_SIO, WARN,
+		     "NetPlay lockstep: late pending transfer processing player=%d lag=%" PRId32 " finish=%" PRId32 " seen=%" PRIu32 " processed=%" PRIu32 " overwritten=%" PRIu32 " late=%" PRIu32,
+		     net->playerId,
+		     lag,
+		     net->pendingTransferFinishCycle,
+		     net->pendingTransferStartsSeen,
+		     net->pendingTransferStartsProcessed,
+		     net->pendingTransferStartsOverwritten,
+		     net->pendingTransferStartsLate);
 	}
 
 	uint32_t txData = _readLocalTransferData(net, net->transferMode);
@@ -920,9 +936,18 @@ static void _maybeProcessPendingTransferStartLocked(struct GBASIONetPlayLockstep
 	mTimingSchedule(&net->d.p->p->timing, &net->d.p->completeEvent, delay);
 	_sendCommandLocked(net, "ACK");
 
+	++net->pendingTransferStartsProcessed;
 	net->pendingTransferStart = false;
 	net->pendingTransferStartTimestamp = 0;
 	net->pendingTransferFinishCycle = 0;
+	if (!(net->pendingTransferStartsProcessed & 0xFF)) {
+		mLOG(GBA_SIO, DEBUG,
+		     "NetPlay lockstep: pending transfer stats seen=%" PRIu32 " processed=%" PRIu32 " overwritten=%" PRIu32 " late=%" PRIu32,
+		     net->pendingTransferStartsSeen,
+		     net->pendingTransferStartsProcessed,
+		     net->pendingTransferStartsOverwritten,
+		     net->pendingTransferStartsLate);
+	}
 }
 
 static void _completeTransferSoonLocked(struct GBASIONetPlayLockstepDriver* net) {
@@ -1108,7 +1133,6 @@ static void _handleEventLocked(struct GBASIONetPlayLockstepDriver* net, int type
 		break;
 	case NP_EV_HARD_SYNC:
 		if (net->playerId != 0 && net->connected && net->helloSent) {
-			_resyncClockLocked(net, timestamp, "HARD_SYNC");
 			_sendCommandLocked(net, "ACK");
 		}
 		break;
@@ -1130,6 +1154,20 @@ static void _handleEventLocked(struct GBASIONetPlayLockstepDriver* net, int type
 	}
 	case NP_EV_TRANSFER_START:
 		if (net->playerId > 0 && net->connected && net->helloSent && net->d.p && net->d.p->p) {
+			if (net->pendingTransferStart) {
+				++net->pendingTransferStartsOverwritten;
+				mLOG(GBA_SIO, WARN,
+				     "NetPlay lockstep: pending transfer overwritten player=%d oldStart=%" PRId32 " oldFinish=%" PRId32 " newStart=%" PRId32 " newFinish=%" PRId32 " seen=%" PRIu32 " processed=%" PRIu32 " overwritten=%" PRIu32,
+				     net->playerId,
+				     net->pendingTransferStartTimestamp,
+				     net->pendingTransferFinishCycle,
+				     timestamp,
+				     value,
+				     net->pendingTransferStartsSeen,
+				     net->pendingTransferStartsProcessed,
+				     net->pendingTransferStartsOverwritten);
+			}
+			++net->pendingTransferStartsSeen;
 			net->pendingTransferStart = true;
 			net->pendingTransferStartTimestamp = timestamp;
 			net->pendingTransferFinishCycle = value;
