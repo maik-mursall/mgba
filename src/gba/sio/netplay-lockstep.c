@@ -330,6 +330,9 @@ static uint16_t GBASIONetPlayLockstepDriverWriteSIOCNT(struct GBASIODriver* driv
 	struct GBASIONetPlayLockstepDriver* net = (struct GBASIONetPlayLockstepDriver*) driver;
 	mLOG(GBA_SIO, DEBUG, "NetPlay lockstep: SIOCNT <- %04X", value);
 	MutexLock(&net->mutex);
+	if (net->connected) {
+		_drainIncomingLocked(net);
+	}
 	_updateReadyStateLocked(net);
 	MutexUnlock(&net->mutex);
 	return value;
@@ -339,6 +342,9 @@ static uint16_t GBASIONetPlayLockstepDriverWriteRCNT(struct GBASIODriver* driver
 	struct GBASIONetPlayLockstepDriver* net = (struct GBASIONetPlayLockstepDriver*) driver;
 	mLOG(GBA_SIO, DEBUG, "NetPlay lockstep: RCNT <- %04X", value);
 	MutexLock(&net->mutex);
+	if (net->connected) {
+		_drainIncomingLocked(net);
+	}
 	_updateReadyStateLocked(net);
 	MutexUnlock(&net->mutex);
 	return value;
@@ -348,6 +354,9 @@ static bool GBASIONetPlayLockstepDriverStart(struct GBASIODriver* driver) {
 	struct GBASIONetPlayLockstepDriver* net = (struct GBASIONetPlayLockstepDriver*) driver;
 	bool started = false;
 	MutexLock(&net->mutex);
+	if (net->connected) {
+		_drainIncomingLocked(net);
+	}
 	if (!net->connected || !net->helloSent) {
 		goto out;
 	}
@@ -384,6 +393,9 @@ out:
 static void GBASIONetPlayLockstepDriverFinishMultiplayer(struct GBASIODriver* driver, uint16_t data[4]) {
 	struct GBASIONetPlayLockstepDriver* net = (struct GBASIONetPlayLockstepDriver*) driver;
 	MutexLock(&net->mutex);
+	if (net->connected) {
+		_drainIncomingLocked(net);
+	}
 	if (net->transferMode == GBA_SIO_MULTI) {
 		if (!net->dataReceived) {
 			mLOG(GBA_SIO, WARN, "MULTI did not receive data. Are we running behind?");
@@ -403,6 +415,9 @@ static uint8_t GBASIONetPlayLockstepDriverFinishNormal8(struct GBASIODriver* dri
 	struct GBASIONetPlayLockstepDriver* net = (struct GBASIONetPlayLockstepDriver*) driver;
 	uint8_t data = 0xFF;
 	MutexLock(&net->mutex);
+	if (net->connected) {
+		_drainIncomingLocked(net);
+	}
 	if (net->transferMode == GBA_SIO_NORMAL_8) {
 		if (net->playerId > 0) {
 			if (!net->dataReceived) {
@@ -424,6 +439,9 @@ static uint32_t GBASIONetPlayLockstepDriverFinishNormal32(struct GBASIODriver* d
 	struct GBASIONetPlayLockstepDriver* net = (struct GBASIONetPlayLockstepDriver*) driver;
 	uint32_t data = 0xFFFFFFFF;
 	MutexLock(&net->mutex);
+	if (net->connected) {
+		_drainIncomingLocked(net);
+	}
 	if (net->transferMode == GBA_SIO_NORMAL_32) {
 		if (net->playerId > 0) {
 			if (!net->dataReceived) {
@@ -907,6 +925,9 @@ static void _handleEventLocked(struct GBASIONetPlayLockstepDriver* net, int type
 			net->dataReceived = false;
 		}
 		_setReadyLocked(net, playerId, mode);
+		if (playerId == 0) {
+			net->transferMode = mode;
+		}
 		if (playerId == 0 && net->playerId != 0 && net->connected && net->helloSent) {
 			_sendCommandLocked(net, "ACK");
 		}
@@ -914,7 +935,7 @@ static void _handleEventLocked(struct GBASIONetPlayLockstepDriver* net, int type
 	}
 	case NP_EV_TRANSFER_START:
 		if (net->playerId > 0 && net->connected && net->helloSent && net->d.p && net->d.p->p) {
-			uint32_t txData = _readLocalTransferData(net, net->mode);
+			uint32_t txData = _readLocalTransferData(net, net->transferMode);
 			int32_t delay = value - _now(net);
 			if (delay < 1) {
 				delay = 1;
