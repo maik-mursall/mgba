@@ -133,6 +133,7 @@ private class RemoteLockstepCoordinator(
 
     private var transferActive = false
     private var transferMode = SioMode.INVALID
+    private var pendingTransferSubmit = 0
 
     private var cycle = 0
     private var nextHardSync = HARD_SYNC_INTERVAL
@@ -324,6 +325,16 @@ private class RemoteLockstepCoordinator(
             nAttached,
         )
 
+        if (waiting != 0) {
+            logger.warn(
+                "Transfer start rejected due to active wait: lockstepId={}, waitingMask=0x{}",
+                player.lockstepId,
+                waiting.toString(16),
+            )
+            send(out, conn, "ERR wait_in_progress")
+            return out
+        }
+
         resetTransferBuffers()
         setData(0, txData)
 
@@ -333,8 +344,13 @@ private class RemoteLockstepCoordinator(
             TARGET_ALL and target(0).inv(),
         )
 
+        val waitingBefore = waiting
         waitOnPlayers(out, player, timestamp)
+        if (waiting == waitingBefore) {
+            return out
+        }
         transferActive = true
+        pendingTransferSubmit = waiting
 
         send(out, conn, "OK START_TRANSFER")
         return out
@@ -361,6 +377,9 @@ private class RemoteLockstepCoordinator(
         )
 
         setData(player.playerId, txData)
+        if (transferActive && player.playerId in 1 until MAX_GBAS) {
+            pendingTransferSubmit = pendingTransferSubmit and target(player.playerId).inv()
+        }
         return emptyList()
     }
 
@@ -522,6 +541,7 @@ private class RemoteLockstepCoordinator(
 
         waiting = 0
         transferActive = false
+        pendingTransferSubmit = 0
 
         val before = snapshotPlayerIds()
         players.remove(player.lockstepId)
@@ -539,6 +559,16 @@ private class RemoteLockstepCoordinator(
     private fun hardSync(out: MutableList<Outbound>, primary: PlayerState, timestamp: Int) {
         if (nAttached < 2) {
             nextHardSync = HARD_SYNC_INTERVAL
+            return
+        }
+        if (waiting != 0) {
+            logger.debug(
+                "Hard sync ignored while wait is active: lockstepId={}, waitingMask=0x{}, transferActive={}, pendingSubmitMask=0x{}",
+                primary.lockstepId,
+                waiting.toString(16),
+                transferActive,
+                pendingTransferSubmit.toString(16),
+            )
             return
         }
 
@@ -569,6 +599,7 @@ private class RemoteLockstepCoordinator(
 
         transferActive = false
         waiting = 0
+        pendingTransferSubmit = 0
 
         if (byPlayer.playerId != 0) {
             players[attachedPlayers[0]]?.let { wakePlayer(out, it) }
@@ -616,8 +647,28 @@ private class RemoteLockstepCoordinator(
             return
         }
 
+        val playerMask = target(player.playerId)
+        if ((waiting and playerMask) == 0) {
+            logger.debug(
+                "Ignoring out-of-window ACK: lockstepId={}, playerId={}, waitingMask=0x{}",
+                player.lockstepId,
+                player.playerId,
+                waiting.toString(16),
+            )
+            return
+        }
+        if (transferActive && (pendingTransferSubmit and playerMask) != 0) {
+            logger.warn(
+                "Ignoring ACK before SUBMIT_DATA: lockstepId={}, playerId={}, pendingSubmitMask=0x{}",
+                player.lockstepId,
+                player.playerId,
+                pendingTransferSubmit.toString(16),
+            )
+            return
+        }
+
         val oldWaiting = waiting
-        waiting = waiting and target(player.playerId).inv()
+        waiting = waiting and playerMask.inv()
 
         logger.info(
             "ACK received: lockstepId={}, playerId={}, waitingMask=0x{}->0x{}",
@@ -634,6 +685,7 @@ private class RemoteLockstepCoordinator(
                 }
                 sendTransferDone(out)
                 transferActive = false
+                pendingTransferSubmit = 0
             }
 
             nextHardSync = HARD_SYNC_INTERVAL
