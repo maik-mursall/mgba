@@ -20,6 +20,8 @@ extern const uint16_t GBA_SIO_NETPLAY_LOCKSTEP_DEFAULT_PORT;
 extern const char GBA_SIO_NETPLAY_LOCKSTEP_DEFAULT_HOST[];
 
 #define GBA_SIO_NETPLAY_LOCKSTEP_RX_BUFFER_SIZE 4096
+#define GBA_SIO_NETPLAY_LOCKSTEP_MAX_LINE 512
+#define GBA_SIO_NETPLAY_LOCKSTEP_LINE_QUEUE_SIZE 64
 
 struct GBASIONetPlayLockstepDriver {
 	struct GBASIODriver d;
@@ -46,6 +48,15 @@ struct GBASIONetPlayLockstepDriver {
 
 	uint8_t rxBuffer[GBA_SIO_NETPLAY_LOCKSTEP_RX_BUFFER_SIZE];
 	size_t rxBufferSize;
+
+#ifndef DISABLE_THREADING
+	Thread ioThread;
+	bool ioThreadActive;
+	bool ioThreadRunning;
+	size_t lineQueueRead;
+	size_t lineQueueWrite;
+	char lineQueue[GBA_SIO_NETPLAY_LOCKSTEP_LINE_QUEUE_SIZE][GBA_SIO_NETPLAY_LOCKSTEP_MAX_LINE];
+#endif
 };
 
 void GBASIONetPlayLockstepDriverCreate(struct GBASIONetPlayLockstepDriver*, struct mLockstepUser*);
